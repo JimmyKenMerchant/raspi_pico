@@ -10,24 +10,19 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <stdio.h>
-#include "pico/stdlib.h"
+#include "sequencer_gpio.h"
 
 const unsigned long sequencer_gpio_list_length = 3;
 const unsigned long sequencer_gpio_list[] = {15,16,25}; // Pin No. 0 to No. 29
 // LSB in sequencer_gpio_command is the last in sequencer_gpio_list.
 const unsigned short sequencer_gpio_command[] = {0b1000000000000011,
                                                  0b1000000000000101,
-                                                 0b1000000000000010,
-                                                 0b1000000000000100,
+                                                 0b1000000000000011,
+                                                 0b1000000000000101,
                                                  0b1000000000000000,
                                                  0b0000000000000000, // Clear MSB to Show End
                                                 };
-unsigned long sequencer_gpio_command_length = 0;
-unsigned long sequencer_gpio_init();
-unsigned long sequencer_gpio_execute(unsigned long index);
-
-#define SEQUENCER_GPIO_COMMAND_LENGTH_MAXIMUM 0xFFFF
+unsigned long sequencer_gpio_command_length;
 
 unsigned long sequencer_gpio_init() {
     unsigned long gpio_mask = 0x00000000;
@@ -75,19 +70,5 @@ unsigned long sequencer_gpio_execute(unsigned long index) {
     gpio_put_masked(gpio_mask_set, 0xFFFFFFFF);
     index++;
     return index;
-}
-
-int main(void) {
-    stdio_init_all();
-    sleep_ms(3000); // Wait for Rediness of USB for Messages
-    sequencer_gpio_init();
-    unsigned long index = 0;
-    printf("Let's Start!\n");
-    while (true) {
-        printf("In The Loop: %d\n", index);
-        index = sequencer_gpio_execute(index);
-        sleep_ms(500);
-    }
-    return 0;
 }
 

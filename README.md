@@ -28,7 +28,11 @@ mkdir ~/pico_projects
 cd ~/pico_projects
 # Install Projects
 git clone -b master https://github.com/raspberrypi/pico-sdk.git
-git clone -b master https://github.com/JimmyKenMerchant/raspi_pico.git
+git clone -b main https://github.com/JimmyKenMerchant/raspi_pico.git
+# Install TinyUSB as A Submodule of pico-sdk
+cd pico-sdk
+git submodule update --init
+cd ../
 # Import CMAKE File in PICO-SDK to My Projects
 cp pico-sdk/external/pico_sdk_import.cmake raspi_pico/
 # Build
@@ -53,4 +57,6 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 * [How to add a reset button to your Raspberry Pi Pico](https://www.raspberrypi.org/blog/how-to-add-a-reset-button-to-your-raspberry-pi-pico/)
 
 * [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk)
+
+* [TinyUSB](https://github.com/hathach/tinyusb)
 
