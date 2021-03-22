@@ -1,0 +1,4 @@
+# Ignore CMAKE File from ../pico-sdk/external/ Because of Possible External Updating
+pico_sdk_import.cmake
+# Ignore Contents in build/
+build/
