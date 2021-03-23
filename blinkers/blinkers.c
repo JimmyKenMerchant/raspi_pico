@@ -23,14 +23,14 @@ uint32 pinlist_length = 3;
 // LSB in sequencer_gpio_pico->sequence is the last in sequencer_gpio_pico->pinlist.
 uint16 sequence[] = {0b1000000000000111,
                      0b1000000000000101,
-                     0b1000000000000010,
+                     0b1000000000000011,
                      0b1000000000000101,
                      0b1000000000000011,
                      0b1000000000000110,
                      0b0000000000000000, // Clear MSB to Show End
                      };
 
-sequencer_gpio_pico *the_sequencer;
+sequencer_gpio_pico* the_sequencer;
 
 int main(void) {
     stdio_init_all();

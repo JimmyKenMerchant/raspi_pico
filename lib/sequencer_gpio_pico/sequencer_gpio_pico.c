@@ -13,7 +13,7 @@
 #include "sequencer_gpio_pico.h"
 
 sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_length, uint16* sequence) {
-    sequencer_gpio_pico *sequencer_gpio = (sequencer_gpio_pico*)calloc(1, sizeof(sequencer_gpio_pico));
+    sequencer_gpio_pico* sequencer_gpio = (sequencer_gpio_pico*)calloc(1, sizeof(sequencer_gpio_pico));
     if (sequencer_gpio == null) return sequencer_gpio;
     sequencer_gpio->pinlist = pinlist;
     sequencer_gpio->pinlist_length = pinlist_length;
@@ -38,11 +38,11 @@ sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_le
     }
     __asm__("dsb");
     __asm__("isb");
-    sequencer_gpio->is_init = true;
     return sequencer_gpio;
 }
 
 bool sequencer_gpio_pico_execute(sequencer_gpio_pico* sequencer_gpio) {
+    if (sequencer_gpio == null) return EXIT_FAILURE;
     if (sequencer_gpio->index >= sequencer_gpio->sequence_length) sequencer_gpio->index = 0;
     //printf("@sequencer_gpio_pico_execute 1 - sequencer_gpio->index: %d\n", sequencer_gpio->index);
     //printf("@sequencer_gpio_pico_execute 2 - sequencer_gpio->sequence_length: %d\n", sequencer_gpio->sequence_length);

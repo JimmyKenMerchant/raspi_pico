@@ -39,7 +39,6 @@ typedef struct {
 	uint32 sequence_length;
 	uint16* sequence;
 	uint32 index;
-	bool is_init;
 } sequencer_gpio_pico;
 
 /* Functions */
