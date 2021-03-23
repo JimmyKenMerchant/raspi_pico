@@ -10,8 +10,12 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _MACROS_H
-#define _MACROS_H 1
+#ifndef _MACROS_PICO_H
+#define _MACROS_PICO_H 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /********************************
  * Unique Definitions on General
@@ -180,5 +184,9 @@
 #endif
 
 #define _wordsizeof(x) ( sizeof(x) + 3 ) / 4
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

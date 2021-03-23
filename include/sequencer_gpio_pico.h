@@ -15,33 +15,37 @@
 
 // Standards
 #include <stdio.h>
+#include <stdlib.h>
 // Dependancies
 #include "pico/stdlib.h"
 // raspi_pico/include
 #include "macros_pico.h"
 
-/* Definitions */
-
-#define SEQUENCER_GPIO_PICO_SEQUENCE_LENGTH_MAXIMUM 0xFFFF
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* Definitions */
+
+#define SEQUENCER_GPIO_PICO_SEQUENCE_LENGTH_MAXIMUM 0xFFFF
+
 /* Structs */
 
-typedef struct _sequencer_gpio_pico {
+// Allocate the memory space using calloc to guarantee all zeros.
+typedef struct {
 	uint32 pinlist_length;
 	uchar8* pinlist;
 	uint32 sequence_length;
-	uint32* sequence;
+	uint16* sequence;
 	uint32 index;
+	bool is_init;
 } sequencer_gpio_pico;
 
 /* Functions */
 
-uint32 sequencer_gpio_pico_init();
-uint32 sequencer_gpio_pico_execute(uint32 index);
+sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_length, uint16* sequence);
+bool sequencer_gpio_pico_execute(sequencer_gpio_pico* sequencer_gpio);
 
 #ifdef __cplusplus
 }
