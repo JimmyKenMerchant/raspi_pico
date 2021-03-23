@@ -44,8 +44,7 @@ make -j4
 # Connect Pico and Your PC through USB2.0
 # Push and Hold "BOOTSEL" Button on Connecting to Your PC
 # Copy, Paste, and Run!
-cd blinker
-cp blinker.uf2 /media/$USER/RPI-RP2/
+cp blinkers/blinkers.uf2 /media/$USER/RPI-RP2/
 # Monitor "printf" Messages
 sudo minicom -b 115200 -o -D /dev/ttyACM0
 ```

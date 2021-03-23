@@ -1,1 +1,1 @@
-add_subdirectory(sequencer_gpio)
+add_subdirectory(sequencer_gpio_pico)

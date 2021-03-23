@@ -1,4 +1,4 @@
-set(target_name sequencer_gpio)
+set(target_name sequencer_gpio_pico)
 
 add_library(${target_name} STATIC
     ${target_name}.c

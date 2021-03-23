@@ -4,7 +4,7 @@ add_executable(${target_name}
     ${target_name}.c
 )
 
-target_link_libraries(${target_name} pico_stdlib sequencer_gpio)
+target_link_libraries(${target_name} pico_stdlib sequencer_gpio_pico)
 
 # Beside elf, Create map/bin/hex/uf2 files.
 pico_add_extra_outputs(${target_name})
