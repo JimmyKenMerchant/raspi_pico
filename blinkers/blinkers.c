@@ -20,14 +20,13 @@
 
 uchar8 pinlist[] = {15,16,25}; // Pin No. 0 to No. 29
 uint32 pinlist_length = 3;
-// LSB in sequencer_gpio_pico->sequence is the last in sequencer_gpio_pico->pinlist.
 uint16 sequence[] = {0b1000000000000111,
                      0b1000000000000101,
                      0b1000000000000011,
                      0b1000000000000101,
                      0b1000000000000011,
                      0b1000000000000110,
-                     0b0000000000000000, // Clear MSB to Show End
+                     0b0000000000000000, // Clear MSB to Show End of Sequence
                      };
 
 sequencer_gpio_pico* the_sequencer;

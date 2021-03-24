@@ -13,7 +13,7 @@
 #include "sequencer_gpio_pico.h"
 
 sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_length, uint16* sequence) {
-    sequencer_gpio_pico* sequencer_gpio = (sequencer_gpio_pico*)calloc(1, sizeof(sequencer_gpio_pico));
+    sequencer_gpio_pico* sequencer_gpio = (sequencer_gpio_pico*)malloc(sizeof(sequencer_gpio_pico));
     if (sequencer_gpio == null) return sequencer_gpio;
     sequencer_gpio->pinlist = pinlist;
     sequencer_gpio->pinlist_length = pinlist_length;
