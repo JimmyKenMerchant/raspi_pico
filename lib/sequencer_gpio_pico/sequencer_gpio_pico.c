@@ -22,12 +22,12 @@ sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_le
     for (uchar8 i = 0; i < sequencer_gpio->pinlist_length; i++) {
         gpio_mask |= 0b1 << sequencer_gpio->pinlist[i];
     }
-    printf("@sequencer_gpio_pico_init 1 - gpio_mask: %#x\n", gpio_mask);
+    //printf("@sequencer_gpio_pico_init 1 - gpio_mask: %#x\n", gpio_mask);
     gpio_init_mask(gpio_mask);
     //gpio_set_dir_out_masked(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0xFFFFFFFF);
-    printf("@sequencer_gpio_pico_init 2 - GPIO-24 Direction: %d\n", gpio_is_dir_out(24));
-    printf("@sequencer_gpio_pico_init 3 - GPIO-25 Direction: %d\n", gpio_is_dir_out(25));
+    //printf("@sequencer_gpio_pico_init 2 - GPIO-24 Direction: %d\n", gpio_is_dir_out(24));
+    //printf("@sequencer_gpio_pico_init 3 - GPIO-25 Direction: %d\n", gpio_is_dir_out(25));
     for (uint32 i = 0; i < SEQUENCER_GPIO_PICO_SEQUENCE_LENGTH_MAXIMUM; i++) {
         if (sequencer_gpio->sequence[i] & 0x8000) {
             continue;
