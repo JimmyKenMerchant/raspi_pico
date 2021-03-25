@@ -49,6 +49,12 @@ cp blinkers/blinkers.uf2 /media/$USER/RPI-RP2/
 sudo minicom -b 115200 -o -D /dev/ttyACM0
 ```
 
+## Notes on Projects
+
+**Twin Dimmers**
+
+* This project is using ADC. I connected ADC_VREF to 3V3, and AGND to GND. GPIO26 and GPIO27 are used as ADC inputs. Two ADC inputs are converted to digital values with the round robin mode, and these values are used for controlling brightness of two LED outputs from GPIO14 and GPIO15 using PWM.
+
 ## Links of References
 
 * [Getting Started with RP2040 – Raspberry Pi](https://www.raspberrypi.org/documentation/rp2040/getting-started/): Downloadable Documentation
