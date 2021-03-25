@@ -13,3 +13,4 @@ pico_sdk_init()
 
 add_subdirectory(lib)
 add_subdirectory(blinkers)
+add_subdirectory(twin_dimmers)
