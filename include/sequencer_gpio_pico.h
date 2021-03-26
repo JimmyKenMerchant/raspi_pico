@@ -46,6 +46,7 @@ typedef struct {
 /* Functions */
 
 sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_length, uint16* sequence);
+uint32 sequencer_gpio_pico_get_sequence_length(uint16* sequence);
 bool sequencer_gpio_pico_execute(sequencer_gpio_pico* sequencer_gpio);
 
 #ifdef __cplusplus

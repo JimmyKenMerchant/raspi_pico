@@ -22,7 +22,7 @@
 
 uchar8 blinkers_pinlist[] = {15,16,25}; // Pin No. 0 to No. 29
 uint32 blinkers_pinlist_length = 3;
-uint16 blinkers_sequence[] = {0b1000000000000011,
+uint16 blinkers_sequence[] = {0b1000000000000010,
                               0b1000000000000101,
                               0b1000000000000010,
                               0b1000000000000101,

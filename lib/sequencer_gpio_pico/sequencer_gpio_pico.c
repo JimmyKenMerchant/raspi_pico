@@ -28,17 +28,20 @@ sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_le
     gpio_set_dir_masked(gpio_mask, 0xFFFFFFFF);
     //printf("@sequencer_gpio_pico_init 2 - GPIO-24 Direction: %d\n", gpio_is_dir_out(24));
     //printf("@sequencer_gpio_pico_init 3 - GPIO-25 Direction: %d\n", gpio_is_dir_out(25));
-    for (uint32 i = 0; i < SEQUENCER_GPIO_PICO_SEQUENCE_LENGTH_MAXIMUM; i++) {
-        if (sequencer_gpio->sequence[i] & 0x8000) {
-            continue;
-        } else {
-            sequencer_gpio->sequence_length = i;
-            break;
-        }
-    }
+    sequencer_gpio->sequence_length = sequencer_gpio_pico_get_sequence_length(sequencer_gpio->sequence);
     __asm__("dsb");
     __asm__("isb");
     return sequencer_gpio;
+}
+
+uint32 sequencer_gpio_pico_get_sequence_length(uint16* sequence) {
+    for (uint32 i = 0; i < SEQUENCER_GPIO_PICO_SEQUENCE_LENGTH_MAXIMUM; i++) {
+        if (sequence[i] & 0x8000) {
+            continue;
+        } else {
+            return i;
+        }
+    }
 }
 
 bool sequencer_gpio_pico_execute(sequencer_gpio_pico* sequencer_gpio) {
