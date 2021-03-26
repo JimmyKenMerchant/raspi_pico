@@ -47,8 +47,8 @@ int main(void) {
     gpio_set_function(BLINKERS_PWM_GPIO, GPIO_FUNC_PWM); // GPIO14 = PWM7 A
     blinkers_pwm_slice_num = pwm_gpio_to_slice_num(BLINKERS_PWM_GPIO); // GPIO 14 = PWM7
     blinkers_pwm_channel = pwm_gpio_to_channel(BLINKERS_PWM_GPIO); // GPIO 14 = A
-    printf("main 1 - blinkers_pwm_slice_num: %d\n", blinkers_pwm_slice_num);
-    printf("main 2 - blinkers_pwm_channel: %d\n", blinkers_pwm_channel);
+    printf("@main 1 - blinkers_pwm_slice_num: %d\n", blinkers_pwm_slice_num);
+    printf("@main 2 - blinkers_pwm_channel: %d\n", blinkers_pwm_channel);
     // Set IRQ and Handler for PWM
     pwm_clear_irq(blinkers_pwm_slice_num);
     pwm_set_irq_enabled(blinkers_pwm_slice_num, true);
@@ -63,11 +63,11 @@ int main(void) {
     pwm_init(blinkers_pwm_slice_num, &config, true); // Push Configufation and Start
     /* GPIO Settings */
     blinkers_the_sequencer = sequencer_gpio_pico_init(blinkers_pinlist, blinkers_pinlist_length, blinkers_sequence);
-    printf("Let's Start!\n");
+    printf("@main 3 - Let's Start!\n");
     while (true) {
-        tight_loop_contents();
-        //printf("In The Loop: %d\n", blinkers_the_sequencer->index);
-        //sleep_ms(500);
+        //tight_loop_contents();
+        printf("@main 4 - blinkers_the_sequencer->index: %d\n", blinkers_the_sequencer->index);
+        sleep_ms(500);
     }
     free(blinkers_the_sequencer);
     return 0;
@@ -80,6 +80,6 @@ void blinkers_on_pwm_irq_wrap() {
     if (blinkers_count == 0) {
         blinkers_count = 255;
         sequencer_gpio_pico_execute(blinkers_the_sequencer);
-        printf("In The IRQ: %d\n", blinkers_the_sequencer->index);
+        printf("@blinkers_on_pwm_irq_wrap 1 - blinkers_the_sequencer->index: %d\n", blinkers_the_sequencer->index);
     }
 }
