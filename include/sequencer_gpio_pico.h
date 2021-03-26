@@ -21,7 +21,6 @@
 // raspi_pico/include
 #include "macros_pico.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,7 +31,6 @@ extern "C" {
 
 /* Structs */
 
-// Allocate the memory space using calloc to guarantee all zeros.
 typedef struct {
 	uint32 pinlist_length;
 	uchar8* pinlist;
