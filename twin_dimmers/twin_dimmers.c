@@ -31,6 +31,7 @@ uint16 twin_dimmers_sequence[] = {0x8000,0x800F,0x801F,0x802F,0x803F,0x804F,0x80
 sequencer_pwm_pico* twin_dimmers_the_sequencer_1;
 sequencer_pwm_pico* twin_dimmers_the_sequencer_2;
 
+bool twin_dimmers_is_outstanding_on_adc;
 uint32 twin_dimmers_count;
 uint32 twin_dimmers_pwm_slice_num;
 uint32 twin_dimmers_pwm_channel;
@@ -53,6 +54,7 @@ int main(void) {
     pwm_clear_irq(twin_dimmers_pwm_slice_num);
     pwm_set_irq_enabled(twin_dimmers_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, twin_dimmers_on_pwm_irq_wrap);
+    irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
     irq_set_enabled(PWM_IRQ_WRAP, true);
     // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
@@ -72,9 +74,10 @@ int main(void) {
     adc_gpio_init(27);
     adc_set_clkdiv(60000.0f);
     adc_set_round_robin(0b0011);
-    adc_fifo_setup(true, false, 1, true, true); // Truncate to 8-bit Length (0-255)
+    adc_fifo_setup(true, false, 2, true, true); // Truncate to 8-bit Length (0-255)
     adc_fifo_drain(); // Clean FIFO
     irq_set_exclusive_handler(ADC_IRQ_FIFO, twin_dimmers_on_adc_irq_fifo);
+    irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
     adc_irq_set_enabled(true);
     twin_dimmers_conversion_1 = 0;
     twin_dimmers_conversion_2 = 0;
@@ -83,6 +86,7 @@ int main(void) {
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << twin_dimmers_pwm_slice_num);
+    twin_dimmers_is_outstanding_on_adc = true;
     adc_select_input(0); // Ensure to Start from A0
     adc_run(true);
     printf("@main 2 - Let's Start!\n");
@@ -96,26 +100,34 @@ void twin_dimmers_on_pwm_irq_wrap() {
     pwm_clear_irq(twin_dimmers_pwm_slice_num);
     twin_dimmers_count--;
     if (twin_dimmers_count == 0) {
-        if (abs(twin_dimmers_conversion_1_temp - twin_dimmers_conversion_1) > TWIN_DIMMERS_PWM_THRESHOLD) twin_dimmers_conversion_1 = twin_dimmers_conversion_1_temp;
-        if (abs(twin_dimmers_conversion_2_temp - twin_dimmers_conversion_2) > TWIN_DIMMERS_PWM_THRESHOLD) twin_dimmers_conversion_2 = twin_dimmers_conversion_2_temp;
-        twin_dimmers_the_sequencer_1->index = twin_dimmers_conversion_1 >> 4;
-        twin_dimmers_the_sequencer_2->index = twin_dimmers_conversion_2 >> 4;
-        sequencer_pwm_pico_execute(twin_dimmers_the_sequencer_1);
-        sequencer_pwm_pico_execute(twin_dimmers_the_sequencer_2);
+        if (abs(twin_dimmers_conversion_1_temp - twin_dimmers_conversion_1) > TWIN_DIMMERS_PWM_THRESHOLD) {
+            twin_dimmers_conversion_1 = twin_dimmers_conversion_1_temp;
+            twin_dimmers_the_sequencer_1->index = twin_dimmers_conversion_1 >> 4;
+            sequencer_pwm_pico_execute(twin_dimmers_the_sequencer_1);
+        }
+        if (abs(twin_dimmers_conversion_2_temp - twin_dimmers_conversion_2) > TWIN_DIMMERS_PWM_THRESHOLD) {
+            twin_dimmers_conversion_2 = twin_dimmers_conversion_2_temp;
+            twin_dimmers_the_sequencer_2->index = twin_dimmers_conversion_2 >> 4;
+            sequencer_pwm_pico_execute(twin_dimmers_the_sequencer_2);
+        }
         //pwm_set_chan_level(twin_dimmers_pwm_slice_num, twin_dimmers_pwm_channel, (twin_dimmers_conversion_1 >> 4) << 4);
         //pwm_set_chan_level(twin_dimmers_pwm_slice_num, twin_dimmers_pwm_channel + 1, (twin_dimmers_conversion_2 >> 4) << 4);
         twin_dimmers_count = TWIN_DIMMERS_COUNT_MAX;
-        printf("@twin_dimmers_on_pwm_irq_wrap 1 - twin_dimmers_conversion_1: %d, twin_dimmers_conversion_2: %d\n", twin_dimmers_conversion_1, twin_dimmers_conversion_2);
+        //printf("@twin_dimmers_on_pwm_irq_wrap 1 - twin_dimmers_conversion_1: %d, twin_dimmers_conversion_2: %d\n", twin_dimmers_conversion_1, twin_dimmers_conversion_2);
     }
-    adc_select_input(0); // Ensure to Start from A0
-    adc_run(true);
+    if (! twin_dimmers_is_outstanding_on_adc) {
+        twin_dimmers_is_outstanding_on_adc = true;
+        adc_select_input(0); // Ensure to Start from A0
+        adc_run(true);
+    }
 }
 
 void twin_dimmers_on_adc_irq_fifo() {
     adc_run(false);
     uint16 adc_fifo_level = adc_fifo_get_level();
-    //printf("@twin_dimmers_on_adc_irq_fifo 1 - : %d\n", adc_fifo_level);
+    //printf("@twin_dimmers_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
     for (uint16 i = 0; i < adc_fifo_level; i++) {
+        //printf("@twin_dimmers_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (i % 2) {
             twin_dimmers_conversion_1_temp = temp;
@@ -123,5 +135,7 @@ void twin_dimmers_on_adc_irq_fifo() {
             twin_dimmers_conversion_2_temp = temp;
         }
     }
+    //printf("@twin_dimmers_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
     adc_fifo_drain();
+    twin_dimmers_is_outstanding_on_adc = false;
 }
