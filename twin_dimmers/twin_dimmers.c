@@ -23,6 +23,8 @@
 
 #define TWIN_DIMMERS_PWM_1_GPIO 14
 #define TWIN_DIMMERS_PWM_2_GPIO 15
+#define TWIN_DIMMERS_ADC_0_GPIO 26
+#define TWIN_DIMMERS_ADC_1_GPIO 27
 #define TWIN_DIMMERS_PWM_THRESHOLD 0xF
 #define TWIN_DIMMERS_COUNT_MAX 32
 
@@ -47,19 +49,19 @@ int main(void) {
     sleep_ms(2000); // Wait for Rediness of USB for Messages
     /* PWM Settings */
     gpio_set_function(TWIN_DIMMERS_PWM_1_GPIO, GPIO_FUNC_PWM); // GPIO14 = PWM7 A
-    gpio_set_function(TWIN_DIMMERS_PWM_1_GPIO + 1, GPIO_FUNC_PWM); // GPIO15 = PWM7 B
-    twin_dimmers_pwm_slice_num = pwm_gpio_to_slice_num(TWIN_DIMMERS_PWM_1_GPIO); // GPIO 14 = PWM7
-    twin_dimmers_pwm_channel = pwm_gpio_to_channel(TWIN_DIMMERS_PWM_1_GPIO); // GPIO 14 = A
+    gpio_set_function(TWIN_DIMMERS_PWM_2_GPIO, GPIO_FUNC_PWM); // GPIO15 = PWM7 B
+    twin_dimmers_pwm_slice_num = pwm_gpio_to_slice_num(TWIN_DIMMERS_PWM_1_GPIO); // GPIO14 = PWM7
+    twin_dimmers_pwm_channel = pwm_gpio_to_channel(TWIN_DIMMERS_PWM_1_GPIO); // GPIO14 = A
     // Set IRQ and Handler for PWM
     pwm_clear_irq(twin_dimmers_pwm_slice_num);
     pwm_set_irq_enabled(twin_dimmers_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, twin_dimmers_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
     irq_set_enabled(PWM_IRQ_WRAP, true);
-    // PWM Configuration
+    // PWM Configuration (Make Arrox. 975Hz from 125Mhz - Approx. 1ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 255.75f); // Set Clock Divider
-    pwm_config_set_wrap(&config, 0xFF); // 0-255, 65536 Cycles
+    pwm_config_set_clkdiv(&config, 500.75f); // Set Clock Divider, 125,000,000 Divided by 500.75 for Approx. 4us for A Cycle
+    pwm_config_set_wrap(&config, 0xFF); // 0-255, 256 Cycles for Approx. 1ms
     pwm_init(twin_dimmers_pwm_slice_num, &config, false); // Push Configufation
     twin_dimmers_count = TWIN_DIMMERS_COUNT_MAX;
     pwm_set_chan_level(twin_dimmers_pwm_slice_num, twin_dimmers_pwm_channel, 0); // Assuming Channel A
@@ -70,9 +72,9 @@ int main(void) {
     printf("@main 1 - twin_dimmers_the_sequencer_1->sequence_length: %d\n", twin_dimmers_the_sequencer_1->sequence_length);
     /* ADC Settings */
     adc_init();
-    adc_gpio_init(26);
-    adc_gpio_init(27);
-    adc_set_clkdiv(60000.0f);
+    adc_gpio_init(TWIN_DIMMERS_ADC_0_GPIO); // GPIO26 (ADC0) for GPIO14 (PWM7 A)
+    adc_gpio_init(TWIN_DIMMERS_ADC_1_GPIO); // GPIO27 (ADC1) for GPIO15 (PWM7 B)
+    adc_set_clkdiv(0.0f);
     adc_set_round_robin(0b0011);
     adc_fifo_setup(true, false, 2, true, true); // Truncate to 8-bit Length (0-255)
     adc_fifo_drain(); // Clean FIFO
@@ -130,9 +132,9 @@ void twin_dimmers_on_adc_irq_fifo() {
         //printf("@twin_dimmers_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (i % 2) {
-            twin_dimmers_conversion_1_temp = temp;
-        } else {
             twin_dimmers_conversion_2_temp = temp;
+        } else {
+            twin_dimmers_conversion_1_temp = temp;
         }
     }
     //printf("@twin_dimmers_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
