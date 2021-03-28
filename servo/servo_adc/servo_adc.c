@@ -24,20 +24,16 @@
 #define SERVO_PWM_1_GPIO 2
 #define SERVO_ADC_0_GPIO 26
 #define SERVO_PWM_THRESHOLD 0xF
-#define SERVO_COUNT_MAX 32
 
 uint16 servo_sequence[] = {0x8000|720,0x8000|720,0x8000|800,0x8000|880,0x8000|960,0x8000|1040,0x8000|1120,0x8000|1200,0x8000|1200,0x8000|1280,0x8000|1360,0x8000|1440,0x8000|1520,0x8000|1600,0x8000|1680,0x8000|1680,0x0000}; // Clear MSB to Show End of Sequence, 900-2100us (120 degrees)
 
 sequencer_pwm_pico* servo_the_sequencer_1;
 
 bool servo_is_outstanding_on_adc;
-uint32 servo_count;
 uint32 servo_pwm_slice_num;
 uint32 servo_pwm_channel;
 uint16 servo_conversion_1;
-uint16 servo_conversion_2;
 uint16 servo_conversion_1_temp;
-uint16 servo_conversion_2_temp;
 void servo_on_pwm_irq_wrap();
 void servo_on_adc_irq_fifo();
 
@@ -59,7 +55,6 @@ int main(void) {
     pwm_config_set_clkdiv(&config, 156.25f); // Set Clock Divider, 125,000,000 Divided by 156.25 for 1.25us Cycle
     pwm_config_set_wrap(&config, 9999); // 0-9999, 10,000 Cycles for 12.5ms
     pwm_init(servo_pwm_slice_num, &config, false); // Push Configufation
-    servo_count = SERVO_COUNT_MAX;
     pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, servo_sequence[7] & 0x7FFF); // Assuming Channel A, 1500us
     // PWM Sequence Settings
     servo_the_sequencer_1 = sequencer_pwm_pico_init((SERVO_PWM_1_GPIO % 2) << 7|(SERVO_PWM_1_GPIO / 2), servo_sequence);

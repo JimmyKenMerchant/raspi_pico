@@ -16,7 +16,7 @@
 
 ## Installation
 
-* I'm using Linux-based Ubuntu in an AMD64 machine. Also Refer [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk).
+* I'm using Linux-based Ubuntu 20.04 LTS in an AMD64 machine. Also Refer [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk).
 
 ```bash
 # Install Packages to Be Needed
@@ -45,7 +45,7 @@ make -j4
 # Push and Hold "BOOTSEL" Button on Connecting to Your PC
 # Copy, Paste, and Run!
 cp blinkers/blinkers.uf2 /media/$USER/RPI-RP2/
-# Monitor "printf" Messages
+# Monitor "printf" Messages from Console
 sudo minicom -b 115200 -o -D /dev/ttyACM0
 ```
 
@@ -53,7 +53,17 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 **Twin Dimmers**
 
-* This project is using ADC. I connected ADC_VREF to 3V3, and AGND to GND. GPIO26 and GPIO27 are used as ADC inputs. Two ADC inputs are converted to digital values with the round robin mode, and these values are used for controlling brightness of two LED outputs from GPIO14 and GPIO15 using PWM.
+* This project is using ADC. I connected ADC_VREF to 3V3, and AGND to GND. GPIO26 (ADC0) and GPIO27 (ADC1) are used as ADC inputs. Two ADC inputs are converted to digital values with the round robin mode, and these values are used for controlling brightness of two LED outputs from GPIO14 and GPIO15 using PWM.
+
+* I tested this with two B10K ohms potentiometers for ADC inputs.
+
+**Servo**
+
+* I applied FEETECH FS90 Servo Motor. I connected its brown wire to GND, its red wire to VBUS, and its orange wire to GPIO2 (PWM0 A). Double-check the actual wiring layout of your servo motor by an official document. I measured approx. 105-110 degrees rotation with 900-2100us pulses which is assumed 120 degrees rotation. Note that Pico outputs 3.3V signal, even though I connected this signal to FS90 which is driven by 5V from VBUS. 3.3V (OUT) didn't work for FS90.
+
+* "servo_adc" uses ADC0 as an input. I tested this with a B10K ohms potentiometer for the ADC input.
+
+* "servo_console" accepts an input from a console. I only tested this with minicom in Ubuntu via the USB connection.
 
 ## Links of References
 
@@ -63,5 +73,7 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk)
 
-* [TinyUSB](https://github.com/hathach/tinyusb)
+* [TinyUSB](https://github.com/hathach/tinyusb): Pico Sdk implements USB host/device libraries of TinyUSB.
+
+* [Bare Metal Examples for Pico by David Welch](https://github.com/dwelch67/raspberrypi-pico)
 
