@@ -26,7 +26,7 @@
 #define SERVO_PWM_THRESHOLD 0xF
 #define SERVO_COUNT_MAX 32
 
-uint16 servo_sequence[] = {0x8000|225,0x8000|225,0x8000|250,0x8000|275,0x8000|300,0x8000|325,0x8000|350,0x8000|375,0x8000|375,0x8000|400,0x8000|425,0x8000|450,0x8000|475,0x8000|500,0x8000|525,0x8000|525,0x0000}; // Clear MSB to Show End of Sequence
+uint16 servo_sequence[] = {0x8000|720,0x8000|720,0x8000|800,0x8000|880,0x8000|960,0x8000|1040,0x8000|1120,0x8000|1200,0x8000|1200,0x8000|1280,0x8000|1360,0x8000|1440,0x8000|1520,0x8000|1600,0x8000|1680,0x8000|1680,0x0000}; // Clear MSB to Show End of Sequence, 900-2100us (120 degrees)
 
 sequencer_pwm_pico* servo_the_sequencer_1;
 
@@ -54,19 +54,19 @@ int main(void) {
     irq_set_exclusive_handler(PWM_IRQ_WRAP, servo_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
     irq_set_enabled(PWM_IRQ_WRAP, true);
-    // PWM Configuration (Make 50Hz from 125Mhz - 20ms Cycle)
+    // PWM Configuration (Make 50Hz from 125Mhz - 12.5ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 500.0f); // Set Clock Divider, 125,000,000 Divided by 500 for 4us Cycle
-    pwm_config_set_wrap(&config, 4999); // 0-2499, 5,000 Cycles for 20ms
+    pwm_config_set_clkdiv(&config, 156.25f); // Set Clock Divider, 125,000,000 Divided by 156.25 for 1.25us Cycle
+    pwm_config_set_wrap(&config, 9999); // 0-9999, 10,000 Cycles for 12.5ms
     pwm_init(servo_pwm_slice_num, &config, false); // Push Configufation
     servo_count = SERVO_COUNT_MAX;
-    pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, 375); // Assuming Channel A, 1500us
+    pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, servo_sequence[7] & 0x7FFF); // Assuming Channel A, 1500us
     // PWM Sequence Settings
     servo_the_sequencer_1 = sequencer_pwm_pico_init((SERVO_PWM_1_GPIO % 2) << 7|(SERVO_PWM_1_GPIO / 2), servo_sequence);
     printf("@main 1 - servo_the_sequencer_1->sequence_length: %d\n", servo_the_sequencer_1->sequence_length);
     /* ADC Settings */
     adc_init();
-    adc_gpio_init(SERVO_ADC_0_GPIO); // GPIO26 (ADC0) for GPIO2 (PWM1 A) 
+    adc_gpio_init(SERVO_ADC_0_GPIO); // GPIO26 (ADC0) for GPIO2 (PWM1 A)
     adc_set_clkdiv(0.0f);
     adc_set_round_robin(0b0001);
     adc_fifo_setup(true, false, 1, true, true); // Truncate to 8-bit Length (0-255)
@@ -74,7 +74,7 @@ int main(void) {
     irq_set_exclusive_handler(ADC_IRQ_FIFO, servo_on_adc_irq_fifo);
     irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
     adc_irq_set_enabled(true);
-    servo_conversion_1 = 0;
+    servo_conversion_1 = 112; // >> 4 Makes 7
     servo_conversion_1_temp = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
