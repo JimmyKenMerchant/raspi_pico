@@ -11,8 +11,6 @@ add_executable(${target_name}
 target_link_libraries(${target_name}
     pico_stdlib
     hardware_pwm
-    hardware_adc
-    hardware_irq
     sequencer_pwm_pico
 )
 

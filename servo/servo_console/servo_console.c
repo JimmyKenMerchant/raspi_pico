@@ -15,8 +15,6 @@
 // Dependancies
 #include "pico/stdlib.h"
 #include "hardware/pwm.h"
-#include "hardware/adc.h"
-#include "hardware/irq.h"
 // raspi_pico/include
 #include "macros_pico.h"
 #include "sequencer_pwm_pico.h"
