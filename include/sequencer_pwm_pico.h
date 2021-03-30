@@ -33,12 +33,12 @@ extern "C" {
 /* Structs */
 
 typedef struct {
-	uchar8 slice; // Bit[7] Clear for A, Set for B. Bit[6:0] Slice Number
-	// Clearing MSB in sequencer_pwm_pico->sequence[] shows the end of the sequence.
-	// That is the resolution is 32768.
-	uint16* sequence;
-	uint32 sequence_length; // Length of sequences[0][]
-	uint32 index;
+    uchar8 slice; // Bit[7] Clear for A, Set for B. Bit[6:0] Slice Number
+    // Clearing MSB in sequencer_pwm_pico->sequence[] shows the end of the sequence.
+    // That is the resolution is 32768.
+    uint16* sequence;
+    uint32 sequence_length; // Length of sequences[0][]
+    uint32 index;
 } sequencer_pwm_pico;
 
 /* Functions */

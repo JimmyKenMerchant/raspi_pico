@@ -32,13 +32,13 @@ extern "C" {
 /* Structs */
 
 typedef struct {
-	uint32 pinlist_length;
-	uchar8* pinlist;
-	uint32 sequence_length;
-	// LSB in sequencer_gpio_pico->sequence[] is the last in sequencer_gpio_pico->pinlist.
-	// Clearing MSB in sequencer_gpio_pico->sequence[] shows the end of the sequence.
-	uint16* sequence;
-	uint32 index;
+    uint32 pinlist_length;
+    uchar8* pinlist;
+    uint32 sequence_length;
+    // LSB in sequencer_gpio_pico->sequence[] is the last in sequencer_gpio_pico->pinlist.
+    // Clearing MSB in sequencer_gpio_pico->sequence[] shows the end of the sequence.
+    uint16* sequence;
+    uint32 index;
 } sequencer_gpio_pico;
 
 /* Functions */

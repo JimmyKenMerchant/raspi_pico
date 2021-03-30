@@ -1,2 +1,3 @@
 add_subdirectory(sequencer_gpio_pico)
 add_subdirectory(sequencer_pwm_pico)
+add_subdirectory(function_generator_pico)
