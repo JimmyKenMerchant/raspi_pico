@@ -12,7 +12,7 @@
 
 #include "function_generator_pico.h"
 
-function_generator_pico* function_generator_pico_init(uint16 width, uint16 factor, uint16 amplitude) {
+function_generator_pico* function_generator_pico_init(uint16 width, uchar8 factor, uint16 amplitude) {
     function_generator_pico* function_generator = (function_generator_pico*)malloc(sizeof(function_generator_pico));
     if (function_generator == null) return function_generator;
     function_generator->width = width;

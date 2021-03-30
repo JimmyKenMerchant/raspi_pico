@@ -80,6 +80,12 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "servo_console" accepts an input from a console. I only tested this with minicom in Ubuntu via the USB connection.
 
+**Func**
+
+* Now Under Debugging: This project outputs a sine wave from GPIO15 (PWM7 B).
+
+* According to the page 147-148 of RP2040 Datasheet, ROM (0x0000_0000) of RP2040 includes utilities for fast floating point as firmware. The actual code is in [mufplib.S written by Mark Owen](https://github.com/raspberrypi/pico-bootrom/blob/master/bootrom/mufplib.S). Note that the binaries seems to be loaded to SRAM, and I can't check these in the disassembling file (func.dis in this case).
+
 ## Links of References
 
 * [Getting Started with RP2040 – Raspberry Pi](https://www.raspberrypi.org/documentation/rp2040/getting-started/): Downloadable Documentation

@@ -51,7 +51,7 @@ int main(void) {
     pwm_init(func_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(func_pwm_slice_num, func_pwm_channel, FUNC_PWM_OFFSET);
     func_next_factor = 0;
-    function_generator = function_generator_pico_init(100, func_next_factor, 2047); // 305.18Hz
+    function_generator = function_generator_pico_init(100, func_next_factor, FUNC_PWM_PEAK); // 305.18Hz
     /* Start PWM */
     pwm_set_mask_enabled(0b1 << func_pwm_slice_num);
     printf("@main 1 - Let's Start!\n");
