@@ -20,7 +20,7 @@
 #include "macros_pico.h"
 #include "function_generator_pico.h"
 
-#define FUNC_PWM_1_GPIO 15
+#define FUNC_PWM_1_GPIO 16
 #define FUNC_PWM_OFFSET 2048
 #define FUNC_PWM_PEAK 2047
 
@@ -36,9 +36,9 @@ int main(void) {
     stdio_init_all();
     sleep_ms(2000); // Wait for Rediness of USB for Messages
     /* PWM Settings */
-    gpio_set_function(FUNC_PWM_1_GPIO, GPIO_FUNC_PWM); // GPIO15 = PWM7 B
-    func_pwm_slice_num = pwm_gpio_to_slice_num(FUNC_PWM_1_GPIO); // GPIO15 = PWM7
-    func_pwm_channel = pwm_gpio_to_channel(FUNC_PWM_1_GPIO); // GPIO15 = B
+    gpio_set_function(FUNC_PWM_1_GPIO, GPIO_FUNC_PWM); // GPIO16 = PWM8 A
+    func_pwm_slice_num = pwm_gpio_to_slice_num(FUNC_PWM_1_GPIO); // GPIO16 = PWM8
+    func_pwm_channel = pwm_gpio_to_channel(FUNC_PWM_1_GPIO); // GPIO16 = A
     // Set IRQ and Handler for PWM
     pwm_clear_irq(func_pwm_slice_num);
     pwm_set_irq_enabled(func_pwm_slice_num, true);
@@ -51,7 +51,7 @@ int main(void) {
     pwm_init(func_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(func_pwm_slice_num, func_pwm_channel, FUNC_PWM_OFFSET);
     func_next_factor = 0;
-    function_generator = function_generator_pico_init(100, func_next_factor, FUNC_PWM_PEAK); // 305.18Hz
+    function_generator = function_generator_pico_init(25, func_next_factor, FUNC_PWM_PEAK); // 30518 divided by 25 = 1220.72Hz
     /* Start PWM */
     pwm_set_mask_enabled(0b1 << func_pwm_slice_num);
     printf("@main 1 - Let's Start!\n");

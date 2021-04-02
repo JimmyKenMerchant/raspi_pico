@@ -131,6 +131,7 @@ void twin_dimmers_on_adc_irq_fifo() {
     for (uint16 i = 0; i < adc_fifo_level; i++) {
         //printf("@twin_dimmers_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
+        temp &= 0x7FFF; // Clear Bit[15]: ERR
         if (i % 2) {
             twin_dimmers_conversion_2_temp = temp;
         } else {

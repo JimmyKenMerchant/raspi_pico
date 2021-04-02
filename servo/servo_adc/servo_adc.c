@@ -106,7 +106,7 @@ void servo_on_adc_irq_fifo() {
     //printf("@servo_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
     for (uint16 i = 0; i < adc_fifo_level; i++) {
         //printf("@servo_on_adc_irq_fifo 2 - i: %d\n", i);
-        servo_conversion_1_temp = adc_fifo_get();
+        servo_conversion_1_temp = adc_fifo_get() & 0x7FFF; // Clear Bit[15]: ERR
     }
     //printf("@servo_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
     adc_fifo_drain();
