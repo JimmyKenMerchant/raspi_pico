@@ -82,9 +82,28 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 **Func**
 
-* Now Under Debugging: This project outputs a sine wave from GPIO15 (PWM7 B).
+* This project outputs a sine wave from GPIO15 (PWM7 B).
 
 * According to the page 147-148 of RP2040 Datasheet, ROM (0x0000_0000) of RP2040 includes utilities for fast floating point as firmware. The actual code is in [mufplib.S written by Mark Owen](https://github.com/raspberrypi/pico-bootrom/blob/master/bootrom/mufplib.S). Note that the binaries seems to be loaded to SRAM, and I can't check these in the disassembling file (func.dis in this case).
+
+## Technical Notes
+
+**I/O**
+
+```C
+uint32 from_time = time_us_32();
+printf("@main 1 - Let's Start!\n");
+pedal_buffer_debug_time = time_us_32() - from_time;
+printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
+```
+
+* In this coding as above, the time showed approx. 350 micro seconds with USB.
+
+* The PWM interrupt seems to overlap after clearing its interrupt flag ("pwm_clear_irq"). More experiments are needed to probe this phenomenon.
+
+* When you output the audio signal with PWM on approx. 30518Hz (12-bit resolution per cycle with the 125Mhz clock speed), you are allowed to spend approx. 30 micro seconds for a cycle. The 125Mhz clock speed spends 0.008 micro seconds per clock, and 30 micro seconds includes 3750 clocks. These clocks may be enough on processing with integer, but may not be enough on processing with floating point decimal. To utilize decimal, you can use fixed point decimal, and a number table with expected values that is already calculated by functions such as sine.
+
+* On outputting PWM with quantized audio signal by ADC, the noise is not only from 30518Hz at PWM cycle, but also from the misalignment of ADC sampling. The noise from the misalignment of the sampling is under 30518Hz, and it could pass your low-pass filter. In PWM IRQ, the timing to start ADC sampling should be stable. Conditional branches before starting ADC sampling cause the misalignment.
 
 ## Links of References
 

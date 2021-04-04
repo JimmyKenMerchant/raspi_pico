@@ -25,11 +25,13 @@
 #include "macros_pico.h"
 //#include "function_generator_pico.h"
 
+#define PEDAL_BUFFER_LED_GPIO 25
 #define PEDAL_BUFFER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_BUFFER_PWM_OFFSET 2048
 #define PEDAL_BUFFER_PWM_PEAK 2047
-#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 1 // From -66db (2048) to -42db (128)
+#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60dB (1024) to -36.5dB (68) in ADC_VREF (Typically 3.3V)
+#define PEDAL_BUFFER_NOISE_GATE_HYSTERESIS 1 // -66dB (2048) in ADC_VREF, -56dB (620) = 1.6mVp-p in 1V If ADC_VREF = 3.3V
 #define PEDAL_BUFFER_ADC_0_GPIO 26
 #define PEDAL_BUFFER_ADC_1_GPIO 27
 #define PEDAL_BUFFER_ADC_2_GPIO 28
@@ -48,7 +50,9 @@ uint16 pedal_buffer_conversion_2_temp;
 uint16 pedal_buffer_conversion_3_temp;
 char8 pedal_buffer_gain;
 char8 pedal_buffer_noise_gate_threshold;
+char8 pedal_buffer_gain_state; // 0: Void, 1: Positive, 2: Negative
 bool pedal_buffer_is_outstanding_on_adc;
+uint32 pedal_buffer_debug_time;
 
 void pedal_buffer_core_1();
 void pedal_buffer_on_pwm_irq_wrap();
@@ -57,13 +61,21 @@ void pedal_buffer_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    gpio_init(PEDAL_BUFFER_LED_GPIO);
+    gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
+    gpio_put(PEDAL_BUFFER_LED_GPIO, true);
     multicore_launch_core1(pedal_buffer_core_1);
+    //pedal_buffer_debug_time = 0;
+    //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
+    //pedal_buffer_debug_time = time_us_32() - from_time;
+    //printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
     while (true) {
-        //printf("@main 2 - pedal_buffer_conversion_1 %0x\n", pedal_buffer_conversion_1);
-        //printf("@main 3 - pedal_buffer_conversion_2 %0x\n", pedal_buffer_conversion_2);
-        //printf("@main 4 - pedal_buffer_conversion_3 %0x\n", pedal_buffer_conversion_3);
-        //printf("@main 5 - debug_time %d\n", multicore_fifo_pop_blocking());
+        //printf("@main 3 - pedal_buffer_conversion_1 %0x\n", pedal_buffer_conversion_1);
+        //printf("@main 4 - pedal_buffer_conversion_2 %0x\n", pedal_buffer_conversion_2);
+        //printf("@main 5 - pedal_buffer_conversion_3 %0x\n", pedal_buffer_conversion_3);
+        //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
+        //printf("@main 6 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
         //sleep_ms(500);
         tight_loop_contents();
     }
@@ -109,6 +121,7 @@ void pedal_buffer_core_1() {
     pedal_buffer_gain = PEDAL_BUFFER_ADC_MIDDLE >> 8; // Make 4-bit Value (0-15)
     pedal_buffer_noise_gate_threshold =  PEDAL_BUFFER_ADC_MIDDLE >> 8; // Make 4-bit Value (0-15)
     pedal_buffer_noise_gate_threshold *= PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER;
+    pedal_buffer_gain_state = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_buffer_pwm_slice_num);
@@ -121,19 +134,44 @@ void pedal_buffer_core_1() {
 }
 
 void pedal_buffer_on_pwm_irq_wrap() {
-    //absolute_time_t from_time = get_absolute_time();
-    pedal_buffer_conversion_1 = pedal_buffer_conversion_1_temp;
-    if (abs(pedal_buffer_conversion_2_temp - pedal_buffer_conversion_2) > PEDAL_BUFFER_ADC_THRESHOLD) {
-        pedal_buffer_conversion_2 = pedal_buffer_conversion_2_temp;
+    //uint32 from_time = time_us_32();
+    uint16 conversion_1_temp = pedal_buffer_conversion_1_temp;
+    uint16 conversion_2_temp = pedal_buffer_conversion_2_temp;
+    uint16 conversion_3_temp = pedal_buffer_conversion_3_temp;
+    if (! pedal_buffer_is_outstanding_on_adc) {
+        pedal_buffer_is_outstanding_on_adc = true;
+        adc_select_input(0); // Ensure to Start from A0
+        adc_run(true); // Stable Starting Point after PWM IRQ
+    }
+    pedal_buffer_conversion_1 = conversion_1_temp;
+    if (abs(conversion_2_temp - pedal_buffer_conversion_2) > PEDAL_BUFFER_ADC_THRESHOLD) {
+        pedal_buffer_conversion_2 = conversion_2_temp;
         pedal_buffer_gain = pedal_buffer_conversion_2 >> 8; // Make 4-bit Value (0-15)
     }
-    if (abs(pedal_buffer_conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
-        pedal_buffer_conversion_3 = pedal_buffer_conversion_3_temp;
+    if (abs(conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
+        pedal_buffer_conversion_3 = conversion_3_temp;
         pedal_buffer_noise_gate_threshold = pedal_buffer_conversion_3 >> 8; // Make 4-bit Value (0-15)
         pedal_buffer_noise_gate_threshold *= PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER;
     }
     int32 normalized_1 = pedal_buffer_conversion_1 - PEDAL_BUFFER_PWM_OFFSET;
-    if (abs(normalized_1) < pedal_buffer_noise_gate_threshold) normalized_1 = 0;
+    if (normalized_1 > pedal_buffer_noise_gate_threshold) { // Over Positive Threshold
+        pedal_buffer_gain_state = 1;
+    } else if (normalized_1 > PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Positive Threshold and Hysteresis
+        if (pedal_buffer_gain_state != 1) {
+            normalized_1 = 0;
+            pedal_buffer_gain_state = 0;
+        }
+    } else if (normalized_1 < -pedal_buffer_noise_gate_threshold) { // Over Negative Threshold
+        pedal_buffer_gain_state = 2;
+    } else if (normalized_1 < -PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Negative Threshold and Hysteresis
+        if (pedal_buffer_gain_state != 2) {
+            normalized_1 = 0;
+            pedal_buffer_gain_state = 0;
+        }
+    } else if (abs(normalized_1) < PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) {
+        normalized_1 = 0;
+        pedal_buffer_gain_state = 0;
+    }
     if (pedal_buffer_gain > 7) {
         normalized_1 *= (pedal_buffer_gain - 7);
     } else {
@@ -146,13 +184,9 @@ void pedal_buffer_on_pwm_irq_wrap() {
     }
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, (uint16)(normalized_1 + PEDAL_BUFFER_PWM_OFFSET));
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, (uint16)(normalized_1 + PEDAL_BUFFER_PWM_OFFSET));
-    //multicore_fifo_push_blocking(absolute_time_diff_us(from_time, get_absolute_time())); // To send a made pointer, sync flag, etc.
-    if (! pedal_buffer_is_outstanding_on_adc) {
-        pedal_buffer_is_outstanding_on_adc = true;
-        adc_select_input(0); // Ensure to Start from A0
-        adc_run(true);
-    }
-    pwm_clear_irq(pedal_buffer_pwm_slice_num); // Seems Overwarp IRQ Otherwise
+    pwm_clear_irq(pedal_buffer_pwm_slice_num); // Seems Overlap IRQ Otherwise
+    //pedal_buffer_debug_time = time_us_32() - from_time;
+    //multicore_fifo_push_blocking(pedal_buffer_debug_time); // To send a made pointer, sync flag, etc.
 }
 
 void pedal_buffer_on_adc_irq_fifo() {
