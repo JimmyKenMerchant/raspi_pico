@@ -30,8 +30,8 @@
 #define PEDAL_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_BUFFER_PWM_OFFSET 2048
 #define PEDAL_BUFFER_PWM_PEAK 2047
-#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60dB (1024) to -36.5dB (68) in ADC_VREF (Typically 3.3V)
-#define PEDAL_BUFFER_NOISE_GATE_HYSTERESIS 1 // -66dB (2048) in ADC_VREF, -56dB (620) = 1.6mVp-p in 1V If ADC_VREF = 3.3V
+#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 4 // From -54dB (Loss 512) to -30.5dB (Loss 34) in ADC_VREF (Typically 3.3V)
+#define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
 #define PEDAL_BUFFER_ADC_0_GPIO 26
 #define PEDAL_BUFFER_ADC_1_GPIO 27
 #define PEDAL_BUFFER_ADC_2_GPIO 28
@@ -50,7 +50,7 @@ uint16 pedal_buffer_conversion_2_temp;
 uint16 pedal_buffer_conversion_3_temp;
 char8 pedal_buffer_gain;
 char8 pedal_buffer_noise_gate_threshold;
-char8 pedal_buffer_gain_state; // 0: Hysteresis, 1: Peak Positive, 2: Peak Positive Under Threshold, 3: Peak Negative, 4: Peak Negative Under Threshold
+uint16 pedal_buffer_noise_gate_count;
 bool pedal_buffer_is_outstanding_on_adc;
 uint32 pedal_buffer_debug_time;
 
@@ -121,7 +121,7 @@ void pedal_buffer_core_1() {
     pedal_buffer_gain = PEDAL_BUFFER_ADC_MIDDLE >> 8; // Make 4-bit Value (0-15)
     pedal_buffer_noise_gate_threshold =  PEDAL_BUFFER_ADC_MIDDLE >> 8; // Make 4-bit Value (0-15)
     pedal_buffer_noise_gate_threshold *= PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER;
-    pedal_buffer_gain_state = 0;
+    pedal_buffer_noise_gate_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_buffer_pwm_slice_num);
@@ -155,39 +155,26 @@ void pedal_buffer_on_pwm_irq_wrap() {
     }
     int32 normalized_1 = pedal_buffer_conversion_1 - PEDAL_BUFFER_PWM_OFFSET;
     /**
-     * pedal_buffer_gain_state:
+     * pedal_buffer_noise_gate_count:
      *
-     * 1: Over Positive Threshold       ## Reach Trigger to Output
-     *---------------------------------------------------------------------
-     * 2: Under Positive Threshold     #  #      # No Reach Trigger
-     *---------------------------------------------------------------------
-     * 0: In Hysteresis               #    #    #  # Stop to Output
-     *---------------------------------------------------------------------
-     * 4: Under Negative Threshold          #  # Pass Through
-     *---------------------------------------------------------------------
-     * 3: Over Negative Threshold            ## Hold
+     * Over Positive Threshold       ## 1
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Positive Threshold     # 0 # 2      ### 4
+     *-----------------------------------------------------------------------------------------------------------
+     * 0                           # 0   # 3   # 3   # 5   # 7 ...Count Up to PEDAL_BUFFER_NOISE_GATE_COUNT_MAX
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Negative Threshold           # 4 # 2      ### 6
+     *-----------------------------------------------------------------------------------------------------------
+     * Over Negative Threshold             ## Reset to 1
      */
-    if (normalized_1 > pedal_buffer_noise_gate_threshold) { // Over Positive Threshold (1)
-        pedal_buffer_gain_state = 1;
-    } else if (normalized_1 > PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Positive Threshold and Hysteresis (2)
-        if (pedal_buffer_gain_state == 3) { // From Negative
-            pedal_buffer_gain_state = 2;
-        } else if (pedal_buffer_gain_state != 1) {
-            normalized_1 = 0;
-        }
-    } else if (normalized_1 < -pedal_buffer_noise_gate_threshold) { // Over Negative Threshold (3)
-        pedal_buffer_gain_state = 3;
-    } else if (normalized_1 < -PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Negative Threshold and Hysteresis (4)
-        if (pedal_buffer_gain_state == 1) {  // From Positive
-            pedal_buffer_gain_state = 4;
-        } else if (pedal_buffer_gain_state != 3) {
-            normalized_1 = 0;
-        }
-    } else if (abs(normalized_1) < PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // (0)
-        if (pedal_buffer_gain_state != 1 || pedal_buffer_gain_state != 3) {
-            normalized_1 = 0;
-            pedal_buffer_gain_state = 0;
-        }
+    if (normalized_1 > pedal_buffer_noise_gate_threshold || normalized_1 < -pedal_buffer_noise_gate_threshold) {
+        pedal_buffer_noise_gate_count = 1;
+    } else if (pedal_buffer_noise_gate_count != 0) {
+        pedal_buffer_noise_gate_count++;
+    }
+    if (pedal_buffer_noise_gate_count >= PEDAL_BUFFER_NOISE_GATE_COUNT_MAX) pedal_buffer_noise_gate_count = 0;
+    if (pedal_buffer_noise_gate_count == 0) {
+        normalized_1 = 0;
     }
     if (pedal_buffer_gain > 7) {
         normalized_1 *= (pedal_buffer_gain - 7);
