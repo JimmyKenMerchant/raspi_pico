@@ -50,7 +50,7 @@ uint16 pedal_buffer_conversion_2_temp;
 uint16 pedal_buffer_conversion_3_temp;
 char8 pedal_buffer_gain;
 char8 pedal_buffer_noise_gate_threshold;
-char8 pedal_buffer_gain_state; // 0: Void, 1: Positive, 2: Negative
+char8 pedal_buffer_gain_state; // 0: Hysteresis, 1: Peak Positive, 2: Peak Positive Under Threshold, 3: Peak Negative, 4: Peak Negative Under Threshold
 bool pedal_buffer_is_outstanding_on_adc;
 uint32 pedal_buffer_debug_time;
 
@@ -154,23 +154,40 @@ void pedal_buffer_on_pwm_irq_wrap() {
         pedal_buffer_noise_gate_threshold *= PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER;
     }
     int32 normalized_1 = pedal_buffer_conversion_1 - PEDAL_BUFFER_PWM_OFFSET;
-    if (normalized_1 > pedal_buffer_noise_gate_threshold) { // Over Positive Threshold
+    /**
+     * pedal_buffer_gain_state:
+     *
+     * 1: Over Positive Threshold       ## Reach Trigger to Output
+     *---------------------------------------------------------------------
+     * 2: Under Positive Threshold     #  #      # No Reach Trigger
+     *---------------------------------------------------------------------
+     * 0: In Hysteresis               #    #    #  # Stop to Output
+     *---------------------------------------------------------------------
+     * 4: Under Negative Threshold          #  # Pass Through
+     *---------------------------------------------------------------------
+     * 3: Over Negative Threshold            ## Hold
+     */
+    if (normalized_1 > pedal_buffer_noise_gate_threshold) { // Over Positive Threshold (1)
         pedal_buffer_gain_state = 1;
-    } else if (normalized_1 > PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Positive Threshold and Hysteresis
-        if (pedal_buffer_gain_state != 1) {
+    } else if (normalized_1 > PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Positive Threshold and Hysteresis (2)
+        if (pedal_buffer_gain_state == 3) { // From Negative
+            pedal_buffer_gain_state = 2;
+        } else if (pedal_buffer_gain_state != 1) {
+            normalized_1 = 0;
+        }
+    } else if (normalized_1 < -pedal_buffer_noise_gate_threshold) { // Over Negative Threshold (3)
+        pedal_buffer_gain_state = 3;
+    } else if (normalized_1 < -PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Negative Threshold and Hysteresis (4)
+        if (pedal_buffer_gain_state == 1) {  // From Positive
+            pedal_buffer_gain_state = 4;
+        } else if (pedal_buffer_gain_state != 3) {
+            normalized_1 = 0;
+        }
+    } else if (abs(normalized_1) < PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // (0)
+        if (pedal_buffer_gain_state != 1 || pedal_buffer_gain_state != 3) {
             normalized_1 = 0;
             pedal_buffer_gain_state = 0;
         }
-    } else if (normalized_1 < -pedal_buffer_noise_gate_threshold) { // Over Negative Threshold
-        pedal_buffer_gain_state = 2;
-    } else if (normalized_1 < -PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) { // Between Negative Threshold and Hysteresis
-        if (pedal_buffer_gain_state != 2) {
-            normalized_1 = 0;
-            pedal_buffer_gain_state = 0;
-        }
-    } else if (abs(normalized_1) < PEDAL_BUFFER_NOISE_GATE_HYSTERESIS) {
-        normalized_1 = 0;
-        pedal_buffer_gain_state = 0;
     }
     if (pedal_buffer_gain > 7) {
         normalized_1 *= (pedal_buffer_gain - 7);
