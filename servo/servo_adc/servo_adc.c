@@ -23,7 +23,7 @@
 
 #define SERVO_PWM_1_GPIO 2
 #define SERVO_ADC_0_GPIO 26
-#define SERVO_PWM_THRESHOLD 0xF
+#define SERVO_PWM_THRESHOLD (255/16) >> 2 // Maximum Value (0xFF = 255) of ADC Divide by Number of Array of servo_sequence (16), Expecting 15
 
 uint16 servo_sequence[] = {0x8000|720,0x8000|720,0x8000|800,0x8000|880,0x8000|960,0x8000|1040,0x8000|1120,0x8000|1200,0x8000|1200,0x8000|1280,0x8000|1360,0x8000|1440,0x8000|1520,0x8000|1600,0x8000|1680,0x8000|1680,0x0000}; // Clear MSB to Show End of Sequence, 900-2100us (120 degrees)
 
@@ -85,7 +85,6 @@ int main(void) {
 }
 
 void servo_on_pwm_irq_wrap() {
-    pwm_clear_irq(servo_pwm_slice_num);
     if (abs(servo_conversion_1_temp - servo_conversion_1) > SERVO_PWM_THRESHOLD) {
         servo_conversion_1 = servo_conversion_1_temp;
         servo_the_sequencer_1->index = servo_conversion_1 >> 4;
@@ -98,6 +97,7 @@ void servo_on_pwm_irq_wrap() {
         adc_select_input(0); // Ensure to Start from A0
         adc_run(true);
     }
+    pwm_clear_irq(servo_pwm_slice_num);
 }
 
 void servo_on_adc_irq_fifo() {

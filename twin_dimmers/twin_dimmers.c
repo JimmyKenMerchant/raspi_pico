@@ -25,7 +25,7 @@
 #define TWIN_DIMMERS_PWM_2_GPIO 15
 #define TWIN_DIMMERS_ADC_0_GPIO 26
 #define TWIN_DIMMERS_ADC_1_GPIO 27
-#define TWIN_DIMMERS_PWM_THRESHOLD 0xF
+#define TWIN_DIMMERS_PWM_THRESHOLD (255/16) >> 2 // Maximum Value (0xFF = 255) of ADC Divide by Number of Array of twin_dimmers_sequence (16), Expecting 15
 #define TWIN_DIMMERS_COUNT_MAX 32
 
 uint16 twin_dimmers_sequence[] = {0x8000,0x8020,0x8030,0x8040,0x8050,0x8060,0x8070,0x8080,0x8090,0x80A0,0x80B0,0x80C0,0x80D0,0x80E0,0x80F0,0x8100,0x0000}; // 0 (No Pulse) to 256 (High on Full Range), Clear MSB to Show End of Sequence
@@ -99,7 +99,6 @@ int main(void) {
 }
 
 void twin_dimmers_on_pwm_irq_wrap() {
-    pwm_clear_irq(twin_dimmers_pwm_slice_num);
     twin_dimmers_count--;
     if (twin_dimmers_count == 0) {
         if (abs(twin_dimmers_conversion_1_temp - twin_dimmers_conversion_1) > TWIN_DIMMERS_PWM_THRESHOLD) {
@@ -122,6 +121,7 @@ void twin_dimmers_on_pwm_irq_wrap() {
         adc_select_input(0); // Ensure to Start from A0
         adc_run(true);
     }
+    pwm_clear_irq(twin_dimmers_pwm_slice_num);
 }
 
 void twin_dimmers_on_adc_irq_fifo() {
