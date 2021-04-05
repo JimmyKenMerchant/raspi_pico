@@ -108,7 +108,7 @@ void pedal_buffer_core_1() {
     adc_gpio_init(PEDAL_BUFFER_ADC_1_GPIO); // GPIO27 (ADC1)
     adc_gpio_init(PEDAL_BUFFER_ADC_2_GPIO); // GPIO28 (ADC2)
     adc_set_clkdiv(0.0f);
-    adc_set_round_robin(0b0111);
+    adc_set_round_robin(0b00111);
     adc_fifo_setup(true, false, 3, true, false); // 12-bit Length (0-4095), Bit[15] for Error Flag
     adc_fifo_drain(); // Clean FIFO
     irq_set_exclusive_handler(ADC_IRQ_FIFO, pedal_buffer_on_adc_irq_fifo);

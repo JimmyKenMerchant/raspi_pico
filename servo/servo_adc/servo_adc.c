@@ -63,7 +63,7 @@ int main(void) {
     adc_init();
     adc_gpio_init(SERVO_ADC_0_GPIO); // GPIO26 (ADC0) for GPIO2 (PWM1 A)
     adc_set_clkdiv(0.0f);
-    adc_set_round_robin(0b0001);
+    adc_set_round_robin(0b00001);
     adc_fifo_setup(true, false, 1, true, true); // Truncate to 8-bit Length (0-255)
     adc_fifo_drain(); // Clean FIFO
     irq_set_exclusive_handler(ADC_IRQ_FIFO, servo_on_adc_irq_fifo);

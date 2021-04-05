@@ -75,7 +75,7 @@ int main(void) {
     adc_gpio_init(TWIN_DIMMERS_ADC_0_GPIO); // GPIO26 (ADC0) for GPIO14 (PWM7 A)
     adc_gpio_init(TWIN_DIMMERS_ADC_1_GPIO); // GPIO27 (ADC1) for GPIO15 (PWM7 B)
     adc_set_clkdiv(0.0f);
-    adc_set_round_robin(0b0011);
+    adc_set_round_robin(0b00011);
     adc_fifo_setup(true, false, 2, true, true); // Truncate to 8-bit Length (0-255)
     adc_fifo_drain(); // Clean FIFO
     irq_set_exclusive_handler(ADC_IRQ_FIFO, twin_dimmers_on_adc_irq_fifo);
