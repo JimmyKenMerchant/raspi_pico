@@ -86,6 +86,16 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * According to the page 147-148 of RP2040 Datasheet, ROM (0x0000_0000) of RP2040 includes utilities for fast floating point as firmware. The actual code is in [mufplib.S written by Mark Owen](https://github.com/raspberrypi/pico-bootrom/blob/master/bootrom/mufplib.S). Note that the binaries seems to be loaded to SRAM, and I can't check these in the disassembling file (func.dis in this case).
 
+**Pedal**
+
+* This project is making several types of guitar pedals.
+
+* Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels).
+
+* ADC0 inputs an audio signal. Whereas ADC1 and ADC2 input values of potentiometers to control effects.
+
+* "pedal_buffer" is a just buffer with -18.06dB (Loss 8) to 18.06dB (Gain 8). This also implements a noise gate with -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain.
+
 ## Technical Notes
 
 **I/O**
@@ -97,11 +107,23 @@ pedal_buffer_debug_time = time_us_32() - from_time;
 printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
 ```
 
-* In this coding as above, the time showed approx. 350 micro seconds with USB.
+* In this coding as above, the time showed approx. 350 micro seconds with the embedded USB 2.0. However, USB 2.0 becomes a popular middle range communicator. The recommended length of a USB 2.0 cable is up to 5 meters (16 feet), but you can purchase a USB 2.0 cable which has a signal booster, and the length is 10 meters (32 feet).
 
 * The PWM interrupt seems to overlap after clearing its interrupt flag ("pwm_clear_irq"). More experiments are needed to probe this phenomenon.
 
-* When you output the audio signal with PWM on approx. 30518Hz (12-bit resolution per cycle with the 125Mhz clock speed), you are allowed to spend approx. 30 micro seconds for a cycle. The 125Mhz clock speed spends 0.008 micro seconds per clock, and 30 micro seconds includes 3750 clocks. These clocks may be enough on processing with integer, but may not be enough on processing with floating point decimal. To utilize decimal, you can use fixed point decimal, and a number table with expected values that is already calculated by functions such as sine.
+* When you output the audio signal with PWM on approx. 30518Hz (12-bit resolution per cycle with the 125Mhz clock speed), you are allowed to spend approx. 30 micro seconds for a cycle. The 125Mhz clock speed spends 0.008 micro seconds per clock, and 30 micro seconds includes 3750 clocks. These clocks may be enough on processing with integer, but may not be enough on processing with floating point decimal. To utilize decimal, you can use fixed point decimal, and a number table with expected values that is already calculated by functions such as sine. For example:
+
+```C
+uint32 from_time = time_us_32();
+pwm_set_chan_level(func_pwm_slice_num, func_pwm_channel, function_generator_pico_sine(function_generator) + FUNC_PWM_OFFSET);
+if(function_generator->is_end) {
+    function_generator->factor = func_next_factor;
+    function_generator->is_end = false;
+}
+func_debug_time = time_us_32() - from_time;
+```
+
+* In this coding as above the time showed 9-10 micro seconds. 2-3 times are allowed to use the sine function in the 30 seconds.
 
 * On outputting PWM with quantized audio signal by ADC, the noise is not only from 30518Hz at PWM cycle, but also from the misalignment of ADC sampling. The noise from the misalignment of the sampling is under 30518Hz, and it could pass your low-pass filter. In PWM IRQ, the timing to start ADC sampling should be stable. Conditional branches before starting ADC sampling cause the misalignment.
 
