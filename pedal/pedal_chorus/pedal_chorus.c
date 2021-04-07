@@ -41,7 +41,7 @@
 #define PEDAL_CHORUS_ADC_1_GPIO 27
 #define PEDAL_CHORUS_ADC_2_GPIO 28
 #define PEDAL_CHORUS_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 8192 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_CHORUS_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
 //function_generator_pico* function_generator;
@@ -198,10 +198,11 @@ void pedal_chorus_on_pwm_irq_wrap() {
     if (pedal_chorus_noise_gate_count >= PEDAL_CHORUS_NOISE_GATE_COUNT_MAX) pedal_chorus_noise_gate_count = 0;
     if (pedal_chorus_noise_gate_count == 0) {
         normalized_1 = 0;
+        pedal_chorus_osc_time = 0;
     }
     int32 fixed_point_value_sine = pedal_chorus_table_sine_1[((uint32)pedal_chorus_osc_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_TIME_MAX];
     int32 osc_value = (int32)(int64)(((int64)(pedal_chorus_osc_amplitude << 16) * (int64)fixed_point_value_sine) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-    osc_value = ((int64)(osc_value << 16) * (int64)abs(normalized_1)) >> 16;
+    osc_value = ((int64)(osc_value << 16) * (int64)abs(normalized_1 >> 3)) >> 16;
     normalized_1 += (int16)osc_value; // Assuming Arthmetic Shift
     pedal_chorus_osc_time++;
     if (pedal_chorus_osc_time >= PEDAL_CHORUS_OSC_TIME_MAX) pedal_chorus_osc_time = 0;

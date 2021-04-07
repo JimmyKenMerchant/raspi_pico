@@ -36,7 +36,7 @@
 #define PEDAL_BUFFER_ADC_1_GPIO 27
 #define PEDAL_BUFFER_ADC_2_GPIO 28
 #define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 8192 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_BUFFER_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
 //function_generator_pico* function_generator;
