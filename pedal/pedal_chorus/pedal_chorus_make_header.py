@@ -6,6 +6,8 @@
 import sys
 import math
 
+headername = "pedal_chorus.h"
+
 prefix = [
 "/**\n",
 " * Written Codes:\n",
@@ -26,14 +28,24 @@ prefix = [
 "#ifdef __cplusplus\n",
 "extern \"C\" {\n",
 "#endif\n",
-"\n",
-"// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
-"float32 pedal_chorus_table_sine[] = {\n"
+"\n"
 ]
 
+declare_sine_1 = [
+"// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
+"int32 pedal_chorus_table_sine_1[] = {\n"
+]
+
+number_sine_1 = 30518
+
+declare_sine_2 = [
+"// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
+"int32 pedal_chorus_table_sine_2[] = {\n"
+]
+
+number_sine_2 = 10172
+
 postfix = [
-"};\n",
-"\n",
 "#ifdef __cplusplus\n",
 "}\n",
 "#endif\n",
@@ -41,19 +53,45 @@ postfix = [
 "#endif\n"
 ]
 
-headername = "pedal_chorus.h"
+def makeTableSine(number_sine):
+    for i in range(number_sine):
+        header.write("    ")
+        floating_point_value = math.sin((i/number_sine) * 2 * math.pi) # Floating Point Decimal
+        if floating_point_value < 0:
+            is_negative = True
+            floating_point_value = abs(floating_point_value);
+        else:
+            is_negative = False;
+        floating_point_value_int = math.floor(floating_point_value) # Round Down
+        floating_point_value_decimal = floating_point_value - floating_point_value_int
+        fixed_point_value = 0
+        for j in range (4):
+            fixed_point_value |= (int(floating_point_value_int % 16) << 16) << (j * 4)
+            floating_point_value_int /= 16;
+        for j in range (4):
+            floating_point_value_decimal *= 16
+            floating_point_value_decimal_floored = math.floor(floating_point_value_decimal)
+            fixed_point_value |= int(floating_point_value_decimal_floored << 16) >> ((j + 1) * 4)
+            floating_point_value_decimal -= floating_point_value_decimal_floored
+        if is_negative == True:
+            fixed_point_value = -fixed_point_value;
+        header.write(str(hex(fixed_point_value & 0xFFFFFFFF)))
+        if i != number_sine - 1:
+            header.write(",")
+        header.write("\n")
+    header.write("};\n\n")
 
 print (sys.version)
 header = open(headername, "w") # Write Only With UTF-8
 header.writelines(prefix)
 
-for i in range(30518):
-    header.write("    ")
-    header.write(str(math.sin((i/30518) * 2 * math.pi)))
-    header.write("f")
-    if i != 30518 - 1:
-        header.write(",")
-    header.write("\n")
+# Table Sine 1
+header.writelines(declare_sine_1)
+makeTableSine(number_sine_1)
+
+# Table Sine 2
+header.writelines(declare_sine_2)
+makeTableSine(number_sine_2)
 
 header.writelines(postfix)
 header.close()

@@ -34,7 +34,7 @@
 #define PEDAL_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_CHORUS_PWM_PEAK 2047
 #define PEDAL_CHORUS_OSC_TIME_MAX 30518
-#define PEDAL_CHORUS_OSC_AMPLITUDE_PEAK 255
+#define PEDAL_CHORUS_OSC_AMPLITUDE_PEAK 15
 #define PEDAL_CHORUS_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF (Typically 3.3V)
 #define PEDAL_CHORUS_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
 #define PEDAL_CHORUS_ADC_0_GPIO 26
@@ -199,9 +199,10 @@ void pedal_chorus_on_pwm_irq_wrap() {
     if (pedal_chorus_noise_gate_count == 0) {
         normalized_1 = 0;
     }
-    float32 fixed_point_value_sine = pedal_chorus_table_sine[((uint32)pedal_chorus_osc_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_TIME_MAX];
-    int32 osc_value = (int32)((float32)pedal_chorus_osc_amplitude * fixed_point_value_sine);
-    normalized_1 += osc_value; // Assuming Arthmetic Shift
+    int32 fixed_point_value_sine = pedal_chorus_table_sine_1[((uint32)pedal_chorus_osc_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_TIME_MAX];
+    int32 osc_value = (int32)(int64)(((int64)(pedal_chorus_osc_amplitude << 16) * (int64)fixed_point_value_sine) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    osc_value = ((int64)(osc_value << 16) * (int64)abs(normalized_1)) >> 16;
+    normalized_1 += (int16)osc_value; // Assuming Arthmetic Shift
     pedal_chorus_osc_time++;
     if (pedal_chorus_osc_time >= PEDAL_CHORUS_OSC_TIME_MAX) pedal_chorus_osc_time = 0;
     if (pedal_chorus_gain > 7) {
