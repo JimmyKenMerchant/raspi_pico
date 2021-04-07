@@ -98,6 +98,8 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "pedal_buffer" is a just buffer with -18.06dB (Loss 8) to 18.06dB (Gain 8). This also implements a noise gate with -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the loss or the gain, and ADC2 is for the noise gate.
 
+* "pedal_chorus" is still work in progress. This pedal is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal.
+
 ## Technical Notes
 
 **I/O**

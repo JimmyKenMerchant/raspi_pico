@@ -33,8 +33,9 @@
 #define PEDAL_CHORUS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_CHORUS_PWM_PEAK 2047
-#define PEDAL_CHORUS_OSC_TIME_MAX 30518
-#define PEDAL_CHORUS_OSC_AMPLITUDE_PEAK 15
+#define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_CHORUS_OSC_SINE_2_TIME_MAX 15258
+#define PEDAL_CHORUS_OSC_AMPLITUDE_PEAK 4095
 #define PEDAL_CHORUS_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF (Typically 3.3V)
 #define PEDAL_CHORUS_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
 #define PEDAL_CHORUS_ADC_0_GPIO 26
@@ -54,7 +55,8 @@ uint16 pedal_chorus_conversion_3;
 uint16 pedal_chorus_conversion_1_temp;
 uint16 pedal_chorus_conversion_2_temp;
 uint16 pedal_chorus_conversion_3_temp;
-uint16 pedal_chorus_osc_time;
+uint16 pedal_chorus_osc_sine_1_time;
+uint16 pedal_chorus_osc_sine_2_time;
 uint16 pedal_chorus_osc_amplitude;
 uint16 pedal_chorus_osc_speed;
 char8 pedal_chorus_gain;
@@ -85,8 +87,7 @@ int main(void) {
         //printf("@main 4 - pedal_chorus_conversion_2 %0x\n", pedal_chorus_conversion_2);
         //printf("@main 5 - pedal_chorus_conversion_3 %0x\n", pedal_chorus_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 6 - pedal_chorus_debug_time %d\n", pedal_chorus_debug_time);
-        printf("@main 7 - pedal_chorus_debug_time %d\n", pedal_chorus_debug_time);
+        //printf("@main 7 - pedal_chorus_debug_time %d\n", pedal_chorus_debug_time);
         //sleep_ms(500);
         tight_loop_contents();
     }
@@ -130,9 +131,10 @@ void pedal_chorus_core_1() {
     pedal_chorus_conversion_2_temp = PEDAL_CHORUS_ADC_MIDDLE_DEFAULT;
     pedal_chorus_conversion_3_temp = PEDAL_CHORUS_ADC_MIDDLE_DEFAULT;
     pedal_chorus_adc_middle_moving_average = pedal_chorus_conversion_1 * PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_chorus_osc_time = 0;
+    pedal_chorus_osc_sine_1_time = 0;
+    pedal_chorus_osc_sine_2_time = 0;
     pedal_chorus_osc_amplitude = PEDAL_CHORUS_OSC_AMPLITUDE_PEAK;
-    pedal_chorus_osc_speed = 2;
+    pedal_chorus_osc_speed = 4;
     pedal_chorus_gain = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
     pedal_chorus_noise_gate_threshold = (pedal_chorus_conversion_3 >> 8) * PEDAL_CHORUS_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15)
     pedal_chorus_noise_gate_count = 0;
@@ -198,14 +200,24 @@ void pedal_chorus_on_pwm_irq_wrap() {
     if (pedal_chorus_noise_gate_count >= PEDAL_CHORUS_NOISE_GATE_COUNT_MAX) pedal_chorus_noise_gate_count = 0;
     if (pedal_chorus_noise_gate_count == 0) {
         normalized_1 = 0;
-        pedal_chorus_osc_time = 0;
+        pedal_chorus_osc_sine_1_time = 0;
+        pedal_chorus_osc_sine_2_time = 0;
     }
-    int32 fixed_point_value_sine = pedal_chorus_table_sine_1[((uint32)pedal_chorus_osc_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_TIME_MAX];
-    int32 osc_value = (int32)(int64)(((int64)(pedal_chorus_osc_amplitude << 16) * (int64)fixed_point_value_sine) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-    osc_value = ((int64)(osc_value << 16) * (int64)abs(normalized_1 >> 3)) >> 16;
-    normalized_1 += (int16)osc_value; // Assuming Arthmetic Shift
-    pedal_chorus_osc_time++;
-    if (pedal_chorus_osc_time >= PEDAL_CHORUS_OSC_TIME_MAX) pedal_chorus_osc_time = 0;
+    /**
+     * Using 32-bit Signed Fixed Decimal, Bit[31:16] Integer Part, Bit[15:0] Decimal Part:
+     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     */
+    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[((uint32)pedal_chorus_osc_sine_1_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_SINE_1_TIME_MAX];
+    int32 fixed_point_value_sine_2 = pedal_chorus_table_sine_2[((uint32)pedal_chorus_osc_sine_2_time * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
+    int32 osc_value = (int32)(int64)(((int64)(pedal_chorus_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    //int32 osc_value = (int32)(int64)(((int64)(pedal_chorus_osc_amplitude << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
+    normalized_1 += (int16)osc_value;
+    pedal_chorus_osc_sine_1_time++;
+    pedal_chorus_osc_sine_2_time++;
+    if (pedal_chorus_osc_sine_1_time >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX) pedal_chorus_osc_sine_1_time = 0;
+    if (pedal_chorus_osc_sine_2_time >= PEDAL_CHORUS_OSC_SINE_2_TIME_MAX) pedal_chorus_osc_sine_2_time = 0;
     if (pedal_chorus_gain > 7) {
         normalized_1 *= (pedal_chorus_gain - 7);
     } else {

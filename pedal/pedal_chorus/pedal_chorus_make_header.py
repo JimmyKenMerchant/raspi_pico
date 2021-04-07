@@ -43,7 +43,7 @@ declare_sine_2 = [
 "int32 pedal_chorus_table_sine_2[] = {\n"
 ]
 
-number_sine_2 = 10172
+number_sine_2 = 15258
 
 postfix = [
 "#ifdef __cplusplus\n",
