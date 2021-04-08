@@ -6,7 +6,7 @@
 import sys
 import math
 
-headername = "pedal_chorus.h"
+headername = "pedal_sideband.h"
 
 prefix = [
 "/**\n",
@@ -22,8 +22,8 @@ prefix = [
 " */\n",
 "\n",
 "/* THIS IS AN AUTOMATICALLY GENERATED HEADER FILE */\n",
-"#ifndef _PEDAL_CHORUS_H\n",
-"#define _PEDAL_CHORUS_H 1\n",
+"#ifndef _PEDAL_SIDEBAND_H\n",
+"#define _PEDAL_SIDEBAND_H 1\n",
 "\n",
 "#ifdef __cplusplus\n",
 "extern \"C\" {\n",
@@ -33,17 +33,17 @@ prefix = [
 
 declare_sine_1 = [
 "// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_chorus_table_sine_1[] = {\n"
+"int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
 number_sine_1 = 30518
 
 declare_sine_2 = [
 "// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_chorus_table_sine_2[] = {\n"
+"int32 pedal_sideband_table_sine_2[] = {\n"
 ]
 
-number_sine_2 = 15258
+number_sine_2 = 20345
 
 postfix = [
 "#ifdef __cplusplus\n",

@@ -1,7 +1,7 @@
 # Turn on to show actual commands on "make" (only for related commands in this file).
 set(CMAKE_VERBOSE_MAKEFILE off)
 
-set(target_name pedal_chorus)
+set(target_name pedal_sideband)
 
 add_executable(${target_name}
     ${target_name}.c
@@ -12,7 +12,6 @@ target_link_libraries(${target_name}
     pico_stdlib
     pico_multicore
     pico_divider
-    pico_float
     hardware_pwm
     hardware_adc
     hardware_irq

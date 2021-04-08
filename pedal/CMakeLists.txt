@@ -1,2 +1,2 @@
 add_subdirectory(pedal_buffer)
-add_subdirectory(pedal_chorus)
+add_subdirectory(pedal_sideband)
