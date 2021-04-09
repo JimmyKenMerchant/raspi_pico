@@ -192,14 +192,20 @@ void pedal_buffer_on_pwm_irq_wrap() {
     } else {
         normalized_1 /= abs(pedal_buffer_gain - 8);
     }
-    normalized_1 += middle_moving_average;
-    if (normalized_1 > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
-        normalized_1 = PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK;
-    } else if (normalized_1 < PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK) {
-        normalized_1 = PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK;
+    int32 output_1 = normalized_1 + middle_moving_average;
+    if (output_1 > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
+        output_1 = PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK;
+    } else if (output_1 < PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK) {
+        output_1 = PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK;
     }
-    pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, (uint16)normalized_1);
-    pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, (uint16)normalized_1);
+    int32 output_1_inverted = -normalized_1 + middle_moving_average;
+    if (output_1_inverted > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
+        output_1_inverted = PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK;
+    } else if (output_1_inverted < PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK) {
+        output_1_inverted = PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK;
+    }
+    pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, (uint16)output_1);
+    pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, (uint16)output_1_inverted);
     pwm_clear_irq(pedal_buffer_pwm_slice_num); // Seems Overlap IRQ Otherwise
     //pedal_buffer_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_buffer_debug_time); // To send a made pointer, sync flag, etc.

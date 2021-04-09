@@ -32,14 +32,14 @@ prefix = [
 ]
 
 declare_sine_1 = [
-"// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
+"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
 "int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
 number_sine_1 = 30518
 
 declare_sine_2 = [
-"// Fixed Point Decimal = Bit[31:16] Integer Part, Bit[15:0] Decimal Part\n",
+"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
 "int32 pedal_sideband_table_sine_2[] = {\n"
 ]
 

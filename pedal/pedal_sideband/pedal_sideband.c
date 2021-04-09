@@ -202,34 +202,39 @@ void pedal_sideband_on_pwm_irq_wrap() {
         pedal_sideband_osc_sine_1_time = 0;
         pedal_sideband_osc_sine_2_time = 0;
     }
-    /**
-     * Using 32-bit Signed Fixed Decimal, Bit[31:16] Integer Part, Bit[15:0] Decimal Part:
-     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
-     */
-    int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[((uint32)pedal_sideband_osc_sine_1_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX];
-    int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[((uint32)pedal_sideband_osc_sine_2_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
-    int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-    //int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-    osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
-    normalized_1 += (int16)osc_value;
-    pedal_sideband_osc_sine_1_time++;
-    pedal_sideband_osc_sine_2_time++;
-    if (pedal_sideband_osc_sine_1_time >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_time = 0;
-    if (pedal_sideband_osc_sine_2_time >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_time = 0;
     if (pedal_sideband_gain > 7) {
         normalized_1 *= (pedal_sideband_gain - 7);
     } else {
         normalized_1 /= abs(pedal_sideband_gain - 8);
     }
-    normalized_1 += middle_moving_average;
-    if (normalized_1 > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
-        normalized_1 = PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK;
-    } else if (normalized_1 < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {
-        normalized_1 = PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK;
+    /**
+     * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     */
+    int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[((uint32)pedal_sideband_osc_sine_1_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX];
+    int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[((uint32)pedal_sideband_osc_sine_2_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
+    pedal_sideband_osc_sine_1_time++;
+    pedal_sideband_osc_sine_2_time++;
+    if (pedal_sideband_osc_sine_1_time >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_time = 0;
+    if (pedal_sideband_osc_sine_2_time >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_time = 0;
+    int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
+    int32 output_1 = (normalized_1 + osc_value) + middle_moving_average;
+    if (output_1 > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
+        output_1 = PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK;
+    } else if (output_1 < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {
+        output_1 = PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK;
     }
-    pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel, (uint16)normalized_1);
-    pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel + 1, (uint16)normalized_1);
+    int32 output_1_inverted = (normalized_1 - osc_value) + middle_moving_average;
+    output_1_inverted += middle_moving_average;
+    if (output_1_inverted > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
+        output_1_inverted = PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK;
+    } else if (output_1_inverted < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {
+        output_1_inverted = PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK;
+    }
+    pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel, (uint16)output_1);
+    pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel + 1, (uint16)output_1_inverted);
     pwm_clear_irq(pedal_sideband_pwm_slice_num); // Seems Overlap IRQ Otherwise
     //pedal_sideband_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_sideband_debug_time); // To send a made pointer, sync flag, etc.
