@@ -15,6 +15,7 @@ target_link_libraries(${target_name}
     hardware_pwm
     hardware_adc
     hardware_irq
+    hardware_sync
 )
 
 # Beside elf, Create map/bin/hex/uf2 files.

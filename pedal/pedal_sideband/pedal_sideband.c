@@ -21,9 +21,9 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "hardware/irq.h"
+#include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
-//#include "function_generator_pico.h"
 // Private header
 #include "pedal_sideband.h"
 
@@ -43,8 +43,6 @@
 #define PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_SIDEBAND_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
-
-//function_generator_pico* function_generator;
 
 uint32 pedal_sideband_pwm_slice_num;
 uint32 pedal_sideband_pwm_channel;
@@ -142,6 +140,8 @@ void pedal_sideband_core_1() {
     pwm_set_mask_enabled(0b1 << pedal_sideband_pwm_slice_num);
     pedal_sideband_is_outstanding_on_adc = true;
     adc_select_input(0); // Ensure to Start from A0
+    __dsb();
+    __isb();
     adc_run(true);
     while (true) {
         tight_loop_contents();
@@ -156,6 +156,8 @@ void pedal_sideband_on_pwm_irq_wrap() {
     if (! pedal_sideband_is_outstanding_on_adc) {
         pedal_sideband_is_outstanding_on_adc = true;
         adc_select_input(0); // Ensure to Start from A0
+        __dsb();
+        __isb();
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_sideband_conversion_1 = conversion_1_temp;
@@ -171,7 +173,7 @@ void pedal_sideband_on_pwm_irq_wrap() {
     uint32 middle_moving_average = pedal_sideband_adc_middle_moving_average / PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_sideband_adc_middle_moving_average -= middle_moving_average;
     pedal_sideband_adc_middle_moving_average += pedal_sideband_conversion_1;
-    int32 normalized_1 = pedal_sideband_conversion_1 - middle_moving_average;
+    int32 normalized_1 = (int32)pedal_sideband_conversion_1 - (int32)middle_moving_average;
     /**
      * pedal_sideband_noise_gate_count:
      *
@@ -227,7 +229,6 @@ void pedal_sideband_on_pwm_irq_wrap() {
         output_1 = PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK;
     }
     int32 output_1_inverted = (normalized_1 - osc_value) + middle_moving_average;
-    output_1_inverted += middle_moving_average;
     if (output_1_inverted > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
         output_1_inverted = PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK;
     } else if (output_1_inverted < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {

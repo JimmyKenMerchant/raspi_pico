@@ -1,7 +1,7 @@
 # Turn on to show actual commands on "make" (only for related commands in this file).
 set(CMAKE_VERBOSE_MAKEFILE off)
 
-set(target_name pedal_sideband)
+set(target_name pedal_chorus)
 
 add_executable(${target_name}
     ${target_name}.c
@@ -16,21 +16,6 @@ target_link_libraries(${target_name}
     hardware_adc
     hardware_irq
     hardware_sync
-)
-
-add_custom_target(${target_name}_header
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ./${target_name}_make_header.py
-    COMMAND cp ${target_name}.h ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND rm ${target_name}.h
-)
-
-add_dependencies(${target_name}
-    ${target_name}_header
-)
-
-target_include_directories(${target_name} PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
 # Beside elf, Create map/bin/hex/uf2 files.

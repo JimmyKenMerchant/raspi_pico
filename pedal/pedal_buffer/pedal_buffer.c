@@ -21,9 +21,9 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "hardware/irq.h"
+#include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
-//#include "function_generator_pico.h"
 
 #define PEDAL_BUFFER_LED_GPIO 25
 #define PEDAL_BUFFER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
@@ -38,8 +38,6 @@
 #define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_BUFFER_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
-
-//function_generator_pico* function_generator;
 
 uint32 pedal_buffer_pwm_slice_num;
 uint32 pedal_buffer_pwm_channel;
@@ -77,7 +75,7 @@ int main(void) {
         //printf("@main 4 - pedal_buffer_conversion_2 %0x\n", pedal_buffer_conversion_2);
         //printf("@main 5 - pedal_buffer_conversion_3 %0x\n", pedal_buffer_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 6 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
+        //printf("@main 7 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
         //sleep_ms(500);
         tight_loop_contents();
     }
@@ -129,6 +127,8 @@ void pedal_buffer_core_1() {
     pwm_set_mask_enabled(0b1 << pedal_buffer_pwm_slice_num);
     pedal_buffer_is_outstanding_on_adc = true;
     adc_select_input(0); // Ensure to Start from A0
+    __dsb();
+    __isb();
     adc_run(true);
     while (true) {
         tight_loop_contents();
@@ -143,6 +143,8 @@ void pedal_buffer_on_pwm_irq_wrap() {
     if (! pedal_buffer_is_outstanding_on_adc) {
         pedal_buffer_is_outstanding_on_adc = true;
         adc_select_input(0); // Ensure to Start from A0
+        __dsb();
+        __isb();
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_buffer_conversion_1 = conversion_1_temp;
@@ -158,7 +160,7 @@ void pedal_buffer_on_pwm_irq_wrap() {
     uint32 middle_moving_average = pedal_buffer_adc_middle_moving_average / PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_adc_middle_moving_average -= middle_moving_average;
     pedal_buffer_adc_middle_moving_average += pedal_buffer_conversion_1;
-    int32 normalized_1 = pedal_buffer_conversion_1 - middle_moving_average;
+    int32 normalized_1 = (int32)pedal_buffer_conversion_1 - (int32)middle_moving_average;
     /**
      * pedal_buffer_noise_gate_count:
      *
