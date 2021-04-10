@@ -166,7 +166,7 @@ void pedal_reverb_on_pwm_irq_wrap() {
     pedal_reverb_adc_middle_moving_average += pedal_reverb_conversion_1;
     int32 normalized_1 = (int32)pedal_reverb_conversion_1 - (int32)middle_moving_average;
     int32 delay = (int32)pedal_reverb_delay_array[((pedal_reverb_delay_index + PEDAL_REVERB_DELAY_TIME_MAX) - pedal_reverb_delay_time) % PEDAL_REVERB_DELAY_TIME_MAX];
-    if (pedal_reverb_delay_time == 0) delay = normalized_1; // No Reverb, Otherwise Latest
+    if (pedal_reverb_delay_time == 0) delay = 0; // No Reverb, Otherwise Latest
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.

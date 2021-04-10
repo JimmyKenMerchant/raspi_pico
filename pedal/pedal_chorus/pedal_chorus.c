@@ -31,8 +31,8 @@
 #define PEDAL_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_CHORUS_PWM_PEAK 2047
 #define PEDAL_CHORUS_DELAY_GAIN 2
-#define PEDAL_CHORUS_DELAY_AMPLITUDE_PEAK 0x0000F000 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_CHORUS_DELAY_AMPLITUDE_SHIFT 12
+#define PEDAL_CHORUS_DELAY_AMPLITUDE_PEAK 0x0003C000 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_CHORUS_DELAY_AMPLITUDE_SHIFT 14
 #define PEDAL_CHORUS_DELAY_TIME_MAX 3841
 #define PEDAL_CHORUS_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-3840), 3840 Divided by 30518 (0.126 Seconds)
 #define PEDAL_CHORUS_ADC_0_GPIO 26
