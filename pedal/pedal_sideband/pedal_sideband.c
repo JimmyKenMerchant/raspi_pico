@@ -52,8 +52,8 @@ uint16 pedal_sideband_conversion_3;
 uint16 pedal_sideband_conversion_1_temp;
 uint16 pedal_sideband_conversion_2_temp;
 uint16 pedal_sideband_conversion_3_temp;
-uint16 pedal_sideband_osc_sine_1_time;
-uint16 pedal_sideband_osc_sine_2_time;
+uint16 pedal_sideband_osc_sine_1_index;
+uint16 pedal_sideband_osc_sine_2_index;
 uint16 pedal_sideband_osc_amplitude;
 uint16 pedal_sideband_osc_speed;
 char8 pedal_sideband_gain;
@@ -128,8 +128,8 @@ void pedal_sideband_core_1() {
     pedal_sideband_conversion_2_temp = PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT;
     pedal_sideband_conversion_3_temp = PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT;
     pedal_sideband_adc_middle_moving_average = pedal_sideband_conversion_1 * PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_sideband_osc_sine_1_time = 0;
-    pedal_sideband_osc_sine_2_time = 0;
+    pedal_sideband_osc_sine_1_index = 0;
+    pedal_sideband_osc_sine_2_index = 0;
     pedal_sideband_osc_amplitude = PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK;
     pedal_sideband_osc_speed = 4;
     pedal_sideband_gain = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
@@ -201,8 +201,8 @@ void pedal_sideband_on_pwm_irq_wrap() {
     if (pedal_sideband_noise_gate_count >= PEDAL_SIDEBAND_NOISE_GATE_COUNT_MAX) pedal_sideband_noise_gate_count = 0;
     if (pedal_sideband_noise_gate_count == 0) {
         normalized_1 = 0;
-        pedal_sideband_osc_sine_1_time = 0;
-        pedal_sideband_osc_sine_2_time = 0;
+        pedal_sideband_osc_sine_1_index = 0;
+        pedal_sideband_osc_sine_2_index = 0;
     }
     if (pedal_sideband_gain > 7) {
         normalized_1 *= (pedal_sideband_gain - 7);
@@ -214,12 +214,12 @@ void pedal_sideband_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[((uint32)pedal_sideband_osc_sine_1_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX];
-    int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[((uint32)pedal_sideband_osc_sine_2_time * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
-    pedal_sideband_osc_sine_1_time++;
-    pedal_sideband_osc_sine_2_time++;
-    if (pedal_sideband_osc_sine_1_time >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_time = 0;
-    if (pedal_sideband_osc_sine_2_time >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_time = 0;
+    int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[((uint32)pedal_sideband_osc_sine_1_index * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX];
+    int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[((uint32)pedal_sideband_osc_sine_2_index * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
+    pedal_sideband_osc_sine_1_index++;
+    pedal_sideband_osc_sine_2_index++;
+    if (pedal_sideband_osc_sine_1_index >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_index = 0;
+    if (pedal_sideband_osc_sine_2_index >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_index = 0;
     int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
     osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
     int32 output_1 = (normalized_1 + osc_value) + middle_moving_average;

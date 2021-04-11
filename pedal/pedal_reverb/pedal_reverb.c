@@ -50,7 +50,7 @@ uint16 pedal_reverb_conversion_3;
 uint16 pedal_reverb_conversion_1_temp;
 uint16 pedal_reverb_conversion_2_temp;
 uint16 pedal_reverb_conversion_3_temp;
-uint16* pedal_reverb_delay_array;
+int16* pedal_reverb_delay_array;
 int32 pedal_reverb_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 uint16 pedal_reverb_delay_time;
 uint16 pedal_reverb_delay_index;
@@ -123,7 +123,7 @@ void pedal_reverb_core_1() {
     pedal_reverb_conversion_2_temp = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
     pedal_reverb_conversion_3_temp = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
     pedal_reverb_adc_middle_moving_average = pedal_reverb_conversion_1 * PEDAL_REVERB_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_reverb_delay_array = (uint16*)calloc(PEDAL_REVERB_DELAY_TIME_MAX, sizeof(uint16));
+    pedal_reverb_delay_array = (int16*)calloc(PEDAL_REVERB_DELAY_TIME_MAX, sizeof(int16));
     pedal_reverb_delay_amplitude = (int32)(pedal_reverb_conversion_2 >> 8) << PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_reverb_delay_time = (pedal_reverb_conversion_3 >> 8) << PEDAL_REVERB_DELAY_TIME_SHIFT;// Make 4-bit Value (0-15) and Multiply
     pedal_reverb_delay_index = 0;
