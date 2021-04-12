@@ -228,7 +228,7 @@ void pedal_sideband_on_pwm_irq_wrap() {
     } else if (output_1 < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {
         output_1 = PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK;
     }
-    int32 output_1_inverted = (normalized_1 - osc_value) + middle_moving_average;
+    int32 output_1_inverted = -(normalized_1 - osc_value) + middle_moving_average;
     if (output_1_inverted > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
         output_1_inverted = PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK;
     } else if (output_1_inverted < PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK) {

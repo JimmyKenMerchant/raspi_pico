@@ -33,14 +33,14 @@ prefix = [
 
 declare_sine_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_sideband_table_sine_1[] = {\n"
+"static int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
 number_sine_1 = 30518
 
 declare_sine_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_sideband_table_sine_2[] = {\n"
+"static int32 pedal_sideband_table_sine_2[] = {\n"
 ]
 
 number_sine_2 = 20345
@@ -53,10 +53,10 @@ postfix = [
 "#endif\n"
 ]
 
-def makeTableSine(number_sine):
+def makeTableSineHalf(number_sine): # Make Sine Values in 0-180 Degrees
     for i in range(number_sine):
         header.write("    ")
-        floating_point_value = math.sin((i/number_sine) * 2 * math.pi) # Floating Point Decimal
+        floating_point_value = math.sin((i/number_sine) * math.pi) # Floating Point Decimal
         if floating_point_value < 0:
             is_negative = True
             floating_point_value = abs(floating_point_value);
@@ -87,11 +87,11 @@ header.writelines(prefix)
 
 # Table Sine 1
 header.writelines(declare_sine_1)
-makeTableSine(number_sine_1)
+makeTableSineHalf(number_sine_1)
 
 # Table Sine 2
 header.writelines(declare_sine_2)
-makeTableSine(number_sine_2)
+makeTableSineHalf(number_sine_2)
 
 header.writelines(postfix)
 header.close()

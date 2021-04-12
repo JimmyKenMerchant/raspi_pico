@@ -33,7 +33,7 @@ prefix = [
 
 declare_sine_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_chorus_table_sine_1[] = {\n"
+"static int32 pedal_chorus_table_sine_1[] = {\n"
 ]
 
 number_sine_1 = 61036
@@ -46,7 +46,7 @@ postfix = [
 "#endif\n"
 ]
 
-def makeTableSineHalf(number_sine):
+def makeTableSineHalf(number_sine): # Make Sine Values in 0-180 Degrees
     for i in range(number_sine):
         header.write("    ")
         floating_point_value = math.sin((i/number_sine) * math.pi) # Floating Point Decimal
