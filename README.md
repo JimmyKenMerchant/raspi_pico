@@ -160,6 +160,7 @@ int16 example = -10;
 example_array[1] = example;
 if (example_array[1] < 0) printf("It's Negative!");
 printf("Value: %d", example_array[1]);
+free(example_array); // Don't forget to Release Memory Space
 ```
 
 * This code doesn't printed out the message because the array points variables with 16-bit unsigned integer. The values is printed as 65526.
