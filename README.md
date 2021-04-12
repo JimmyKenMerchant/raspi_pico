@@ -102,7 +102,9 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. Outputs are gained two times in default. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
 
-* "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate or the reverberance (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
+* "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
+
+* "pedal_tape" is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time becomes swing by an oscillator. ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
 ## Technical Notes
 
