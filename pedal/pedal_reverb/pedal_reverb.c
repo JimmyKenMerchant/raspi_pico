@@ -31,7 +31,7 @@
 #define PEDAL_REVERB_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_REVERB_PWM_PEAK 2047
 #define PEDAL_REVERB_DELAY_GAIN 2
-#define PEDAL_REVERB_DELAY_AMPLITUDE_PEAK 0x0000F000 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_REVERB_DELAY_AMPLITUDE_PEAK (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT 12
 #define PEDAL_REVERB_DELAY_TIME_MAX 7681
 #define PEDAL_REVERB_DELAY_TIME_SHIFT 9 // Multiply By 512 (0-7680), 7680 Divided by 30518 (0.25 Seconds)
@@ -96,7 +96,7 @@ void pedal_reverb_core_1() {
     pwm_clear_irq(pedal_reverb_pwm_slice_num);
     pwm_set_irq_enabled(pedal_reverb_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_reverb_on_pwm_irq_wrap);
-    irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
     // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle

@@ -98,9 +98,9 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "pedal_buffer" is a just buffer with -18.06dB (Loss 8) to 18.06dB (Gain 8). This also implements a noise gate with -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the loss or the gain, and ADC2 is for the noise gate. One of two outputs is inverted for balanced monaural.
 
-* "pedal_sideband" is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. Note that I renamed this pedal from "pedal_chorus" to "pedal_sideband", and I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. One of two outputs is added the pulsating wave, and another is added the inverted pulsating wave (another is also inverted for balanced monoural). ADC0 is for the audio input, ADC1 is for the loss or the gain, and ADC2 is for the noise gate. Frequencies of main pulsating wave and sub pulsating wave are fixed so far.
+* "pedal_sideband" is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. Note that I renamed this pedal from "pedal_chorus" to "pedal_sideband", and I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. One of two outputs is added the pulsating wave, and another is added the inverted pulsating wave (another is also inverted for balanced monaural). ADC0 is for the audio input, ADC1 is for the loss or the gain, and ADC2 is for the noise gate. Frequencies of main pulsating wave and sub pulsating wave are fixed so far.
 
-* "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. Outputs are gained two times in default. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monoural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement using USB output that would use the inner bus).
+* "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. Outputs are gained two times in default. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
 
 * "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate or the reverberance (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
@@ -136,6 +136,33 @@ func_debug_time = time_us_32() - from_time;
 * On outputting PWM with quantized audio signal by ADC, the noise is not only from 30518Hz at PWM cycle, but also from the misalignment of ADC sampling. The noise from the misalignment of the sampling is under 30518Hz, and it could pass your low-pass filter. In PWM IRQ, the timing to start ADC sampling should be stable. Conditional branches before starting ADC sampling cause the misalignment.
 
 * RP2040 has 5 ADC inputs (ADC0-4), and ADC4 is dedicated for a implemented temperature sensor. Pico can be freely used 3 ADC inputs, and ADC3 is connected to the VSYS/3 measurement (see page 7 and page 24 of Raspberry Pi Pico Datasheet). Third-party RP2040 hardware may be able to use 4 ADC inputs. You also see page 579 of RP2040 Datasheet to check the note which describes existence of diodes on ADC inputs. However, for safety, you need each zener diode to IOVDD and GND on the audio input. The input impedance is 100K ohms at minimum (see page 634 of RP2040 Datasheet). This impedance is small as an input from a coil pick up of an electric guitar, and the direct connection apparently reduces the harmonics in my experience.
+
+**C Language**
+
+* C language needs strict declarations of variable types. Unlike Python, which converts the variable type by functions explicitly, the declaration is implicitly kept through the life of the variable. To change the variables types in C language, we need to make a type casting. For example:
+
+```C
+/**
+ * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+ * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+ * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+ */
+delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
+int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
+```
+
+* The variable, "delay_1", is a 32-bit signed integer. However, in a multiplication of the fixed point decimal, we need to cast the variable to 64-bit signed integer. Otherwise, the two's compliment expression for 64-bit is broken. Besides, the next example is dangerous:
+
+```C
+uint16* example_array = (uint16*)calloc(5, sizeof(uint16));
+int16 example = -10;
+example_array[1] = example;
+if (example_array[1] < 0) printf("It's Negative!");
+printf("Value: %d", example_array[1]);
+```
+
+* This code doesn't printed out the message because the array points variables with 16-bit unsigned integer. The values is printed as 65526.
 
 ## Links of References
 

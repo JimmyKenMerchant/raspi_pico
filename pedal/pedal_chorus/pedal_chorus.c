@@ -34,7 +34,7 @@
 #define PEDAL_CHORUS_PWM_PEAK 2047
 #define PEDAL_CHORUS_DELAY_GAIN 2
 #define PEDAL_CHORUS_DELAY_AMPLITUDE (int32)(0x0000FFFF) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_CHORUS_DELAY_TIME_MAX 3841 // 3840 Divided by 30518 (0.126 Seconds)
+#define PEDAL_CHORUS_DELAY_TIME_MAX 1527 // 1526 Divided by 30518 (0.05 Seconds)
 #define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 961
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 6 // Multiply By 64 (0-960), 960 Divided by 30518 (0.0314 Seconds = 10.68 Meters)
@@ -110,7 +110,7 @@ void pedal_chorus_core_1() {
     pwm_clear_irq(pedal_chorus_pwm_slice_num);
     pwm_set_irq_enabled(pedal_chorus_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_chorus_on_pwm_irq_wrap);
-    irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
     // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
@@ -175,11 +175,11 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_chorus_conversion_2) > PEDAL_CHORUS_ADC_THRESHOLD) {
         pedal_chorus_conversion_2 = conversion_2_temp;
-        pedal_chorus_osc_speed = pedal_chorus_conversion_3 >> 8; // Make 4-bit Value (0-15)
+        pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
     }
     if (abs(conversion_3_temp - pedal_chorus_conversion_3) > PEDAL_CHORUS_ADC_THRESHOLD) {
         pedal_chorus_conversion_3 = conversion_3_temp;
-        pedal_chorus_lr_distance_time = (int32)(pedal_chorus_conversion_2 >> 8) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 4-bit Value (0-15) and Multiply
+        pedal_chorus_lr_distance_time = (int32)(pedal_chorus_conversion_3 >> 8) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 4-bit Value (0-15) and Multiply
     }
     uint32 middle_moving_average = pedal_chorus_adc_middle_moving_average / PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_chorus_adc_middle_moving_average -= middle_moving_average;

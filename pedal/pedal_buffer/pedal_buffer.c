@@ -92,7 +92,7 @@ void pedal_buffer_core_1() {
     pwm_clear_irq(pedal_buffer_pwm_slice_num);
     pwm_set_irq_enabled(pedal_buffer_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_buffer_on_pwm_irq_wrap);
-    irq_set_priority(PWM_IRQ_WRAP, 0x80); // Middle Priority
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
     // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
