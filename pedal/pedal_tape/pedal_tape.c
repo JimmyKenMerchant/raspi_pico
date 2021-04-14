@@ -184,9 +184,9 @@ void pedal_tape_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    int16 time_swing = (int32)(int64)(((int64)(pedal_tape_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    int32 delay_1 = (int32)pedal_tape_delay_array[((pedal_tape_delay_index + PEDAL_TAPE_DELAY_TIME_MAX) - (pedal_tape_delay_time + time_swing)) % PEDAL_TAPE_DELAY_TIME_MAX];
-    if (pedal_tape_delay_time == 0) delay_1 = 0; // No Delay, Otherwise Latest
+    int16 time_swing = (int16)(int64)(((int64)(pedal_tape_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    int32 delay_1 = (int32)pedal_tape_delay_array[((pedal_tape_delay_index + PEDAL_TAPE_DELAY_TIME_MAX) - ((int16)pedal_tape_delay_time + time_swing)) % PEDAL_TAPE_DELAY_TIME_MAX];
+    if (pedal_tape_delay_time + time_swing == 0) delay_1 = 0; // No Delay, Otherwise Latest
     int32 pedal_tape_normalized_1_amplitude = 0x00010000 - pedal_tape_delay_amplitude;
     normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_tape_normalized_1_amplitude) >> 32);
     delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_tape_delay_amplitude) >> 32);
