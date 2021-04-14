@@ -104,7 +104,7 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
-* "pedal_tape" is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time becomes swing by an oscillator. ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
+* "pedal_tape" is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
 ## Technical Notes
 
@@ -147,7 +147,7 @@ func_debug_time = time_us_32() - from_time;
 /**
  * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
  * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
- * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+ * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
  */
 delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
 int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
@@ -157,7 +157,7 @@ int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - 
 * The variable, "delay_1", is a 32-bit signed integer. However, in a multiplication of the fixed point decimal, we need to cast the variable to 64-bit signed integer. Otherwise, the two's compliment expression for 64-bit is broken. Besides, the next example is dangerous:
 
 ```C
-uint16* example_array = (uint16*)calloc(5, sizeof(uint16));
+uint16* example_array = (uint16*)calloc(5, sizeof(uint16)); // stdlib.h
 int16 example = -10;
 example_array[1] = example;
 if (example_array[1] < 0) printf("It's Negative!");

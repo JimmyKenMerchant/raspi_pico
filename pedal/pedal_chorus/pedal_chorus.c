@@ -32,9 +32,10 @@
 #define PEDAL_CHORUS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_CHORUS_PWM_PEAK 2047
-#define PEDAL_CHORUS_DELAY_GAIN 2
-#define PEDAL_CHORUS_DELAY_AMPLITUDE (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_CHORUS_DELAY_TIME_MAX 1527 // 1526 Divided by 30518 (0.05 Seconds)
+#define PEDAL_CHORUS_GAIN 2
+#define PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_CHORUS_DELAY_TIME_MAX 1527
+#define PEDAL_CHORUS_DELAY_TIME_FIXED_1 PEDAL_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 30518 (0.05 Seconds)
 #define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 961
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 6 // Multiply By 64 (0-960), 960 Divided by 30518 (0.0314 Seconds = 10.68 Meters)
@@ -138,8 +139,8 @@ void pedal_chorus_core_1() {
     pedal_chorus_conversion_3_temp = PEDAL_CHORUS_ADC_MIDDLE_DEFAULT;
     pedal_chorus_adc_middle_moving_average = pedal_chorus_conversion_1 * PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_chorus_delay_array = (int16*)calloc(PEDAL_CHORUS_DELAY_TIME_MAX, sizeof(int16));
-    pedal_chorus_delay_amplitude = PEDAL_CHORUS_DELAY_AMPLITUDE; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
-    pedal_chorus_delay_time = PEDAL_CHORUS_DELAY_TIME_MAX - 1;
+    pedal_chorus_delay_amplitude = PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_chorus_delay_time = PEDAL_CHORUS_DELAY_TIME_FIXED_1;
     pedal_chorus_delay_index = 0;
     pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
     pedal_chorus_osc_sine_1_index = 0;
@@ -197,9 +198,9 @@ void pedal_chorus_on_pwm_irq_wrap() {
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
     int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
     /* Push and Pop Distance */
@@ -208,13 +209,13 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_lr_distance_index++;
     if (pedal_chorus_lr_distance_index >= PEDAL_CHORUS_LR_DISTANCE_TIME_MAX) pedal_chorus_lr_distance_index = 0;
     /* Output */
-    int32 output_1 = (normalized_1 + delay_1_l) * PEDAL_CHORUS_DELAY_GAIN + middle_moving_average;
+    int32 output_1 = (normalized_1 + delay_1_l) * PEDAL_CHORUS_GAIN + middle_moving_average;
     if (output_1 > PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK) {
         output_1 = PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK;
     } else if (output_1 < PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK) {
         output_1 = PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK;
     }
-    int32 output_1_inverted = -lr_distance_1 * PEDAL_CHORUS_DELAY_GAIN + middle_moving_average;
+    int32 output_1_inverted = -lr_distance_1 * PEDAL_CHORUS_GAIN + middle_moving_average;
     if (output_1_inverted > PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK) {
         output_1_inverted = PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK;
     } else if (output_1_inverted < PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK) {

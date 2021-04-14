@@ -30,7 +30,7 @@
 #define PEDAL_REVERB_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_REVERB_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_REVERB_PWM_PEAK 2047
-#define PEDAL_REVERB_DELAY_GAIN 2
+#define PEDAL_REVERB_GAIN 2
 #define PEDAL_REVERB_DELAY_AMPLITUDE_PEAK (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT 12
 #define PEDAL_REVERB_DELAY_TIME_MAX 7681
@@ -170,16 +170,16 @@ void pedal_reverb_on_pwm_irq_wrap() {
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     int32 pedal_reverb_normalized_1_amplitude = 0x00010000 - pedal_reverb_delay_amplitude;
-    normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_reverb_normalized_1_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_reverb_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_reverb_normalized_1_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_reverb_delay_amplitude) >> 32);
     int32 mixed_1 = normalized_1 + delay_1;
     pedal_reverb_delay_array[pedal_reverb_delay_index] = (int16)mixed_1;
     pedal_reverb_delay_index++;
     if (pedal_reverb_delay_index >= PEDAL_REVERB_DELAY_TIME_MAX) pedal_reverb_delay_index = 0;
-    mixed_1 *= PEDAL_REVERB_DELAY_GAIN;
+    mixed_1 *= PEDAL_REVERB_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_REVERB_PWM_OFFSET + PEDAL_REVERB_PWM_PEAK) {
         output_1 = PEDAL_REVERB_PWM_OFFSET + PEDAL_REVERB_PWM_PEAK;

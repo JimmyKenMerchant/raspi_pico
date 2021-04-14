@@ -32,12 +32,12 @@
 #define PEDAL_TAPE_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_TAPE_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_TAPE_PWM_PEAK 2047
-#define PEDAL_TAPE_DELAY_GAIN 2
+#define PEDAL_TAPE_GAIN 2
 #define PEDAL_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1 (int32)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_TAPE_DELAY_TIME_MAX 7681
-#define PEDAL_TAPE_DELAY_TIME_FIXED_1 3840 // 3840 Divided by 30518 (0.126 Seconds)
-#define PEDAL_TAPE_DELAY_TIME_SWING_PEAK_1 3840
-#define PEDAL_TAPE_DELAY_TIME_SWING_SHIFT 8 // Multiply By 256 (0-3840)
+#define PEDAL_TAPE_DELAY_TIME_MAX 3841
+#define PEDAL_TAPE_DELAY_TIME_FIXED_1 1920 // 1920 Divided by 30518 (0.063 Seconds)
+#define PEDAL_TAPE_DELAY_TIME_SWING_PEAK_1 1920
+#define PEDAL_TAPE_DELAY_TIME_SWING_SHIFT 7 // Multiply By 128 (0-1920)
 #define PEDAL_TAPE_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_TAPE_ADC_0_GPIO 26
 #define PEDAL_TAPE_ADC_1_GPIO 27
@@ -188,13 +188,13 @@ void pedal_tape_on_pwm_irq_wrap() {
     int32 delay_1 = (int32)pedal_tape_delay_array[((pedal_tape_delay_index + PEDAL_TAPE_DELAY_TIME_MAX) - (pedal_tape_delay_time + time_swing)) % PEDAL_TAPE_DELAY_TIME_MAX];
     if (pedal_tape_delay_time == 0) delay_1 = 0; // No Delay, Otherwise Latest
     int32 pedal_tape_normalized_1_amplitude = 0x00010000 - pedal_tape_delay_amplitude;
-    normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_tape_normalized_1_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_tape_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_tape_normalized_1_amplitude) >> 32);
+    delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_tape_delay_amplitude) >> 32);
     int32 mixed_1 = normalized_1 + delay_1;
     pedal_tape_delay_array[pedal_tape_delay_index] = (int16)mixed_1;
     pedal_tape_delay_index++;
     if (pedal_tape_delay_index >= PEDAL_TAPE_DELAY_TIME_MAX) pedal_tape_delay_index = 0;
-    mixed_1 *= PEDAL_TAPE_DELAY_GAIN;
+    mixed_1 *= PEDAL_TAPE_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK) {
         output_1 = PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK;

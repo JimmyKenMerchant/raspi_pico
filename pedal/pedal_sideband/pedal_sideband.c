@@ -212,7 +212,7 @@ void pedal_sideband_on_pwm_irq_wrap() {
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[((uint32)pedal_sideband_osc_sine_1_index * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX];
     int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[((uint32)pedal_sideband_osc_sine_2_index * (uint32)pedal_sideband_osc_speed) % PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX] >> 1; // Divide By 2
@@ -220,7 +220,7 @@ void pedal_sideband_on_pwm_irq_wrap() {
     pedal_sideband_osc_sine_2_index++;
     if (pedal_sideband_osc_sine_1_index >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_index = 0;
     if (pedal_sideband_osc_sine_2_index >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_index = 0;
-    int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+    int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
     int32 output_1 = (normalized_1 + osc_value) + middle_moving_average;
     if (output_1 > PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK) {
