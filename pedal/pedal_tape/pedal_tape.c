@@ -176,8 +176,8 @@ void pedal_tape_on_pwm_irq_wrap() {
     pedal_tape_adc_middle_moving_average += pedal_tape_conversion_1;
     int32 normalized_1 = (int32)pedal_tape_conversion_1 - (int32)middle_moving_average;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_tape_table_sine_1[((uint32)pedal_tape_osc_sine_1_index * (uint32)pedal_tape_osc_speed) % PEDAL_TAPE_OSC_SINE_1_TIME_MAX];
-    pedal_tape_osc_sine_1_index++;
+    int32 fixed_point_value_sine_1 = pedal_tape_table_sine_1[pedal_tape_osc_sine_1_index];
+    pedal_tape_osc_sine_1_index += pedal_tape_osc_speed;
     if (pedal_tape_osc_sine_1_index >= PEDAL_TAPE_OSC_SINE_1_TIME_MAX) pedal_tape_osc_sine_1_index = 0;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

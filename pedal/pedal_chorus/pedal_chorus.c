@@ -139,7 +139,7 @@ void pedal_chorus_core_1() {
     pedal_chorus_conversion_3_temp = PEDAL_CHORUS_ADC_MIDDLE_DEFAULT;
     pedal_chorus_adc_middle_moving_average = pedal_chorus_conversion_1 * PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_chorus_delay_array = (int16*)calloc(PEDAL_CHORUS_DELAY_TIME_MAX, sizeof(int16));
-    pedal_chorus_delay_amplitude = PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_chorus_delay_amplitude = PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1;
     pedal_chorus_delay_time = PEDAL_CHORUS_DELAY_TIME_FIXED_1;
     pedal_chorus_delay_index = 0;
     pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
@@ -192,8 +192,8 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_delay_index++;
     if (pedal_chorus_delay_index >= PEDAL_CHORUS_DELAY_TIME_MAX) pedal_chorus_delay_index = 0;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[((uint32)pedal_chorus_osc_sine_1_index * (uint32)pedal_chorus_osc_speed) % PEDAL_CHORUS_OSC_SINE_1_TIME_MAX];
-    pedal_chorus_osc_sine_1_index++;
+    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[pedal_chorus_osc_sine_1_index];
+    pedal_chorus_osc_sine_1_index += pedal_chorus_osc_speed;
     if (pedal_chorus_osc_sine_1_index >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX) pedal_chorus_osc_sine_1_index = 0;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

@@ -85,7 +85,7 @@ int main(void) {
         //printf("@main 4 - pedal_phaser_conversion_2 %0x\n", pedal_phaser_conversion_2);
         //printf("@main 5 - pedal_phaser_conversion_3 %0x\n", pedal_phaser_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 7 - pedal_phaser_debug_time %0x\n", pedal_phaser_debug_time);
+        //printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
         //sleep_ms(500);
         tight_loop_contents();
     }
