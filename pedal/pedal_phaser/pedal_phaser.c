@@ -33,12 +33,11 @@
 #define PEDAL_PHASER_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PHASER_PWM_PEAK 2047
 #define PEDAL_PHASER_GAIN 2
-#define PEDAL_PHASER_DELAY_TIME_MAX 15681
-#define PEDAL_PHASER_DELAY_TIME_FIXED_1 8000 // 1000 Divided by 30518 (0.033 Seconds)
-#define PEDAL_PHASER_DELAY_TIME_SWING_PEAK_1 7680
-#define PEDAL_PHASER_DELAY_TIME_SWING_SHIFT 9 // Multiply By 512 (0-7680)
-#define PEDAL_PHASER_COEFFICIENT_FIXED_1 (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PHASER_COEFFICIENT_SWING_SHIFT 12 // Multiply By 4096 (0x1 - 0x10 to 0x1 - 0x00010000)
+#define PEDAL_PHASER_DELAY_TIME_MAX 64
+#define PEDAL_PHASER_DELAY_TIME_FIXED_1 32 // 32 Divided by 30518 (0.001 Seconds on 90 Degrees = 250Hz)
 #define PEDAL_PHASER_ADC_0_GPIO 26
 #define PEDAL_PHASER_ADC_1_GPIO 27
 #define PEDAL_PHASER_ADC_2_GPIO 28
@@ -54,15 +53,13 @@ uint16 pedal_phaser_conversion_3;
 uint16 pedal_phaser_conversion_1_temp;
 uint16 pedal_phaser_conversion_2_temp;
 uint16 pedal_phaser_conversion_3_temp;
-int32 pedal_phaser_coefficient;
 uint16 pedal_phaser_osc_sine_1_index;
-uint16 pedal_phaser_osc_sine_1_index_count;
-uint32 pedal_phaser_osc_speed;
+uint16 pedal_phaser_osc_speed;
+int32 pedal_phaser_coefficient_swing;
 int16* pedal_phaser_delay_x;
 int16* pedal_phaser_delay_y;
 uint16 pedal_phaser_delay_time;
 uint16 pedal_phaser_delay_index;
-uint16 pedal_phaser_delay_time_swing;
 uint32 pedal_phaser_adc_middle_moving_average;
 bool pedal_phaser_is_outstanding_on_adc;
 uint32 pedal_phaser_debug_time;
@@ -88,7 +85,7 @@ int main(void) {
         //printf("@main 4 - pedal_phaser_conversion_2 %0x\n", pedal_phaser_conversion_2);
         //printf("@main 5 - pedal_phaser_conversion_3 %0x\n", pedal_phaser_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
+        //printf("@main 7 - pedal_phaser_debug_time %0x\n", pedal_phaser_debug_time);
         //sleep_ms(500);
         tight_loop_contents();
     }
@@ -132,15 +129,13 @@ void pedal_phaser_core_1() {
     pedal_phaser_conversion_2_temp = PEDAL_PHASER_ADC_MIDDLE_DEFAULT;
     pedal_phaser_conversion_3_temp = PEDAL_PHASER_ADC_MIDDLE_DEFAULT;
     pedal_phaser_adc_middle_moving_average = pedal_phaser_conversion_1 * PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_phaser_osc_speed = pedal_phaser_conversion_2 >> 8; // Make 4-bit Value (0-15)
+    pedal_phaser_osc_sine_1_index = 0;
+    pedal_phaser_coefficient_swing = ((pedal_phaser_conversion_3 >> 8) + 1) << PEDAL_PHASER_COEFFICIENT_SWING_SHIFT; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_phaser_delay_x = (int16*)calloc(PEDAL_PHASER_DELAY_TIME_MAX, sizeof(int16));
     pedal_phaser_delay_y = (int16*)calloc(PEDAL_PHASER_DELAY_TIME_MAX, sizeof(int16));
     pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_1;
-    pedal_phaser_delay_time_swing = (pedal_phaser_conversion_2 >> 8) << PEDAL_PHASER_DELAY_TIME_SWING_SHIFT; // Make 4-bit Value (0-15) and Multiply
     pedal_phaser_delay_index = 0;
-    pedal_phaser_coefficient = PEDAL_PHASER_COEFFICIENT_FIXED_1;
-    pedal_phaser_osc_speed = pedal_phaser_conversion_3 >> 8; // Make 4-bit Value (0-15)
-    pedal_phaser_osc_sine_1_index = 0;
-    pedal_phaser_osc_sine_1_index_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_phaser_pwm_slice_num);
@@ -169,11 +164,11 @@ void pedal_phaser_on_pwm_irq_wrap() {
     pedal_phaser_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_phaser_conversion_2) > PEDAL_PHASER_ADC_THRESHOLD) {
         pedal_phaser_conversion_2 = conversion_2_temp;
-        pedal_phaser_delay_time_swing = (pedal_phaser_conversion_2 >> 8) << PEDAL_PHASER_DELAY_TIME_SWING_SHIFT; // Make 4-bit Value (0-15) and Multiply
+        pedal_phaser_osc_speed = pedal_phaser_conversion_2 >> 8; // Make 4-bit Value (0-15)
     }
     if (abs(conversion_3_temp - pedal_phaser_conversion_3) > PEDAL_PHASER_ADC_THRESHOLD) {
         pedal_phaser_conversion_3 = conversion_3_temp;
-        pedal_phaser_osc_speed = pedal_phaser_conversion_3 >> 8; // Make 4-bit Value (0-15)
+        pedal_phaser_coefficient_swing = ((pedal_phaser_conversion_3 >> 8) + 1) << PEDAL_PHASER_COEFFICIENT_SWING_SHIFT; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     uint32 middle_moving_average = pedal_phaser_adc_middle_moving_average / PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_phaser_adc_middle_moving_average -= middle_moving_average;
@@ -181,12 +176,8 @@ void pedal_phaser_on_pwm_irq_wrap() {
     int32 normalized_1 = (int32)pedal_phaser_conversion_1 - (int32)middle_moving_average;
     /* Get Oscillator */
     int32 fixed_point_value_sine_1 = pedal_phaser_table_sine_1[pedal_phaser_osc_sine_1_index];
-    pedal_phaser_osc_sine_1_index_count++;
-    if (pedal_phaser_osc_sine_1_index_count >= pedal_phaser_osc_speed) {
-        pedal_phaser_osc_sine_1_index_count = 0;
-        pedal_phaser_osc_sine_1_index++;
-        if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX) pedal_phaser_osc_sine_1_index = 0;
-    }
+    pedal_phaser_osc_sine_1_index += pedal_phaser_osc_speed;
+    if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX) pedal_phaser_osc_sine_1_index = 0;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
@@ -213,11 +204,11 @@ void pedal_phaser_on_pwm_irq_wrap() {
      * X[S - 1] and Y[S - 1] are effected on a high frequency.
      * To get effect on intended frequencies, use X[S - N] and Y[S - N] where N is the number of delay.
      */
-    int16 time_swing = (int16)(int64)(((int64)(pedal_phaser_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    int16 delay_x = pedal_phaser_delay_x[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - ((int16)pedal_phaser_delay_time + time_swing)) % PEDAL_PHASER_DELAY_TIME_MAX];
-    int16 delay_y = pedal_phaser_delay_y[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - ((int16)pedal_phaser_delay_time + time_swing)) % PEDAL_PHASER_DELAY_TIME_MAX];
-    //if (pedal_chorus_time + time_swing == 0) delay_x = 0; // No Delay, Otherwise Latest
-    int32 phase_shift_1 = (int32)delay_x - (int32)(int64)(((int64)(delay_y << 16) * (int64)pedal_phaser_coefficient) >> 32) + (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_phaser_coefficient) >> 32);
+    int32 coefficient = (int32)(int64)(((int64)(pedal_phaser_coefficient_swing) * (int64)fixed_point_value_sine_1) >> 16); // Remain Decimal Part
+    int16 delay_x = pedal_phaser_delay_x[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
+    int16 delay_y = pedal_phaser_delay_y[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
+    //if (pedal_phaser_delay_time) delay_x = 0; // No Delay, Otherwise Latest
+    int32 phase_shift_1 = (int32)delay_x - (int32)(int64)(((int64)(delay_y << 16) * (int64)coefficient) >> 32) + (int32)(int64)(((int64)(normalized_1 << 16) * (int64)coefficient) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     pedal_phaser_delay_x[pedal_phaser_delay_index] = (int16)normalized_1;
     pedal_phaser_delay_y[pedal_phaser_delay_index] = (int16)phase_shift_1;
     pedal_phaser_delay_index++;
