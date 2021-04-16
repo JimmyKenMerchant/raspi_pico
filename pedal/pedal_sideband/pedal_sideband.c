@@ -30,7 +30,7 @@
 #define PEDAL_SIDEBAND_LED_GPIO 25
 #define PEDAL_SIDEBAND_SWITCH_1 14
 #define PEDAL_SIDEBAND_SWITCH_2 15
-#define PEDAL_SIDEBAND_SWITCH_THRESHOLD 300
+#define PEDAL_SIDEBAND_SWITCH_THRESHOLD 30
 #define PEDAL_SIDEBAND_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_SIDEBAND_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_SIDEBAND_PWM_OFFSET 2048 // Ideal Middle Point
@@ -93,12 +93,14 @@ int main(void) {
         switch (gpio_get_all() & (0b1 << PEDAL_SIDEBAND_SWITCH_1|0b1 << PEDAL_SIDEBAND_SWITCH_2)) {
             case 0b1 << PEDAL_SIDEBAND_SWITCH_2: // SWITCH_1: Low
                 gpio_count_switch_1++;
+                gpio_count_switch_2 = 0;
                 if (gpio_count_switch_1 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
                     gpio_count_switch_1 = 0;
                     pedal_sideband_gain = PEDAL_SIDEBAND_GAIN_FIXED_1;
                 }
                 break;
             case 0b1 << PEDAL_SIDEBAND_SWITCH_1: // SWITCH_2: Low
+                gpio_count_switch_1 = 0;
                 gpio_count_switch_2++;
                 if (gpio_count_switch_2 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
                     gpio_count_switch_2 = 0;
@@ -113,7 +115,7 @@ int main(void) {
         //printf("@main 5 - pedal_sideband_conversion_3 %0x\n", pedal_sideband_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_sideband_debug_time %d\n", pedal_sideband_debug_time);
-        //sleep_ms(500);
+        sleep_us(1000);
         //tight_loop_contents();
     }
     return 0;

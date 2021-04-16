@@ -24,8 +24,13 @@
 #include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
+// Private header
+#include "pedal_buffer.h"
 
 #define PEDAL_BUFFER_LED_GPIO 25
+#define PEDAL_BUFFER_SWITCH_1 14
+#define PEDAL_BUFFER_SWITCH_2 15
+#define PEDAL_BUFFER_SWITCH_THRESHOLD 30
 #define PEDAL_BUFFER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_BUFFER_PWM_OFFSET 2048 // Ideal Middle Point
@@ -47,6 +52,7 @@ uint16 pedal_buffer_conversion_3;
 uint16 pedal_buffer_conversion_1_temp;
 uint16 pedal_buffer_conversion_2_temp;
 uint16 pedal_buffer_conversion_3_temp;
+volatile bool pedal_buffer_mode; // Compressor on True
 char8 pedal_buffer_gain;
 char8 pedal_buffer_noise_gate_threshold;
 uint16 pedal_buffer_noise_gate_count;
@@ -61,23 +67,48 @@ void pedal_buffer_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
-    gpio_init(PEDAL_BUFFER_LED_GPIO);
-    gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
+    uint32 gpio_mask = 0b1 << PEDAL_BUFFER_LED_GPIO|0b1<< PEDAL_BUFFER_SWITCH_1|0b1 << PEDAL_BUFFER_SWITCH_2;
+    gpio_init_mask(gpio_mask);
+    gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_BUFFER_LED_GPIO);
     gpio_put(PEDAL_BUFFER_LED_GPIO, true);
+    gpio_pull_up(PEDAL_BUFFER_SWITCH_1);
+    gpio_pull_up(PEDAL_BUFFER_SWITCH_2);
     multicore_launch_core1(pedal_buffer_core_1);
     //pedal_buffer_debug_time = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
     //pedal_buffer_debug_time = time_us_32() - from_time;
     //printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
+    uint32 gpio_count_switch_1 = 0;
+    uint32 gpio_count_switch_2 = 0;
     while (true) {
+        switch (gpio_get_all() & (0b1 << PEDAL_BUFFER_SWITCH_1|0b1 << PEDAL_BUFFER_SWITCH_2)) {
+            case 0b1 << PEDAL_BUFFER_SWITCH_2: // SWITCH_1: Low
+                gpio_count_switch_1++;
+                gpio_count_switch_2 = 0;
+                if (gpio_count_switch_1 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
+                    gpio_count_switch_1 = 0;
+                    pedal_buffer_mode = false;
+                }
+                break;
+            case 0b1 << PEDAL_BUFFER_SWITCH_1: // SWITCH_2: Low
+                gpio_count_switch_1 = 0;
+                gpio_count_switch_2++;
+                if (gpio_count_switch_2 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
+                    gpio_count_switch_2 = 0;
+                    pedal_buffer_mode = true;
+                }
+                break;
+            default:
+                break;
+        }
         //printf("@main 3 - pedal_buffer_conversion_1 %0x\n", pedal_buffer_conversion_1);
         //printf("@main 4 - pedal_buffer_conversion_2 %0x\n", pedal_buffer_conversion_2);
         //printf("@main 5 - pedal_buffer_conversion_3 %0x\n", pedal_buffer_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
-        //sleep_ms(500);
-        tight_loop_contents();
+        sleep_us(1000);
+        //tight_loop_contents();
     }
     return 0;
 }
@@ -119,6 +150,7 @@ void pedal_buffer_core_1() {
     pedal_buffer_conversion_2_temp = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_conversion_3_temp = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_buffer_mode = false;
     pedal_buffer_gain = pedal_buffer_conversion_2 >> 8; // Make 4-bit Value (0-15)
     pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
     pedal_buffer_noise_gate_count = 0;
@@ -192,6 +224,15 @@ void pedal_buffer_on_pwm_irq_wrap() {
         normalized_1 *= (pedal_buffer_gain - 7);
     } else {
         normalized_1 /= abs(pedal_buffer_gain - 8);
+    }
+    if (normalized_1 >= PEDAL_BUFFER_PWM_PEAK) normalized_1 = PEDAL_BUFFER_PWM_PEAK;
+    if (pedal_buffer_mode) {
+        /**
+         * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+         * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+         * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+         */
+        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     }
     int32 output_1 = normalized_1 + middle_moving_average;
     if (output_1 > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
