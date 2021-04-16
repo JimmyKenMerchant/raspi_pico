@@ -120,7 +120,7 @@ void pedal_buffer_core_1() {
     pedal_buffer_conversion_3_temp = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_gain = pedal_buffer_conversion_2 >> 8; // Make 4-bit Value (0-15)
-    pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15)
+    pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
     pedal_buffer_noise_gate_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -154,8 +154,7 @@ void pedal_buffer_on_pwm_irq_wrap() {
     }
     if (abs(conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
         pedal_buffer_conversion_3 = conversion_3_temp;
-        pedal_buffer_noise_gate_threshold = pedal_buffer_conversion_3 >> 8; // Make 4-bit Value (0-15)
-        pedal_buffer_noise_gate_threshold *= PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER;
+        pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
     }
     uint32 middle_moving_average = pedal_buffer_adc_middle_moving_average / PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_adc_middle_moving_average -= middle_moving_average;

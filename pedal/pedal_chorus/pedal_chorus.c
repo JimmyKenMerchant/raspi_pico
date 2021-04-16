@@ -190,7 +190,7 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_delay_array[pedal_chorus_delay_index] = (int16)normalized_1; // Push Current Value in Advance for 0
     int32 delay_1 = (int32)pedal_chorus_delay_array[((pedal_chorus_delay_index + PEDAL_CHORUS_DELAY_TIME_MAX) - pedal_chorus_delay_time) % PEDAL_CHORUS_DELAY_TIME_MAX];
     pedal_chorus_delay_index++;
-    if (pedal_chorus_delay_index >= PEDAL_CHORUS_DELAY_TIME_MAX) pedal_chorus_delay_index = 0;
+    if (pedal_chorus_delay_index >= PEDAL_CHORUS_DELAY_TIME_MAX) pedal_chorus_delay_index -= PEDAL_CHORUS_DELAY_TIME_MAX;
     /* Get Oscillator */
     int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[pedal_chorus_osc_sine_1_index];
     pedal_chorus_osc_sine_1_index += pedal_chorus_osc_speed;

@@ -177,7 +177,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     /* Get Oscillator */
     int32 fixed_point_value_sine_1 = pedal_phaser_table_sine_1[pedal_phaser_osc_sine_1_index];
     pedal_phaser_osc_sine_1_index += pedal_phaser_osc_speed;
-    if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX) pedal_phaser_osc_sine_1_index = 0;
+    if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX) pedal_phaser_osc_sine_1_index -= PEDAL_PHASER_OSC_SINE_1_TIME_MAX;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.

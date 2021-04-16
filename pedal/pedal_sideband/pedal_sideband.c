@@ -28,10 +28,15 @@
 #include "pedal_sideband.h"
 
 #define PEDAL_SIDEBAND_LED_GPIO 25
+#define PEDAL_SIDEBAND_SWITCH_1 14
+#define PEDAL_SIDEBAND_SWITCH_2 15
+#define PEDAL_SIDEBAND_SWITCH_THRESHOLD 300
 #define PEDAL_SIDEBAND_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_SIDEBAND_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_SIDEBAND_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_SIDEBAND_PWM_PEAK 2047
+#define PEDAL_SIDEBAND_GAIN_FIXED_1 8
+#define PEDAL_SIDEBAND_GAIN_FIXED_2 12
 #define PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX 20345
 #define PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK 4095
@@ -56,7 +61,7 @@ uint16 pedal_sideband_osc_sine_1_index;
 uint16 pedal_sideband_osc_sine_2_index;
 uint16 pedal_sideband_osc_amplitude;
 uint16 pedal_sideband_osc_speed;
-char8 pedal_sideband_gain;
+volatile char8 pedal_sideband_gain;
 char8 pedal_sideband_noise_gate_threshold;
 uint16 pedal_sideband_noise_gate_count;
 uint32 pedal_sideband_adc_middle_moving_average;
@@ -70,23 +75,46 @@ void pedal_sideband_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
-    gpio_init(PEDAL_SIDEBAND_LED_GPIO);
-    gpio_set_dir(PEDAL_SIDEBAND_LED_GPIO, GPIO_OUT);
+    uint32 gpio_mask = 0b1 << PEDAL_SIDEBAND_LED_GPIO|0b1<< PEDAL_SIDEBAND_SWITCH_1|0b1 << PEDAL_SIDEBAND_SWITCH_2;
+    gpio_init_mask(gpio_mask);
+    gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_SIDEBAND_LED_GPIO);
     gpio_put(PEDAL_SIDEBAND_LED_GPIO, true);
+    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_1);
+    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_2);
     multicore_launch_core1(pedal_sideband_core_1);
     //pedal_sideband_debug_time = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
     //pedal_sideband_debug_time = time_us_32() - from_time;
     //printf("@main 2 - pedal_sideband_debug_time %d\n", pedal_sideband_debug_time);
+    uint32 gpio_count_switch_1 = 0;
+    uint32 gpio_count_switch_2 = 0;
     while (true) {
+        switch (gpio_get_all() & (0b1 << PEDAL_SIDEBAND_SWITCH_1|0b1 << PEDAL_SIDEBAND_SWITCH_2)) {
+            case 0b1 << PEDAL_SIDEBAND_SWITCH_2: // SWITCH_1: Low
+                gpio_count_switch_1++;
+                if (gpio_count_switch_1 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
+                    gpio_count_switch_1 = 0;
+                    pedal_sideband_gain = PEDAL_SIDEBAND_GAIN_FIXED_1;
+                }
+                break;
+            case 0b1 << PEDAL_SIDEBAND_SWITCH_1: // SWITCH_2: Low
+                gpio_count_switch_2++;
+                if (gpio_count_switch_2 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
+                    gpio_count_switch_2 = 0;
+                    pedal_sideband_gain = PEDAL_SIDEBAND_GAIN_FIXED_2;
+                }
+                break;
+            default:
+                break;
+        }
         //printf("@main 3 - pedal_sideband_conversion_1 %0x\n", pedal_sideband_conversion_1);
         //printf("@main 4 - pedal_sideband_conversion_2 %0x\n", pedal_sideband_conversion_2);
         //printf("@main 5 - pedal_sideband_conversion_3 %0x\n", pedal_sideband_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_sideband_debug_time %d\n", pedal_sideband_debug_time);
         //sleep_ms(500);
-        tight_loop_contents();
+        //tight_loop_contents();
     }
     return 0;
 }
@@ -128,12 +156,13 @@ void pedal_sideband_core_1() {
     pedal_sideband_conversion_2_temp = PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT;
     pedal_sideband_conversion_3_temp = PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT;
     pedal_sideband_adc_middle_moving_average = pedal_sideband_conversion_1 * PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_sideband_gain = PEDAL_SIDEBAND_GAIN_FIXED_1;
     pedal_sideband_osc_sine_1_index = 0;
     pedal_sideband_osc_sine_2_index = 0;
     pedal_sideband_osc_amplitude = PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK;
     pedal_sideband_osc_speed = 4;
-    pedal_sideband_gain = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
-    pedal_sideband_noise_gate_threshold = (pedal_sideband_conversion_3 >> 8) * PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15)
+    pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
+    pedal_sideband_noise_gate_threshold = (pedal_sideband_conversion_3 >> 8) * PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
     pedal_sideband_noise_gate_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -163,12 +192,11 @@ void pedal_sideband_on_pwm_irq_wrap() {
     pedal_sideband_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_sideband_conversion_2) > PEDAL_SIDEBAND_ADC_THRESHOLD) {
         pedal_sideband_conversion_2 = conversion_2_temp;
-        pedal_sideband_gain = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
+        pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
     }
     if (abs(conversion_3_temp - pedal_sideband_conversion_3) > PEDAL_SIDEBAND_ADC_THRESHOLD) {
         pedal_sideband_conversion_3 = conversion_3_temp;
-        pedal_sideband_noise_gate_threshold = pedal_sideband_conversion_3 >> 8; // Make 4-bit Value (0-15)
-        pedal_sideband_noise_gate_threshold *= PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER;
+        pedal_sideband_noise_gate_threshold = (pedal_sideband_conversion_3 >> 8) * PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
     }
     uint32 middle_moving_average = pedal_sideband_adc_middle_moving_average / PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_sideband_adc_middle_moving_average -= middle_moving_average;
@@ -218,8 +246,8 @@ void pedal_sideband_on_pwm_irq_wrap() {
     int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[pedal_sideband_osc_sine_2_index] >> 1; // Divide By 2
     pedal_sideband_osc_sine_1_index += pedal_sideband_osc_speed;
     pedal_sideband_osc_sine_2_index += pedal_sideband_osc_speed;
-    if (pedal_sideband_osc_sine_1_index >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_index = 0;
-    if (pedal_sideband_osc_sine_2_index >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_index = 0;
+    if (pedal_sideband_osc_sine_1_index >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX) pedal_sideband_osc_sine_1_index -= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX;
+    if (pedal_sideband_osc_sine_2_index >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_index -= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX;
     int32 osc_value = (int32)(int64)(((int64)(pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     osc_value = (int32)(int64)(((int64)(osc_value << 16) * (int64)(abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
     int32 output_1 = (normalized_1 + osc_value) + middle_moving_average;

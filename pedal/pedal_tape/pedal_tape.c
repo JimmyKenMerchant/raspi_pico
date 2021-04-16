@@ -193,7 +193,7 @@ void pedal_tape_on_pwm_irq_wrap() {
     int32 mixed_1 = normalized_1 + delay_1;
     pedal_tape_delay_array[pedal_tape_delay_index] = (int16)mixed_1;
     pedal_tape_delay_index++;
-    if (pedal_tape_delay_index >= PEDAL_TAPE_DELAY_TIME_MAX) pedal_tape_delay_index = 0;
+    if (pedal_tape_delay_index >= PEDAL_TAPE_DELAY_TIME_MAX) pedal_tape_delay_index -= PEDAL_TAPE_DELAY_TIME_MAX;
     mixed_1 *= PEDAL_TAPE_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK) {
