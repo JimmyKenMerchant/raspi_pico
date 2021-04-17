@@ -44,21 +44,21 @@
 #define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_BUFFER_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
-uint32 pedal_buffer_pwm_slice_num;
-uint32 pedal_buffer_pwm_channel;
-uint16 pedal_buffer_conversion_1;
-uint16 pedal_buffer_conversion_2;
-uint16 pedal_buffer_conversion_3;
-uint16 pedal_buffer_conversion_1_temp;
-uint16 pedal_buffer_conversion_2_temp;
-uint16 pedal_buffer_conversion_3_temp;
+volatile uint32 pedal_buffer_pwm_slice_num;
+volatile uint32 pedal_buffer_pwm_channel;
+volatile uint16 pedal_buffer_conversion_1;
+volatile uint16 pedal_buffer_conversion_2;
+volatile uint16 pedal_buffer_conversion_3;
+volatile uint16 pedal_buffer_conversion_1_temp;
+volatile uint16 pedal_buffer_conversion_2_temp;
+volatile uint16 pedal_buffer_conversion_3_temp;
 volatile bool pedal_buffer_mode; // Compressor on True
-char8 pedal_buffer_gain;
-char8 pedal_buffer_noise_gate_threshold;
-uint16 pedal_buffer_noise_gate_count;
-uint32 pedal_buffer_adc_middle_moving_average;
-bool pedal_buffer_is_outstanding_on_adc;
-uint32 pedal_buffer_debug_time;
+volatile char8 pedal_buffer_gain;
+volatile char8 pedal_buffer_noise_gate_threshold;
+volatile uint16 pedal_buffer_noise_gate_count;
+volatile uint32 pedal_buffer_adc_middle_moving_average;
+volatile bool pedal_buffer_is_outstanding_on_adc;
+volatile uint32 pedal_buffer_debug_time;
 
 void pedal_buffer_core_1();
 void pedal_buffer_on_pwm_irq_wrap();

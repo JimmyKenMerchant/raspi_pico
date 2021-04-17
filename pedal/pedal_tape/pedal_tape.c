@@ -46,24 +46,24 @@
 #define PEDAL_TAPE_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_TAPE_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
-uint32 pedal_tape_pwm_slice_num;
-uint32 pedal_tape_pwm_channel;
-uint16 pedal_tape_conversion_1;
-uint16 pedal_tape_conversion_2;
-uint16 pedal_tape_conversion_3;
-uint16 pedal_tape_conversion_1_temp;
-uint16 pedal_tape_conversion_2_temp;
-uint16 pedal_tape_conversion_3_temp;
-uint16 pedal_tape_osc_sine_1_index;
-uint32 pedal_tape_osc_speed;
-int16* pedal_tape_delay_array;
-int32 pedal_tape_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-uint16 pedal_tape_delay_time;
-uint16 pedal_tape_delay_index;
-uint16 pedal_tape_delay_time_swing;
-uint32 pedal_tape_adc_middle_moving_average;
-bool pedal_tape_is_outstanding_on_adc;
-uint32 pedal_tape_debug_time;
+volatile uint32 pedal_tape_pwm_slice_num;
+volatile uint32 pedal_tape_pwm_channel;
+volatile uint16 pedal_tape_conversion_1;
+volatile uint16 pedal_tape_conversion_2;
+volatile uint16 pedal_tape_conversion_3;
+volatile uint16 pedal_tape_conversion_1_temp;
+volatile uint16 pedal_tape_conversion_2_temp;
+volatile uint16 pedal_tape_conversion_3_temp;
+volatile uint16 pedal_tape_osc_sine_1_index;
+volatile uint32 pedal_tape_osc_speed;
+volatile int16* pedal_tape_delay_array;
+volatile int32 pedal_tape_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile uint16 pedal_tape_delay_time;
+volatile uint16 pedal_tape_delay_index;
+volatile uint16 pedal_tape_delay_time_swing;
+volatile uint32 pedal_tape_adc_middle_moving_average;
+volatile bool pedal_tape_is_outstanding_on_adc;
+volatile uint32 pedal_tape_debug_time;
 
 void pedal_tape_core_1();
 void pedal_tape_on_pwm_irq_wrap();

@@ -35,10 +35,10 @@
 #define PEDAL_PLANETS_GAIN 2
 #define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000C000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_MAX 16385 // Don't Use Delay Time = 0
-#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 8193 // 30518 Divided by 256 (119.2Hz, Folding Frequency is 59.6Hz)
-#define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 8192 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 9 // Multiply By 512 (1 - 16 to 512 - 8192)
+#define PEDAL_PLANETS_DELAY_TIME_MAX 4097 // Don't Use Delay Time = 0
+#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 2049 // 30518 Divided by 256 (119.2Hz, Folding Frequency is 59.6Hz)
+#define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 2048 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 7 // Multiply By 128 (1 - 16 to 128 - 2048)
 #define PEDAL_PLANETS_ADC_0_GPIO 26
 #define PEDAL_PLANETS_ADC_1_GPIO 27
 #define PEDAL_PLANETS_ADC_2_GPIO 28
@@ -46,25 +46,25 @@
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
-uint32 pedal_planets_pwm_slice_num;
-uint32 pedal_planets_pwm_channel;
-uint16 pedal_planets_conversion_1;
-uint16 pedal_planets_conversion_2;
-uint16 pedal_planets_conversion_3;
-uint16 pedal_planets_conversion_1_temp;
-uint16 pedal_planets_conversion_2_temp;
-uint16 pedal_planets_conversion_3_temp;
-uint16 pedal_planets_osc_sine_1_index;
-uint16 pedal_planets_osc_speed;
-int32 pedal_planets_coefficient;
-int16* pedal_planets_delay_x;
-int16* pedal_planets_delay_y;
-uint16 pedal_planets_delay_time;
-uint16 pedal_planets_delay_index;
-uint16 pedal_planets_delay_time_swing;
-uint32 pedal_planets_adc_middle_moving_average;
-bool pedal_planets_is_outstanding_on_adc;
-uint32 pedal_planets_debug_time;
+volatile uint32 pedal_planets_pwm_slice_num;
+volatile uint32 pedal_planets_pwm_channel;
+volatile uint16 pedal_planets_conversion_1;
+volatile uint16 pedal_planets_conversion_2;
+volatile uint16 pedal_planets_conversion_3;
+volatile uint16 pedal_planets_conversion_1_temp;
+volatile uint16 pedal_planets_conversion_2_temp;
+volatile uint16 pedal_planets_conversion_3_temp;
+volatile uint16 pedal_planets_osc_sine_1_index;
+volatile uint16 pedal_planets_osc_speed;
+volatile int32 pedal_planets_coefficient;
+volatile int16* pedal_planets_delay_x;
+volatile int16* pedal_planets_delay_y;
+volatile uint16 pedal_planets_delay_time;
+volatile uint16 pedal_planets_delay_index;
+volatile uint16 pedal_planets_delay_time_swing;
+volatile uint32 pedal_planets_adc_middle_moving_average;
+volatile bool pedal_planets_is_outstanding_on_adc;
+volatile uint32 pedal_planets_debug_time;
 
 void pedal_planets_core_1();
 void pedal_planets_on_pwm_irq_wrap();

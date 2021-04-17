@@ -49,24 +49,24 @@
 #define PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_SIDEBAND_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
 
-uint32 pedal_sideband_pwm_slice_num;
-uint32 pedal_sideband_pwm_channel;
-uint16 pedal_sideband_conversion_1;
-uint16 pedal_sideband_conversion_2;
-uint16 pedal_sideband_conversion_3;
-uint16 pedal_sideband_conversion_1_temp;
-uint16 pedal_sideband_conversion_2_temp;
-uint16 pedal_sideband_conversion_3_temp;
-uint16 pedal_sideband_osc_sine_1_index;
-uint16 pedal_sideband_osc_sine_2_index;
-uint16 pedal_sideband_osc_amplitude;
-uint16 pedal_sideband_osc_speed;
-volatile char8 pedal_sideband_gain;
-char8 pedal_sideband_noise_gate_threshold;
-uint16 pedal_sideband_noise_gate_count;
-uint32 pedal_sideband_adc_middle_moving_average;
-bool pedal_sideband_is_outstanding_on_adc;
-uint32 pedal_sideband_debug_time;
+volatile uint32 pedal_sideband_pwm_slice_num;
+volatile uint32 pedal_sideband_pwm_channel;
+volatile uint16 pedal_sideband_conversion_1;
+volatile uint16 pedal_sideband_conversion_2;
+volatile uint16 pedal_sideband_conversion_3;
+volatile uint16 pedal_sideband_conversion_1_temp;
+volatile uint16 pedal_sideband_conversion_2_temp;
+volatile uint16 pedal_sideband_conversion_3_temp;
+volatile uint16 pedal_sideband_osc_sine_1_index;
+volatile uint16 pedal_sideband_osc_sine_2_index;
+volatile uint16 pedal_sideband_osc_amplitude;
+volatile uint16 pedal_sideband_osc_speed;
+volatile volatile char8 pedal_sideband_gain;
+volatile char8 pedal_sideband_noise_gate_threshold;
+volatile uint16 pedal_sideband_noise_gate_count;
+volatile uint32 pedal_sideband_adc_middle_moving_average;
+volatile bool pedal_sideband_is_outstanding_on_adc;
+volatile uint32 pedal_sideband_debug_time;
 
 void pedal_sideband_core_1();
 void pedal_sideband_on_pwm_irq_wrap();
