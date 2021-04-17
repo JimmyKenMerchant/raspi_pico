@@ -110,7 +110,7 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * "pedal_tape" is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
-* "pedal_phaser" is using an all-pass filter. This sweeps the coefficient of the function to reduce a fixed frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
+* "pedal_phaser" is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. Outputs are gained two times in default. One of two outputs is inverted for balanced monaural.
 
 ## Technical Notes
 

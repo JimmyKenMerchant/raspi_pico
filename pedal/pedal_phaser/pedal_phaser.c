@@ -36,8 +36,8 @@
 #define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PHASER_COEFFICIENT_SWING_SHIFT 12 // Multiply By 4096 (0x1 - 0x10 to 0x1 - 0x00010000)
-#define PEDAL_PHASER_DELAY_TIME_MAX 64
-#define PEDAL_PHASER_DELAY_TIME_FIXED_1 32 // 32 Divided by 30518 (0.001 Seconds on 90 Degrees = 250Hz)
+#define PEDAL_PHASER_DELAY_TIME_MAX 257 // Don't Use Delay Time = 0
+#define PEDAL_PHASER_DELAY_TIME_FIXED_1 256 // 30518 Divided by 256 (119.2Hz, Folding Frequency is 59.6Hz)
 #define PEDAL_PHASER_ADC_0_GPIO 26
 #define PEDAL_PHASER_ADC_1_GPIO 27
 #define PEDAL_PHASER_ADC_2_GPIO 28
@@ -199,10 +199,11 @@ void pedal_phaser_on_pwm_irq_wrap() {
      * Low-pass Filter: Y[S] = K''*Y[S - 1] + (1 - K'')*X[S]: It's like a speaker in a closed box.
      * High-pass Filter: Y[S] = K''*X[S - 1] + (1 - K'')*X[S]: It's like a speaker with a reflection board.
      * All-pass Filter: Low-pass Filter + High-pass Filter - X[S]: K''*Y[S - 1] + K''*X[S - 1] + X[S] - 2*K''*X[S]
-     * If K'' = 1, this means the phase shift 90 degress.
      * All-pass Filter with K'' = 1: X[S - 1] + Y[S - 1] - X[S]: With unknown K' = 1, this function actually makes a phase shift.
+     * All-pass Filter Y(S) with S{5,-5,5,-5} where K' = 1 and preceding Y(S - 1) = 0 results Y{-5,5,-5,5}. This means phase shift 180 degrees delay.
      * X[S - 1] and Y[S - 1] are effected on a high frequency.
-     * To get effect on intended frequencies, use X[S - N] and Y[S - N] where N is the number of delay.
+     * If the sampling frequency is 30518Hz, the effective frequency is its Nyquist (or folding) frequency and over, i.e., 15259Hz <=.
+     * To get the effect on intended frequencies, use X[S - N] and Y[S - N] where N is the number of delay.
      */
     int32 coefficient = (int32)(int64)(((int64)(pedal_phaser_coefficient_swing) * (int64)fixed_point_value_sine_1) >> 16); // Remain Decimal Part
     int16 delay_x = pedal_phaser_delay_x[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
