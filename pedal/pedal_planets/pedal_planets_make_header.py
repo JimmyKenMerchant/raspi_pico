@@ -36,7 +36,7 @@ declare_sine_1 = [
 "static int32 pedal_planets_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 30518
+number_sine_1 = 61036
 
 postfix = [
 "#ifdef __cplusplus\n",
@@ -46,10 +46,10 @@ postfix = [
 "#endif\n"
 ]
 
-def makeTableSine(number_sine): # Make Sine Values in 0-360 Degrees
+def makeTableSineHalf(number_sine): # Make Sine Values in 0-180 Degrees
     for i in range(number_sine):
         header.write("    ")
-        floating_point_value = math.sin((i/number_sine) * 2 * math.pi) # Floating Point Decimal
+        floating_point_value = math.sin((i/number_sine) * math.pi) # Floating Point Decimal
         if floating_point_value < 0:
             is_negative = True
             floating_point_value = abs(floating_point_value);
@@ -80,7 +80,7 @@ header.writelines(prefix)
 
 # Table Sine 1
 header.writelines(declare_sine_1)
-makeTableSine(number_sine_1)
+makeTableSineHalf(number_sine_1)
 
 header.writelines(postfix)
 header.close()

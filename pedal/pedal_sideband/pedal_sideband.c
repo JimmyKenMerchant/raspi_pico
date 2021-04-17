@@ -40,14 +40,14 @@
 #define PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX 20345
 #define PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK 4095
-#define PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF (Typically 3.3V)
-#define PEDAL_SIDEBAND_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
+#define PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
+#define PEDAL_SIDEBAND_OSC_START_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
 #define PEDAL_SIDEBAND_ADC_0_GPIO 26
 #define PEDAL_SIDEBAND_ADC_1_GPIO 27
 #define PEDAL_SIDEBAND_ADC_2_GPIO 28
 #define PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_SIDEBAND_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
+#define PEDAL_SIDEBAND_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_sideband_pwm_slice_num;
 volatile uint32 pedal_sideband_pwm_channel;
@@ -62,8 +62,8 @@ volatile uint16 pedal_sideband_osc_sine_2_index;
 volatile uint16 pedal_sideband_osc_amplitude;
 volatile uint16 pedal_sideband_osc_speed;
 volatile volatile char8 pedal_sideband_gain;
-volatile char8 pedal_sideband_noise_gate_threshold;
-volatile uint16 pedal_sideband_noise_gate_count;
+volatile char8 pedal_sideband_osc_start_threshold;
+volatile uint16 pedal_sideband_osc_start_count;
 volatile uint32 pedal_sideband_adc_middle_moving_average;
 volatile bool pedal_sideband_is_outstanding_on_adc;
 volatile uint32 pedal_sideband_debug_time;
@@ -115,8 +115,8 @@ int main(void) {
         //printf("@main 5 - pedal_sideband_conversion_3 %0x\n", pedal_sideband_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_sideband_debug_time %d\n", pedal_sideband_debug_time);
-        sleep_us(1000);
-        //tight_loop_contents();
+        //sleep_us(1000);
+        tight_loop_contents();
     }
     return 0;
 }
@@ -163,9 +163,9 @@ void pedal_sideband_core_1() {
     pedal_sideband_osc_sine_2_index = 0;
     pedal_sideband_osc_amplitude = PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK;
     pedal_sideband_osc_speed = 4;
-    pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
-    pedal_sideband_noise_gate_threshold = (pedal_sideband_conversion_3 >> 8) * PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
-    pedal_sideband_noise_gate_count = 0;
+    pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
+    pedal_sideband_osc_start_threshold = (pedal_sideband_conversion_3 >> 7) * PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_sideband_osc_start_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_sideband_pwm_slice_num);
@@ -194,18 +194,18 @@ void pedal_sideband_on_pwm_irq_wrap() {
     pedal_sideband_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_sideband_conversion_2) > PEDAL_SIDEBAND_ADC_THRESHOLD) {
         pedal_sideband_conversion_2 = conversion_2_temp;
-        pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 8; // Make 4-bit Value (0-15)
+        pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3_temp - pedal_sideband_conversion_3) > PEDAL_SIDEBAND_ADC_THRESHOLD) {
         pedal_sideband_conversion_3 = conversion_3_temp;
-        pedal_sideband_noise_gate_threshold = (pedal_sideband_conversion_3 >> 8) * PEDAL_SIDEBAND_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
+        pedal_sideband_osc_start_threshold = (pedal_sideband_conversion_3 >> 7) * PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     uint32 middle_moving_average = pedal_sideband_adc_middle_moving_average / PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_sideband_adc_middle_moving_average -= middle_moving_average;
     pedal_sideband_adc_middle_moving_average += pedal_sideband_conversion_1;
     int32 normalized_1 = (int32)pedal_sideband_conversion_1 - (int32)middle_moving_average;
     /**
-     * pedal_sideband_noise_gate_count:
+     * pedal_sideband_osc_start_count:
      *
      * Over Positive Threshold       ## 1
      *-----------------------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ void pedal_sideband_on_pwm_irq_wrap() {
      *-----------------------------------------------------------------------------------------------------------
      * Hysteresis                  # 0   # 3   # 5   # 2
      *-----------------------------------------------------------------------------------------------------------
-     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_SIDEBAND_NOISE_GATE_COUNT_MAX
+     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_SIDEBAND_OSC_START_COUNT_MAX
      *-----------------------------------------------------------------------------------------------------------
      * Hysteresis                         # 5 # 3      #### 4
      *-----------------------------------------------------------------------------------------------------------
@@ -221,23 +221,22 @@ void pedal_sideband_on_pwm_irq_wrap() {
      *-----------------------------------------------------------------------------------------------------------
      * Over Negative Threshold             ## Reset to 1
      */
-    if (normalized_1 > pedal_sideband_noise_gate_threshold || normalized_1 < -pedal_sideband_noise_gate_threshold) {
-        pedal_sideband_noise_gate_count = 1;
-    } else if (pedal_sideband_noise_gate_count != 0 && (normalized_1 > (pedal_sideband_noise_gate_threshold >> 1) || normalized_1 < -(pedal_sideband_noise_gate_threshold >> 1))) {
-        pedal_sideband_noise_gate_count = 1;
-    } else if (pedal_sideband_noise_gate_count != 0) {
-        pedal_sideband_noise_gate_count++;
+    if (normalized_1 > pedal_sideband_osc_start_threshold || normalized_1 < -pedal_sideband_osc_start_threshold) {
+        pedal_sideband_osc_start_count = 1;
+    } else if (pedal_sideband_osc_start_count != 0 && (normalized_1 > (pedal_sideband_osc_start_threshold >> 1) || normalized_1 < -(pedal_sideband_osc_start_threshold >> 1))) {
+        pedal_sideband_osc_start_count = 1;
+    } else if (pedal_sideband_osc_start_count != 0) {
+        pedal_sideband_osc_start_count++;
     }
-    if (pedal_sideband_noise_gate_count >= PEDAL_SIDEBAND_NOISE_GATE_COUNT_MAX) pedal_sideband_noise_gate_count = 0;
-    if (pedal_sideband_noise_gate_count == 0) {
-        normalized_1 = 0;
+    if (pedal_sideband_osc_start_count >= PEDAL_SIDEBAND_OSC_START_COUNT_MAX) pedal_sideband_osc_start_count = 0;
+    if (pedal_sideband_osc_start_count == 0) {
         pedal_sideband_osc_sine_1_index = 0;
         pedal_sideband_osc_sine_2_index = 0;
     }
-    if (pedal_sideband_gain > 7) {
-        normalized_1 *= (pedal_sideband_gain - 7);
+    if (pedal_sideband_gain > 15) {
+        normalized_1 *= (pedal_sideband_gain - 15);
     } else {
-        normalized_1 /= abs(pedal_sideband_gain - 8);
+        normalized_1 /= abs(pedal_sideband_gain - 16);
     }
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

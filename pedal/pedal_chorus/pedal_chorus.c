@@ -37,14 +37,14 @@
 #define PEDAL_CHORUS_DELAY_TIME_MAX 1527
 #define PEDAL_CHORUS_DELAY_TIME_FIXED_1 PEDAL_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 30518 (0.05 Seconds)
 #define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 61036
-#define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 961
-#define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 6 // Multiply By 64 (0-960), 960 Divided by 30518 (0.0314 Seconds = 10.68 Meters)
+#define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 993
+#define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 5 // Multiply By 32 (0-992), 992 Divided by 30518 (0.0325 Seconds = 11.06 Meters)
 #define PEDAL_CHORUS_ADC_0_GPIO 26
 #define PEDAL_CHORUS_ADC_1_GPIO 27
 #define PEDAL_CHORUS_ADC_2_GPIO 28
 #define PEDAL_CHORUS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_CHORUS_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
+#define PEDAL_CHORUS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_chorus_pwm_slice_num;
 volatile uint32 pedal_chorus_pwm_channel;
@@ -142,10 +142,10 @@ void pedal_chorus_core_1() {
     pedal_chorus_delay_amplitude = PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1;
     pedal_chorus_delay_time = PEDAL_CHORUS_DELAY_TIME_FIXED_1;
     pedal_chorus_delay_index = 0;
-    pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
+    pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_chorus_osc_sine_1_index = 0;
     pedal_chorus_lr_distance_array =  (int16*)calloc(PEDAL_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16));
-    pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 8) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 4-bit Value (0-15) and Multiply
+    pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
     pedal_chorus_lr_distance_index = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -176,11 +176,11 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_chorus_conversion_2) > PEDAL_CHORUS_ADC_THRESHOLD) {
         pedal_chorus_conversion_2 = conversion_2_temp;
-        pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 8; // Make 4-bit Value (0-15)
+        pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 7; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3_temp - pedal_chorus_conversion_3) > PEDAL_CHORUS_ADC_THRESHOLD) {
         pedal_chorus_conversion_3 = conversion_3_temp;
-        pedal_chorus_lr_distance_time = (int32)(pedal_chorus_conversion_3 >> 8) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 4-bit Value (0-15) and Multiply
+        pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
     }
     uint32 middle_moving_average = pedal_chorus_adc_middle_moving_average / PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_chorus_adc_middle_moving_average -= middle_moving_average;

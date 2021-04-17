@@ -33,18 +33,18 @@
 #define PEDAL_PLANETS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PLANETS_PWM_PEAK 2047
 #define PEDAL_PLANETS_GAIN 2
-#define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000C000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_MAX 4097 // Don't Use Delay Time = 0
+#define PEDAL_PLANETS_DELAY_TIME_MAX 4098 // Don't Use Delay Time = 0
 #define PEDAL_PLANETS_DELAY_TIME_FIXED_1 2049 // 30518 Divided by 256 (119.2Hz, Folding Frequency is 59.6Hz)
 #define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 2048 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 7 // Multiply By 128 (1 - 16 to 128 - 2048)
+#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (1 - 32 to 64 - 2048)
 #define PEDAL_PLANETS_ADC_0_GPIO 26
 #define PEDAL_PLANETS_ADC_1_GPIO 27
 #define PEDAL_PLANETS_ADC_2_GPIO 28
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_PLANETS_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
+#define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_planets_pwm_slice_num;
 volatile uint32 pedal_planets_pwm_channel;
@@ -131,14 +131,14 @@ void pedal_planets_core_1() {
     pedal_planets_conversion_2_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_3_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_adc_middle_moving_average = pedal_planets_conversion_1 * PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_planets_osc_speed = pedal_planets_conversion_2 >> 8; // Make 4-bit Value (0-15)
+    pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_planets_osc_sine_1_index = 0;
     pedal_planets_coefficient = PEDAL_PLANETS_COEFFICIENT_FIXED_1;
     pedal_planets_delay_x = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_y = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_time = PEDAL_PLANETS_DELAY_TIME_FIXED_1;
     pedal_planets_delay_index = 0;
-    pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 8) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_planets_pwm_slice_num);
@@ -167,11 +167,11 @@ void pedal_planets_on_pwm_irq_wrap() {
     pedal_planets_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_planets_conversion_2) > PEDAL_PLANETS_ADC_THRESHOLD) {
         pedal_planets_conversion_2 = conversion_2_temp;
-        pedal_planets_osc_speed = pedal_planets_conversion_2 >> 8; // Make 4-bit Value (0-15)
+        pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3_temp - pedal_planets_conversion_3) > PEDAL_PLANETS_ADC_THRESHOLD) {
         pedal_planets_conversion_3 = conversion_3_temp;
-        pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 8) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 4-bit Value (0-15) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     uint32 middle_moving_average = pedal_planets_adc_middle_moving_average / PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_planets_adc_middle_moving_average -= middle_moving_average;

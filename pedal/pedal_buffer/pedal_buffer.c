@@ -35,14 +35,14 @@
 #define PEDAL_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_BUFFER_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_BUFFER_PWM_PEAK 2047
-#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 2 // From -60.2dB (Loss 1024) to -36.7dB (Loss 68) in ADC_VREF (Typically 3.3V)
+#define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
 #define PEDAL_BUFFER_ADC_0_GPIO 26
 #define PEDAL_BUFFER_ADC_1_GPIO 27
 #define PEDAL_BUFFER_ADC_2_GPIO 28
 #define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_BUFFER_ADC_THRESHOLD 0x7F // Range is 0x0-0xFFF (0-4095) Divided by 0xFF (255) for 0x0-0xFb (0-15). 0xFF >> 1.
+#define PEDAL_BUFFER_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_buffer_pwm_slice_num;
 volatile uint32 pedal_buffer_pwm_channel;
@@ -151,8 +151,8 @@ void pedal_buffer_core_1() {
     pedal_buffer_conversion_3_temp = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_mode = false;
-    pedal_buffer_gain = pedal_buffer_conversion_2 >> 8; // Make 4-bit Value (0-15)
-    pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
+    pedal_buffer_gain = pedal_buffer_conversion_2 >> 7; // Make 5-bit Value (0-31)
+    pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_buffer_noise_gate_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -182,11 +182,11 @@ void pedal_buffer_on_pwm_irq_wrap() {
     pedal_buffer_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_buffer_conversion_2) > PEDAL_BUFFER_ADC_THRESHOLD) {
         pedal_buffer_conversion_2 = conversion_2_temp;
-        pedal_buffer_gain = pedal_buffer_conversion_2 >> 8; // Make 4-bit Value (0-15)
+        pedal_buffer_gain = pedal_buffer_conversion_2 >> 7; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
         pedal_buffer_conversion_3 = conversion_3_temp;
-        pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 8) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 4-bit Value (0-15) and Multiply
+        pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     uint32 middle_moving_average = pedal_buffer_adc_middle_moving_average / PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_adc_middle_moving_average -= middle_moving_average;
@@ -220,10 +220,10 @@ void pedal_buffer_on_pwm_irq_wrap() {
     if (pedal_buffer_noise_gate_count == 0) {
         normalized_1 = 0;
     }
-    if (pedal_buffer_gain > 7) {
-        normalized_1 *= (pedal_buffer_gain - 7);
+    if (pedal_buffer_gain > 15) {
+        normalized_1 *= (pedal_buffer_gain - 15);
     } else {
-        normalized_1 /= abs(pedal_buffer_gain - 8);
+        normalized_1 /= abs(pedal_buffer_gain - 16);
     }
     if (normalized_1 >= PEDAL_BUFFER_PWM_PEAK) normalized_1 = PEDAL_BUFFER_PWM_PEAK;
     if (pedal_buffer_mode) {
