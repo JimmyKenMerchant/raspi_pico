@@ -57,6 +57,7 @@ volatile uint16 pedal_phaser_conversion_3;
 volatile uint16 pedal_phaser_conversion_1_temp;
 volatile uint16 pedal_phaser_conversion_2_temp;
 volatile uint16 pedal_phaser_conversion_3_temp;
+volatile uchar8 pedal_phaser_mode;
 volatile int32 pedal_phaser_coefficient_swing;
 volatile int16* pedal_phaser_delay_x;
 volatile int16* pedal_phaser_delay_y;
@@ -89,25 +90,47 @@ int main(void) {
     //printf("@main 1 - Let's Start!\n");
     //pedal_phaser_debug_time = time_us_32() - from_time;
     //printf("@main 2 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
-    uint32 gpio_count_switch_1 = 0;
-    uint32 gpio_count_switch_2 = 0;
+    uint16 count_switch_0 = 0; // Center
+    uint16 count_switch_1 = 0;
+    uint16 count_switch_2 = 0;
+    uchar8 mode = 0; // To Reduce Memory Access
     while (true) {
         switch (gpio_get_all() & (0b1 << PEDAL_PHASER_SWITCH_1_GPIO|0b1 << PEDAL_PHASER_SWITCH_2_GPIO)) {
             case 0b1 << PEDAL_PHASER_SWITCH_2_GPIO: // SWITCH_1: Low
-                gpio_count_switch_1++;
-                gpio_count_switch_2 = 0;
-                if (gpio_count_switch_1 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
-                    gpio_count_switch_1 = 0;
+                count_switch_0 = 0;
+                count_switch_1++;
+                count_switch_2 = 0;
+                if (count_switch_1 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
+                    count_switch_1 = 0;
+                    if (mode != 1) {
+                        pedal_phaser_mode = 1;
+                        mode = 1;
+                    }
                 }
                 break;
             case 0b1 << PEDAL_PHASER_SWITCH_1_GPIO: // SWITCH_2: Low
-                gpio_count_switch_1 = 0;
-                gpio_count_switch_2++;
-                if (gpio_count_switch_2 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
-                    gpio_count_switch_2 = 0;
+                count_switch_0 = 0;
+                count_switch_1 = 0;
+                count_switch_2++;
+                if (count_switch_2 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
+                    count_switch_2 = 0;
+                    if (mode != 2) {
+                        pedal_phaser_mode = 2;
+                        mode = 2;
+                    }
                 }
                 break;
-            default:
+            default: // All High
+                count_switch_0++;
+                count_switch_1 = 0;
+                count_switch_2 = 0;
+                if (count_switch_0 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
+                    count_switch_0 = 0;
+                    if (mode != 0) {
+                        pedal_phaser_mode = 0;
+                        mode = 0;
+                    }
+                }
                 break;
         }
         //printf("@main 3 - pedal_phaser_conversion_1 %0x\n", pedal_phaser_conversion_1);

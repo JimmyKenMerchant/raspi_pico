@@ -52,7 +52,7 @@ volatile uint16 pedal_buffer_conversion_3;
 volatile uint16 pedal_buffer_conversion_1_temp;
 volatile uint16 pedal_buffer_conversion_2_temp;
 volatile uint16 pedal_buffer_conversion_3_temp;
-volatile bool pedal_buffer_mode; // Compressor on True
+volatile uchar8 pedal_buffer_mode; // Compressor on 1 and 2
 volatile char8 pedal_buffer_gain;
 volatile char8 pedal_buffer_noise_gate_threshold;
 volatile uint16 pedal_buffer_noise_gate_count;
@@ -79,27 +79,47 @@ int main(void) {
     //printf("@main 1 - Let's Start!\n");
     //pedal_buffer_debug_time = time_us_32() - from_time;
     //printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
-    uint32 gpio_count_switch_1 = 0;
-    uint32 gpio_count_switch_2 = 0;
+    uint16 count_switch_0 = 0; // Center
+    uint16 count_switch_1 = 0;
+    uint16 count_switch_2 = 0;
+    uchar8 mode = 0; // To Reduce Memory Access
     while (true) {
         switch (gpio_get_all() & (0b1 << PEDAL_BUFFER_SWITCH_1_GPIO|0b1 << PEDAL_BUFFER_SWITCH_2_GPIO)) {
             case 0b1 << PEDAL_BUFFER_SWITCH_2_GPIO: // SWITCH_1: Low
-                gpio_count_switch_1++;
-                gpio_count_switch_2 = 0;
-                if (gpio_count_switch_1 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
-                    gpio_count_switch_1 = 0;
-                    pedal_buffer_mode = false;
+                count_switch_0 = 0;
+                count_switch_1++;
+                count_switch_2 = 0;
+                if (count_switch_1 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
+                    count_switch_1 = 0;
+                    if (mode != 1) {
+                        pedal_buffer_mode = 1;
+                        mode = 1;
+                    }
                 }
                 break;
             case 0b1 << PEDAL_BUFFER_SWITCH_1_GPIO: // SWITCH_2: Low
-                gpio_count_switch_1 = 0;
-                gpio_count_switch_2++;
-                if (gpio_count_switch_2 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
-                    gpio_count_switch_2 = 0;
-                    pedal_buffer_mode = true;
+                count_switch_0 = 0;
+                count_switch_1 = 0;
+                count_switch_2++;
+                if (count_switch_2 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
+                    count_switch_2 = 0;
+                    if (mode != 2) {
+                        pedal_buffer_mode = 2;
+                        mode = 2;
+                    }
                 }
                 break;
-            default:
+            default: // All High
+                count_switch_0++;
+                count_switch_1 = 0;
+                count_switch_2 = 0;
+                if (count_switch_0 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
+                    count_switch_0 = 0;
+                    if (mode != 0) {
+                        pedal_buffer_mode = 0;
+                        mode = 0;
+                    }
+                }
                 break;
         }
         //printf("@main 3 - pedal_buffer_conversion_1 %0x\n", pedal_buffer_conversion_1);
@@ -107,8 +127,8 @@ int main(void) {
         //printf("@main 5 - pedal_buffer_conversion_3 %0x\n", pedal_buffer_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
-        sleep_us(1000);
-        //tight_loop_contents();
+        //sleep_us(1000);
+        tight_loop_contents();
     }
     return 0;
 }
