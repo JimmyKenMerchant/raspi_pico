@@ -28,8 +28,8 @@
 #include "pedal_buffer.h"
 
 #define PEDAL_BUFFER_LED_GPIO 25
-#define PEDAL_BUFFER_SWITCH_1 14
-#define PEDAL_BUFFER_SWITCH_2 15
+#define PEDAL_BUFFER_SWITCH_1_GPIO 14
+#define PEDAL_BUFFER_SWITCH_2_GPIO 15
 #define PEDAL_BUFFER_SWITCH_THRESHOLD 30
 #define PEDAL_BUFFER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
@@ -67,12 +67,12 @@ void pedal_buffer_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
-    uint32 gpio_mask = 0b1 << PEDAL_BUFFER_LED_GPIO|0b1<< PEDAL_BUFFER_SWITCH_1|0b1 << PEDAL_BUFFER_SWITCH_2;
+    uint32 gpio_mask = 0b1 << PEDAL_BUFFER_LED_GPIO|0b1<< PEDAL_BUFFER_SWITCH_1_GPIO|0b1 << PEDAL_BUFFER_SWITCH_2_GPIO;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_BUFFER_LED_GPIO);
     gpio_put(PEDAL_BUFFER_LED_GPIO, true);
-    gpio_pull_up(PEDAL_BUFFER_SWITCH_1);
-    gpio_pull_up(PEDAL_BUFFER_SWITCH_2);
+    gpio_pull_up(PEDAL_BUFFER_SWITCH_1_GPIO);
+    gpio_pull_up(PEDAL_BUFFER_SWITCH_2_GPIO);
     multicore_launch_core1(pedal_buffer_core_1);
     //pedal_buffer_debug_time = 0;
     //uint32 from_time = time_us_32();
@@ -82,8 +82,8 @@ int main(void) {
     uint32 gpio_count_switch_1 = 0;
     uint32 gpio_count_switch_2 = 0;
     while (true) {
-        switch (gpio_get_all() & (0b1 << PEDAL_BUFFER_SWITCH_1|0b1 << PEDAL_BUFFER_SWITCH_2)) {
-            case 0b1 << PEDAL_BUFFER_SWITCH_2: // SWITCH_1: Low
+        switch (gpio_get_all() & (0b1 << PEDAL_BUFFER_SWITCH_1_GPIO|0b1 << PEDAL_BUFFER_SWITCH_2_GPIO)) {
+            case 0b1 << PEDAL_BUFFER_SWITCH_2_GPIO: // SWITCH_1: Low
                 gpio_count_switch_1++;
                 gpio_count_switch_2 = 0;
                 if (gpio_count_switch_1 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {
@@ -91,7 +91,7 @@ int main(void) {
                     pedal_buffer_mode = false;
                 }
                 break;
-            case 0b1 << PEDAL_BUFFER_SWITCH_1: // SWITCH_2: Low
+            case 0b1 << PEDAL_BUFFER_SWITCH_1_GPIO: // SWITCH_2: Low
                 gpio_count_switch_1 = 0;
                 gpio_count_switch_2++;
                 if (gpio_count_switch_2 >= PEDAL_BUFFER_SWITCH_THRESHOLD) {

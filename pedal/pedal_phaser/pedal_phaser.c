@@ -28,18 +28,20 @@
 #include "pedal_phaser.h"
 
 #define PEDAL_PHASER_LED_GPIO 25
+#define PEDAL_PHASER_SWITCH_1_GPIO 14
+#define PEDAL_PHASER_SWITCH_2_GPIO 15
+#define PEDAL_PHASER_SWITCH_THRESHOLD 30
 #define PEDAL_PHASER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_PHASER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_PHASER_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PHASER_PWM_PEAK 2047
-#define PEDAL_PHASER_OSC_START_THRESHOLD_FIXED_1 5 // From -48.16dB (Loss 256) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
-#define PEDAL_PHASER_OSC_START_COUNT_MAX 4000 // 30518 Divided by 4000 = Approx. 8Hz
 #define PEDAL_PHASER_GAIN 2
-#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
-#define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PHASER_COEFFICIENT_SWING_SHIFT 11 // Multiply By 2048 (0x1 - 0x20 to 0x800 - 0x00010000)
+#define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PHASER_DELAY_TIME_MAX 257 // Don't Use Delay Time = 0
 #define PEDAL_PHASER_DELAY_TIME_FIXED_1 256 // 30518 Divided by 256 (119.21Hz, Folding Frequency is 59.6Hz)
+#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
+#define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
+#define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
 #define PEDAL_PHASER_ADC_0_GPIO 26
 #define PEDAL_PHASER_ADC_1_GPIO 27
 #define PEDAL_PHASER_ADC_2_GPIO 28
@@ -55,15 +57,15 @@ volatile uint16 pedal_phaser_conversion_3;
 volatile uint16 pedal_phaser_conversion_1_temp;
 volatile uint16 pedal_phaser_conversion_2_temp;
 volatile uint16 pedal_phaser_conversion_3_temp;
-volatile char8 pedal_phaser_osc_start_threshold;
-volatile uint16 pedal_phaser_osc_start_count;
-volatile uint16 pedal_phaser_osc_sine_1_index;
-volatile uint16 pedal_phaser_osc_speed;
 volatile int32 pedal_phaser_coefficient_swing;
 volatile int16* pedal_phaser_delay_x;
 volatile int16* pedal_phaser_delay_y;
 volatile uint16 pedal_phaser_delay_time;
 volatile uint16 pedal_phaser_delay_index;
+volatile uint16 pedal_phaser_osc_sine_1_index;
+volatile uint16 pedal_phaser_osc_speed;
+volatile char8 pedal_phaser_osc_start_threshold;
+volatile uint16 pedal_phaser_osc_start_count;
 volatile uint32 pedal_phaser_adc_middle_moving_average;
 volatile bool pedal_phaser_is_outstanding_on_adc;
 volatile uint32 pedal_phaser_debug_time;
@@ -75,22 +77,45 @@ void pedal_phaser_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
-    gpio_init(PEDAL_PHASER_LED_GPIO);
-    gpio_set_dir(PEDAL_PHASER_LED_GPIO, GPIO_OUT);
+    uint32 gpio_mask = 0b1 << PEDAL_PHASER_LED_GPIO|0b1<< PEDAL_PHASER_SWITCH_1_GPIO|0b1 << PEDAL_PHASER_SWITCH_2_GPIO;
+    gpio_init_mask(gpio_mask);
+    gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_PHASER_LED_GPIO);
     gpio_put(PEDAL_PHASER_LED_GPIO, true);
+    gpio_pull_up(PEDAL_PHASER_SWITCH_1_GPIO);
+    gpio_pull_up(PEDAL_PHASER_SWITCH_2_GPIO);
     multicore_launch_core1(pedal_phaser_core_1);
     //pedal_phaser_debug_time = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
     //pedal_phaser_debug_time = time_us_32() - from_time;
     //printf("@main 2 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
+    uint32 gpio_count_switch_1 = 0;
+    uint32 gpio_count_switch_2 = 0;
     while (true) {
+        switch (gpio_get_all() & (0b1 << PEDAL_PHASER_SWITCH_1_GPIO|0b1 << PEDAL_PHASER_SWITCH_2_GPIO)) {
+            case 0b1 << PEDAL_PHASER_SWITCH_2_GPIO: // SWITCH_1: Low
+                gpio_count_switch_1++;
+                gpio_count_switch_2 = 0;
+                if (gpio_count_switch_1 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
+                    gpio_count_switch_1 = 0;
+                }
+                break;
+            case 0b1 << PEDAL_PHASER_SWITCH_1_GPIO: // SWITCH_2: Low
+                gpio_count_switch_1 = 0;
+                gpio_count_switch_2++;
+                if (gpio_count_switch_2 >= PEDAL_PHASER_SWITCH_THRESHOLD) {
+                    gpio_count_switch_2 = 0;
+                }
+                break;
+            default:
+                break;
+        }
         //printf("@main 3 - pedal_phaser_conversion_1 %0x\n", pedal_phaser_conversion_1);
         //printf("@main 4 - pedal_phaser_conversion_2 %0x\n", pedal_phaser_conversion_2);
         //printf("@main 5 - pedal_phaser_conversion_3 %0x\n", pedal_phaser_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
-        //sleep_ms(500);
+        //sleep_us(1000);
         tight_loop_contents();
     }
     return 0;
@@ -132,16 +157,16 @@ void pedal_phaser_core_1() {
     pedal_phaser_conversion_1_temp = PEDAL_PHASER_ADC_MIDDLE_DEFAULT;
     pedal_phaser_conversion_2_temp = PEDAL_PHASER_ADC_MIDDLE_DEFAULT;
     pedal_phaser_conversion_3_temp = PEDAL_PHASER_ADC_MIDDLE_DEFAULT;
-    pedal_phaser_osc_start_threshold = PEDAL_PHASER_OSC_START_THRESHOLD_FIXED_1;
-    pedal_phaser_osc_start_count = 0;
     pedal_phaser_adc_middle_moving_average = pedal_phaser_conversion_1 * PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_phaser_osc_speed = pedal_phaser_conversion_2 >> 7; // Make 5-bit Value (0-31)
-    pedal_phaser_osc_sine_1_index = 0;
-    pedal_phaser_coefficient_swing = ((pedal_phaser_conversion_3 >> 7) + 1) << PEDAL_PHASER_COEFFICIENT_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_phaser_coefficient_swing = PEDAL_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1;
     pedal_phaser_delay_x = (int16*)calloc(PEDAL_PHASER_DELAY_TIME_MAX, sizeof(int16));
     pedal_phaser_delay_y = (int16*)calloc(PEDAL_PHASER_DELAY_TIME_MAX, sizeof(int16));
     pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_1;
     pedal_phaser_delay_index = 0;
+    pedal_phaser_osc_sine_1_index = 0;
+    pedal_phaser_osc_speed = pedal_phaser_conversion_2 >> 7; // Make 5-bit Value (0-31)
+    pedal_phaser_osc_start_threshold = (pedal_phaser_conversion_3 >> 7) * PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_phaser_osc_start_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_phaser_pwm_slice_num);
@@ -174,7 +199,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     }
     if (abs(conversion_3_temp - pedal_phaser_conversion_3) > PEDAL_PHASER_ADC_THRESHOLD) {
         pedal_phaser_conversion_3 = conversion_3_temp;
-        pedal_phaser_coefficient_swing = ((pedal_phaser_conversion_3 >> 7) + 1) << PEDAL_PHASER_COEFFICIENT_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_phaser_osc_start_threshold = (pedal_phaser_conversion_3 >> 7) * PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     uint32 middle_moving_average = pedal_phaser_adc_middle_moving_average / PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_phaser_adc_middle_moving_average -= middle_moving_average;

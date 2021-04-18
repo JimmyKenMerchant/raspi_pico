@@ -28,8 +28,8 @@
 #include "pedal_sideband.h"
 
 #define PEDAL_SIDEBAND_LED_GPIO 25
-#define PEDAL_SIDEBAND_SWITCH_1 14
-#define PEDAL_SIDEBAND_SWITCH_2 15
+#define PEDAL_SIDEBAND_SWITCH_1_GPIO 14
+#define PEDAL_SIDEBAND_SWITCH_2_GPIO 15
 #define PEDAL_SIDEBAND_SWITCH_THRESHOLD 30
 #define PEDAL_SIDEBAND_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_SIDEBAND_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
@@ -75,12 +75,12 @@ void pedal_sideband_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
-    uint32 gpio_mask = 0b1 << PEDAL_SIDEBAND_LED_GPIO|0b1<< PEDAL_SIDEBAND_SWITCH_1|0b1 << PEDAL_SIDEBAND_SWITCH_2;
+    uint32 gpio_mask = 0b1 << PEDAL_SIDEBAND_LED_GPIO|0b1<< PEDAL_SIDEBAND_SWITCH_1_GPIO|0b1 << PEDAL_SIDEBAND_SWITCH_2_GPIO;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_SIDEBAND_LED_GPIO);
     gpio_put(PEDAL_SIDEBAND_LED_GPIO, true);
-    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_1);
-    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_2);
+    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_1_GPIO);
+    gpio_pull_up(PEDAL_SIDEBAND_SWITCH_2_GPIO);
     multicore_launch_core1(pedal_sideband_core_1);
     //pedal_sideband_debug_time = 0;
     //uint32 from_time = time_us_32();
@@ -90,8 +90,8 @@ int main(void) {
     uint32 gpio_count_switch_1 = 0;
     uint32 gpio_count_switch_2 = 0;
     while (true) {
-        switch (gpio_get_all() & (0b1 << PEDAL_SIDEBAND_SWITCH_1|0b1 << PEDAL_SIDEBAND_SWITCH_2)) {
-            case 0b1 << PEDAL_SIDEBAND_SWITCH_2: // SWITCH_1: Low
+        switch (gpio_get_all() & (0b1 << PEDAL_SIDEBAND_SWITCH_1_GPIO|0b1 << PEDAL_SIDEBAND_SWITCH_2_GPIO)) {
+            case 0b1 << PEDAL_SIDEBAND_SWITCH_2_GPIO: // SWITCH_1: Low
                 gpio_count_switch_1++;
                 gpio_count_switch_2 = 0;
                 if (gpio_count_switch_1 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
@@ -99,7 +99,7 @@ int main(void) {
                     pedal_sideband_gain = PEDAL_SIDEBAND_GAIN_FIXED_1;
                 }
                 break;
-            case 0b1 << PEDAL_SIDEBAND_SWITCH_1: // SWITCH_2: Low
+            case 0b1 << PEDAL_SIDEBAND_SWITCH_1_GPIO: // SWITCH_2: Low
                 gpio_count_switch_1 = 0;
                 gpio_count_switch_2++;
                 if (gpio_count_switch_2 >= PEDAL_SIDEBAND_SWITCH_THRESHOLD) {
@@ -162,7 +162,6 @@ void pedal_sideband_core_1() {
     pedal_sideband_osc_sine_1_index = 0;
     pedal_sideband_osc_sine_2_index = 0;
     pedal_sideband_osc_amplitude = PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK;
-    pedal_sideband_osc_speed = 4;
     pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_sideband_osc_start_threshold = (pedal_sideband_conversion_3 >> 7) * PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_sideband_osc_start_count = 0;
