@@ -37,8 +37,8 @@
 #define PEDAL_PHASER_PWM_PEAK 2047
 #define PEDAL_PHASER_GAIN 2
 #define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PHASER_DELAY_TIME_MAX 257 // Don't Use Delay Time = 0
-#define PEDAL_PHASER_DELAY_TIME_FIXED_1 256 // 30518 Divided by 256 (119.21Hz, Folding Frequency is 59.6Hz)
+#define PEDAL_PHASER_DELAY_TIME_MAX 1025 // Don't Use Delay Time = 0
+#define PEDAL_PHASER_DELAY_TIME_FIXED_1 1024 // 30518 Divided by 1024 (29.8Hz, Folding Frequency is 14.9Hz)
 #define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
@@ -291,12 +291,19 @@ void pedal_phaser_on_pwm_irq_wrap() {
     int16 delay_x = pedal_phaser_delay_x[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
     int16 delay_y = pedal_phaser_delay_y[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
     //if (pedal_phaser_delay_time) delay_x = 0; // No Delay, Otherwise Latest
-    int32 phase_shift_1 = (int32)delay_x - (int32)(int64)(((int64)(delay_y << 16) * (int64)coefficient) >> 32) + (int32)(int64)(((int64)(normalized_1 << 16) * (int64)coefficient) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    int32 phase_shift_1 = phase_shift_1 = (int32)((int64)(((int64)delay_x << 32) - (((int64)delay_y << 16) * (int64)coefficient) + (((int64)normalized_1 << 16) * (int64)coefficient)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     pedal_phaser_delay_x[pedal_phaser_delay_index] = (int16)normalized_1;
     pedal_phaser_delay_y[pedal_phaser_delay_index] = (int16)phase_shift_1;
     pedal_phaser_delay_index++;
     if (pedal_phaser_delay_index >= PEDAL_PHASER_DELAY_TIME_MAX) pedal_phaser_delay_index = 0;
-    int32 mixed_1 = normalized_1 + phase_shift_1;
+    int32 mixed_1;
+    if (pedal_phaser_mode == 0) {
+        mixed_1 = normalized_1 - phase_shift_1;
+    } else if (pedal_phaser_mode == 1) {
+        mixed_1 = (normalized_1 + phase_shift_1) >> 1;
+    } else {
+        mixed_1 = phase_shift_1;
+    }
     mixed_1 *= PEDAL_PHASER_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK) {
