@@ -28,17 +28,22 @@
 #include "pedal_planets.h"
 
 #define PEDAL_PLANETS_LED_GPIO 25
+#define PEDAL_PLANETS_SWITCH_1_GPIO 14
+#define PEDAL_PLANETS_SWITCH_2_GPIO 15
+#define PEDAL_PLANETS_SWITCH_THRESHOLD 30
 #define PEDAL_PLANETS_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_PLANETS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_PLANETS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PLANETS_PWM_PEAK 2047
-#define PEDAL_PLANETS_GAIN 2
+#define PEDAL_PLANETS_GAIN 1
 #define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 61036
-#define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000C000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_MAX 4098 // Don't Use Delay Time = 0
+#define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PLANETS_DELAY_TIME_MAX 4097 // Don't Use Delay Time = 0
 #define PEDAL_PLANETS_DELAY_TIME_FIXED_1 2049 // 30518 Divided by 256 (119.2Hz, Folding Frequency is 59.6Hz)
 #define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 2048 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (1 - 32 to 64 - 2048)
+#define PEDAL_PLANETS_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
+#define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
 #define PEDAL_PLANETS_ADC_0_GPIO 26
 #define PEDAL_PLANETS_ADC_1_GPIO 27
 #define PEDAL_PLANETS_ADC_2_GPIO 28
@@ -54,14 +59,17 @@ volatile uint16 pedal_planets_conversion_3;
 volatile uint16 pedal_planets_conversion_1_temp;
 volatile uint16 pedal_planets_conversion_2_temp;
 volatile uint16 pedal_planets_conversion_3_temp;
-volatile uint16 pedal_planets_osc_sine_1_index;
-volatile uint16 pedal_planets_osc_speed;
+volatile uchar8 pedal_planets_mode;
 volatile int32 pedal_planets_coefficient;
 volatile int16* pedal_planets_delay_x;
 volatile int16* pedal_planets_delay_y;
 volatile uint16 pedal_planets_delay_time;
 volatile uint16 pedal_planets_delay_index;
 volatile uint16 pedal_planets_delay_time_swing;
+volatile uint16 pedal_planets_osc_sine_1_index;
+volatile uint16 pedal_planets_osc_speed;
+volatile char8 pedal_planets_osc_start_threshold;
+volatile uint16 pedal_planets_osc_start_count;
 volatile uint32 pedal_planets_adc_middle_moving_average;
 volatile bool pedal_planets_is_outstanding_on_adc;
 volatile uint32 pedal_planets_debug_time;
@@ -78,6 +86,8 @@ int main(void) {
     gpio_put(PEDAL_PLANETS_LED_GPIO, true);
     multicore_launch_core1(pedal_planets_core_1);
     //pedal_planets_debug_time = 0;
+    //pedal_planets_debug_value_1 = 0;
+    //pedal_planets_debug_value_2 = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
     //pedal_planets_debug_time = time_us_32() - from_time;
@@ -88,6 +98,8 @@ int main(void) {
         //printf("@main 5 - pedal_planets_conversion_3 %0x\n", pedal_planets_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_planets_debug_time %d\n", pedal_planets_debug_time);
+        //printf("@main 8 - pedal_planets_debug_value_1 %0x\n", pedal_planets_debug_value_1);
+        //printf("@main 9 - pedal_planets_debug_value_2 %0x\n", pedal_planets_debug_value_2);
         //sleep_ms(500);
         tight_loop_contents();
     }
@@ -131,14 +143,16 @@ void pedal_planets_core_1() {
     pedal_planets_conversion_2_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_3_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_adc_middle_moving_average = pedal_planets_conversion_1 * PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
-    pedal_planets_osc_sine_1_index = 0;
     pedal_planets_coefficient = PEDAL_PLANETS_COEFFICIENT_FIXED_1;
     pedal_planets_delay_x = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_y = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_time = PEDAL_PLANETS_DELAY_TIME_FIXED_1;
-    pedal_planets_delay_index = 0;
     pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_planets_delay_index = 0;
+    pedal_planets_osc_sine_1_index = 0;
+    pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
+    pedal_planets_osc_start_threshold = (pedal_planets_conversion_3 >> 7) * PEDAL_PLANETS_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_planets_osc_start_count = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_planets_pwm_slice_num);
@@ -147,8 +161,61 @@ void pedal_planets_core_1() {
     __dsb();
     __isb();
     adc_run(true);
+    uint32 gpio_mask = 0b1<< PEDAL_PLANETS_SWITCH_1_GPIO|0b1 << PEDAL_PLANETS_SWITCH_2_GPIO;
+    gpio_init_mask(gpio_mask);
+    gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_PLANETS_LED_GPIO);
+    gpio_put(PEDAL_PLANETS_LED_GPIO, true);
+    gpio_pull_up(PEDAL_PLANETS_SWITCH_1_GPIO);
+    gpio_pull_up(PEDAL_PLANETS_SWITCH_2_GPIO);
+    uint16 count_switch_0 = 0; // Center
+    uint16 count_switch_1 = 0;
+    uint16 count_switch_2 = 0;
+    uchar8 mode = 0; // To Reduce Memory Access
     while (true) {
-        tight_loop_contents();
+        switch (gpio_get_all() & (0b1 << PEDAL_PLANETS_SWITCH_1_GPIO|0b1 << PEDAL_PLANETS_SWITCH_2_GPIO)) {
+            case 0b1 << PEDAL_PLANETS_SWITCH_2_GPIO: // SWITCH_1: Low
+                count_switch_0 = 0;
+                count_switch_1++;
+                count_switch_2 = 0;
+                if (count_switch_1 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
+                    count_switch_1 = 0;
+                    if (mode != 1) {
+                        pedal_planets_mode = 1;
+                        mode = 1;
+                    }
+                }
+                break;
+            case 0b1 << PEDAL_PLANETS_SWITCH_1_GPIO: // SWITCH_2: Low
+                count_switch_0 = 0;
+                count_switch_1 = 0;
+                count_switch_2++;
+                if (count_switch_2 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
+                    count_switch_2 = 0;
+                    if (mode != 2) {
+                        pedal_planets_mode = 2;
+                        mode = 2;
+                    }
+                }
+                break;
+            default: // All High
+                count_switch_0++;
+                count_switch_1 = 0;
+                count_switch_2 = 0;
+                if (count_switch_0 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
+                    count_switch_0 = 0;
+                    if (mode != 0) {
+                        pedal_planets_mode = 0;
+                        mode = 0;
+                    }
+                }
+                break;
+        }
+        //printf("@main 3 - pedal_planets_conversion_1 %0x\n", pedal_planets_conversion_1);
+        //printf("@main 4 - pedal_planets_conversion_2 %0x\n", pedal_planets_conversion_2);
+        //printf("@main 5 - pedal_planets_conversion_3 %0x\n", pedal_planets_conversion_3);
+        //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
+        //printf("@main 7 - pedal_planets_debug_time %d\n", pedal_planets_debug_time);
+        sleep_us(1000);
     }
 }
 
@@ -177,6 +244,34 @@ void pedal_planets_on_pwm_irq_wrap() {
     pedal_planets_adc_middle_moving_average -= middle_moving_average;
     pedal_planets_adc_middle_moving_average += pedal_planets_conversion_1;
     int32 normalized_1 = (int32)pedal_planets_conversion_1 - (int32)middle_moving_average;
+    /**
+     * pedal_planets_osc_start_count:
+     *
+     * Over Positive Threshold       ## 1
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Positive Threshold     # 0 # 2      ### Reset to 1
+     *-----------------------------------------------------------------------------------------------------------
+     * Hysteresis                  # 0   # 3   # 5   # 2
+     *-----------------------------------------------------------------------------------------------------------
+     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PLANETS_OSC_START_COUNT_MAX
+     *-----------------------------------------------------------------------------------------------------------
+     * Hysteresis                         # 5 # 3      #### 4
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Negative Threshold           # 6 # 2
+     *-----------------------------------------------------------------------------------------------------------
+     * Over Negative Threshold             ## Reset to 1
+     */
+    if (normalized_1 > pedal_planets_osc_start_threshold || normalized_1 < -pedal_planets_osc_start_threshold) {
+        pedal_planets_osc_start_count = 1;
+    } else if (pedal_planets_osc_start_count != 0 && (normalized_1 > (pedal_planets_osc_start_threshold >> 1) || normalized_1 < -(pedal_planets_osc_start_threshold >> 1))) {
+        pedal_planets_osc_start_count = 1;
+    } else if (pedal_planets_osc_start_count != 0) {
+        pedal_planets_osc_start_count++;
+    }
+    if (pedal_planets_osc_start_count >= PEDAL_PLANETS_OSC_START_COUNT_MAX) pedal_planets_osc_start_count = 0;
+    if (pedal_planets_osc_start_count == 0) {
+        pedal_planets_osc_sine_1_index = 0;
+    }
     /* Get Oscillator */
     int32 fixed_point_value_sine_1 = pedal_planets_table_sine_1[pedal_planets_osc_sine_1_index];
     pedal_planets_osc_sine_1_index += pedal_planets_osc_speed;
@@ -186,6 +281,7 @@ void pedal_planets_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
+     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the addition of the concurrent wave and the phase shifted concurrent wave.
      * The phase shifted concurrent wave is made by an all-pass filter.
@@ -208,16 +304,28 @@ void pedal_planets_on_pwm_irq_wrap() {
      * If the sampling frequency is 30518Hz, the effective frequency is its Nyquist (or folding) frequency and over, i.e., 15259Hz <=.
      * To get the effect on intended frequencies, use X[S - N] and Y[S - N] where N is the number of delay.
      */
+    /* First Stage All-pass Filter for Noise Cancel */
     int16 delay_time_swing = (int16)(int64)(((int64)(pedal_planets_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
-    int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
+    int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];    
     //if (pedal_planets_delay_time) delay_x = 0; // No Delay, Otherwise Latest
-    int32 phase_shift_1 = (int32)delay_x - (int32)(int64)(((int64)(delay_y << 16) * (int64)pedal_planets_coefficient) >> 32) + (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_planets_coefficient) >> 32);
-    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
-    pedal_planets_delay_y[pedal_planets_delay_index] = (int16)phase_shift_1;
+    int32 phase_shift_1 = (int32)((int64)(((int64)delay_x << 32) - ((int64)delay_y << 32) + ((int64)normalized_1 << 32)) >> 32); // Coefficient = 1
+    int32 canceled_1 = (normalized_1 + phase_shift_1) >> 1;
+    /* Second Stage All-pass Filter for Phaser */
+    int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient) + (((int64)canceled_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
+    int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * (int64)pedal_planets_coefficient) + (((int64)canceled_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
+    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)canceled_1;
+    pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
     pedal_planets_delay_index++;
     if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index = 0;
-    int32 mixed_1 = normalized_1 + phase_shift_1;
+    int32 mixed_1;
+    if (pedal_planets_mode == 0) {
+        mixed_1 = (low_pass_1 + high_pass_1) - canceled_1;
+    } else if (pedal_planets_mode == 1) {
+        mixed_1 = low_pass_1;
+    } else {
+        mixed_1 = high_pass_1;
+    }
     mixed_1 *= PEDAL_PLANETS_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK) {
@@ -236,10 +344,13 @@ void pedal_planets_on_pwm_irq_wrap() {
     pwm_clear_irq(pedal_planets_pwm_slice_num); // Seems Overlap IRQ Otherwise
     //pedal_planets_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_planets_debug_time); // To send a made pointer, sync flag, etc.
+    __dsb();
 }
 
 void pedal_planets_on_adc_irq_fifo() {
     adc_run(false);
+    __dsb();
+    __isb();
     uint16 adc_fifo_level = adc_fifo_get_level(); // Seems 8 at Maximum
     //printf("@pedal_planets_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
     for (uint16 i = 0; i < adc_fifo_level; i++) {
@@ -257,5 +368,8 @@ void pedal_planets_on_adc_irq_fifo() {
     }
     //printf("@pedal_planets_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
     adc_fifo_drain();
+    do {
+        __dsb();
+    } while (! adc_fifo_is_empty);
     pedal_planets_is_outstanding_on_adc = false;
 }
