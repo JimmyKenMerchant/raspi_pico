@@ -74,6 +74,7 @@ int main(void) {
 }
 
 void blinkers_on_pwm_irq_wrap() {
+    pwm_clear_irq(blinkers_pwm_slice_num);
     pwm_set_chan_level(blinkers_pwm_slice_num, blinkers_pwm_channel, blinkers_count * blinkers_count);
     blinkers_count--;
     if (blinkers_count == 0) {
@@ -81,5 +82,4 @@ void blinkers_on_pwm_irq_wrap() {
         sequencer_gpio_pico_execute(blinkers_the_sequencer);
         printf("@blinkers_on_pwm_irq_wrap 1 - blinkers_the_sequencer->index: %d\n", blinkers_the_sequencer->index);
     }
-    pwm_clear_irq(blinkers_pwm_slice_num);
 }

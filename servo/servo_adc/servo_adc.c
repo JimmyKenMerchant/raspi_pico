@@ -85,6 +85,7 @@ int main(void) {
 }
 
 void servo_on_pwm_irq_wrap() {
+    pwm_clear_irq(servo_pwm_slice_num);
     if (abs(servo_conversion_1_temp - servo_conversion_1) > SERVO_PWM_THRESHOLD) {
         servo_conversion_1 = servo_conversion_1_temp;
         servo_the_sequencer_1->index = servo_conversion_1 >> 4;
@@ -97,7 +98,6 @@ void servo_on_pwm_irq_wrap() {
         adc_select_input(0); // Ensure to Start from A0
         adc_run(true);
     }
-    pwm_clear_irq(servo_pwm_slice_num);
 }
 
 void servo_on_adc_irq_fifo() {

@@ -151,6 +151,7 @@ void pedal_tape_core_1() {
 }
 
 void pedal_tape_on_pwm_irq_wrap() {
+    pwm_clear_irq(pedal_tape_pwm_slice_num);
     //uint32 from_time = time_us_32();
     uint16 conversion_1_temp = pedal_tape_conversion_1_temp;
     uint16 conversion_2_temp = pedal_tape_conversion_2_temp;
@@ -209,7 +210,6 @@ void pedal_tape_on_pwm_irq_wrap() {
     }
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel + 1, (uint16)output_1_inverted);
-    pwm_clear_irq(pedal_tape_pwm_slice_num); // Seems Overlap IRQ Otherwise
     //pedal_tape_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_tape_debug_time); // To send a made pointer, sync flag, etc.
 }

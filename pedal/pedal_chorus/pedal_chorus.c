@@ -32,7 +32,7 @@
 #define PEDAL_CHORUS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_CHORUS_PWM_PEAK 2047
-#define PEDAL_CHORUS_GAIN 2
+#define PEDAL_CHORUS_GAIN 1
 #define PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_CHORUS_DELAY_TIME_MAX 1527
 #define PEDAL_CHORUS_DELAY_TIME_FIXED_1 PEDAL_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 30518 (0.05 Seconds)
@@ -161,6 +161,7 @@ void pedal_chorus_core_1() {
 }
 
 void pedal_chorus_on_pwm_irq_wrap() {
+    pwm_clear_irq(pedal_chorus_pwm_slice_num);
     //uint32 from_time = time_us_32();
     /* Input */
     uint16 conversion_1_temp = pedal_chorus_conversion_1_temp;
@@ -223,7 +224,6 @@ void pedal_chorus_on_pwm_irq_wrap() {
     }
     pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel + 1, (uint16)output_1_inverted);
-    pwm_clear_irq(pedal_chorus_pwm_slice_num); // Seems Overlap IRQ Otherwise
     //pedal_chorus_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_chorus_debug_time); // To send a made pointer, sync flag, etc.
 }
