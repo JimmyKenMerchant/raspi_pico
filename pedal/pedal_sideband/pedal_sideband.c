@@ -138,8 +138,7 @@ int main(void) {
         //printf("@main 5 - pedal_sideband_conversion_3 %0x\n", pedal_sideband_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_sideband_debug_time %d\n", pedal_sideband_debug_time);
-        //sleep_us(1000);
-        tight_loop_contents();
+        sleep_us(1000);
     }
     return 0;
 }
