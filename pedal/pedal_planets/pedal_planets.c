@@ -74,6 +74,7 @@ volatile char8 pedal_planets_osc_start_threshold;
 volatile uint16 pedal_planets_osc_start_count;
 volatile uint32 pedal_planets_adc_middle_moving_average;
 volatile bool pedal_planets_is_outstanding_on_adc;
+volatile bool pedal_planets_is_error_on_adc;
 volatile uint32 pedal_planets_debug_time;
 
 void pedal_planets_core_1();
@@ -156,6 +157,7 @@ void pedal_planets_core_1() {
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_planets_pwm_slice_num);
     pedal_planets_is_outstanding_on_adc = true;
+    pedal_planets_is_error_on_adc = false;
     adc_select_input(0); // Ensure to Start from A0
     __dsb();
     __isb();
@@ -227,10 +229,22 @@ void pedal_planets_on_pwm_irq_wrap() {
     uint16 conversion_3_temp = pedal_planets_conversion_3_temp;
     if (! pedal_planets_is_outstanding_on_adc) {
         pedal_planets_is_outstanding_on_adc = true;
-        adc_select_input(0); // Ensure to Start from A0
-        __dsb();
-        __isb();
-        adc_run(true); // Stable Starting Point after PWM IRQ
+        if (pedal_planets_is_error_on_adc) {
+            pedal_planets_is_error_on_adc = false;
+            uint32 middle_moving_average = pedal_planets_adc_middle_moving_average / PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+            pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel, (uint16)middle_moving_average);
+            pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel + 1, (uint16)middle_moving_average);
+            adc_select_input(0); // Ensure to Start from ADC0
+            __dsb();
+            __isb();
+            adc_run(true); // Stable Starting Point after PWM IRQ
+            return; // Pass Through Further Process
+        } else {
+            adc_select_input(0); // Ensure to Start from ADC0
+            __dsb();
+            __isb();
+            adc_run(true); // Stable Starting Point after PWM IRQ
+        }
     }
     pedal_planets_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_planets_conversion_2) > PEDAL_PLANETS_ADC_THRESHOLD) {
@@ -335,7 +349,8 @@ void pedal_planets_on_adc_irq_fifo() {
         //printf("@pedal_planets_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (temp & 0x8000) { // Procedure on Malfunction
-            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            //reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            pedal_planets_is_error_on_adc = true;
             break;
         } else {
             temp &= 0x7FFF; // Clear Bit[15]: ERR
@@ -355,4 +370,5 @@ void pedal_planets_on_adc_irq_fifo() {
         tight_loop_contents();
     } while (! adc_fifo_is_empty);
     pedal_planets_is_outstanding_on_adc = false;
+    __dsb();
 }

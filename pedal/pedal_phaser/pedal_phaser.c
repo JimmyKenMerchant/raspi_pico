@@ -41,6 +41,8 @@
 #define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PHASER_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
 #define PEDAL_PHASER_DELAY_TIME_FIXED_1 2048 // 30518 Divided by 2024 (15.07Hz, Folding Frequency is 7.53Hz)
+#define PEDAL_PHASER_DELAY_TIME_FIXED_2 256 // 30518 Divided by 256 (119.21Hz, Folding Frequency is 59.6Hz)
+#define PEDAL_PHASER_DELAY_TIME_FIXED_3 64 // 30518 Divided by 64 (476.84Hz, Folding Frequency is 238.42Hz)
 #define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
@@ -73,6 +75,7 @@ volatile char8 pedal_phaser_osc_start_threshold;
 volatile uint16 pedal_phaser_osc_start_count;
 volatile uint32 pedal_phaser_adc_middle_moving_average;
 volatile bool pedal_phaser_is_outstanding_on_adc;
+volatile bool pedal_phaser_is_error_on_adc;
 volatile uint32 pedal_phaser_debug_time;
 
 void pedal_phaser_core_1();
@@ -156,6 +159,7 @@ void pedal_phaser_core_1() {
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_phaser_pwm_slice_num);
     pedal_phaser_is_outstanding_on_adc = true;
+    pedal_phaser_is_error_on_adc = false;
     adc_select_input(0); // Ensure to Start from A0
     __dsb();
     __isb();
@@ -181,6 +185,7 @@ void pedal_phaser_core_1() {
                     if (mode != 1) {
                         pedal_phaser_mode = 1;
                         mode = 1;
+                        pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_3;
                     }
                 }
                 break;
@@ -193,6 +198,7 @@ void pedal_phaser_core_1() {
                     if (mode != 2) {
                         pedal_phaser_mode = 2;
                         mode = 2;
+                        pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_2;
                     }
                 }
                 break;
@@ -205,6 +211,7 @@ void pedal_phaser_core_1() {
                     if (mode != 0) {
                         pedal_phaser_mode = 0;
                         mode = 0;
+                        pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_1;
                     }
                 }
                 break;
@@ -227,10 +234,22 @@ void pedal_phaser_on_pwm_irq_wrap() {
     uint16 conversion_3_temp = pedal_phaser_conversion_3_temp;
     if (! pedal_phaser_is_outstanding_on_adc) {
         pedal_phaser_is_outstanding_on_adc = true;
-        adc_select_input(0); // Ensure to Start from A0
-        __dsb();
-        __isb();
-        adc_run(true); // Stable Starting Point after PWM IRQ
+        if (pedal_phaser_is_error_on_adc) {
+            pedal_phaser_is_error_on_adc = false;
+            uint32 middle_moving_average = pedal_phaser_adc_middle_moving_average / PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+            pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, (uint16)middle_moving_average);
+            pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel + 1, (uint16)middle_moving_average);
+            adc_select_input(0); // Ensure to Start from ADC0
+            __dsb();
+            __isb();
+            adc_run(true); // Stable Starting Point after PWM IRQ
+            return; // Pass Through Further Process
+        } else {
+            adc_select_input(0); // Ensure to Start from ADC0
+            __dsb();
+            __isb();
+            adc_run(true); // Stable Starting Point after PWM IRQ
+        }
     }
     pedal_phaser_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_phaser_conversion_2) > PEDAL_PHASER_ADC_THRESHOLD) {
@@ -331,7 +350,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     } else if (pedal_phaser_mode == 1) {
         mixed_1 = (canceled_1 + phase_shift_2) >> 1;
     } else {
-        mixed_1 = canceled_1;
+        mixed_1 = (canceled_1 + phase_shift_2) >> 1;
     }
     mixed_1 *= PEDAL_PHASER_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
@@ -363,7 +382,8 @@ void pedal_phaser_on_adc_irq_fifo() {
         //printf("@pedal_phaser_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (temp & 0x8000) { // Procedure on Malfunction
-            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            //reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            pedal_phaser_is_error_on_adc = true;
             break;
         } else {
             temp &= 0x7FFF; // Clear Bit[15]: ERR
@@ -383,4 +403,5 @@ void pedal_phaser_on_adc_irq_fifo() {
         tight_loop_contents();
     } while (! adc_fifo_is_empty);
     pedal_phaser_is_outstanding_on_adc = false;
+    __dsb();
 }
