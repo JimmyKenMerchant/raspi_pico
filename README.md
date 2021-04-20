@@ -127,8 +127,6 @@ printf("@main 2 - pedal_buffer_debug_time %d\n", pedal_buffer_debug_time);
 
 * In this coding as above, the time showed approx. 350 micro seconds with the embedded USB 2.0. However, USB 2.0 becomes a popular middle range communicator. The recommended length of a USB 2.0 cable is up to 5 meters (16 feet), but you can purchase a USB 2.0 cable which has a signal booster, and the length is 10 meters (32 feet).
 
-* The PWM interrupt seems to overlap without clearing its interrupt flag ("pwm_clear_irq"). In the IRQ handler, you need to clear the flag immediately. Otherwise, the IRQ overlaps after several cycles ago.
-
 * When you output the audio signal with PWM on approx. 30518Hz (12-bit resolution per cycle with the 125Mhz clock speed), you are allowed to spend approx. 30 micro seconds for a cycle. The 125Mhz clock speed spends 0.008 micro seconds per clock, and 30 micro seconds includes 3750 clocks. These clocks may be enough on processing with integer, but may not be enough on processing with floating point decimal. To utilize decimal, you can use fixed point decimal, and a number table with expected values that is already calculated by functions such as sine. For example:
 
 ```C

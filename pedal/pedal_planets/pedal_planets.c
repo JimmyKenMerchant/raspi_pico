@@ -22,6 +22,7 @@
 #include "hardware/adc.h"
 #include "hardware/irq.h"
 #include "hardware/sync.h"
+#include "hardware/resets.h"
 // raspi_pico/include
 #include "macros_pico.h"
 // Private header
@@ -38,11 +39,11 @@
 #define PEDAL_PLANETS_PWM_PEAK 2047
 #define PEDAL_PLANETS_GAIN 1
 #define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 61036
-#define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000A000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_MAX 4097 // Don't Use Delay Time = 0
-#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 2049 // 30518 Divided by 2049 (14.89Hz, Folding Frequency is 7.447Hz)
-#define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 2048 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (1 - 32 to 64 - 2048)
+#define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PLANETS_DELAY_TIME_MAX 1025 // Don't Use Delay Time = 0
+#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 513 // 30518 Divided by 513 (59.49Hz, Folding Frequency is 29.74Hz)
+#define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 512 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 4 // Multiply By 16 (1 - 32 to 16 - 512)
 #define PEDAL_PLANETS_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
 #define PEDAL_PLANETS_ADC_0_GPIO 26
@@ -281,11 +282,16 @@ void pedal_planets_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
+    if (normalized_1 >= PEDAL_PLANETS_PWM_PEAK) normalized_1 = PEDAL_PLANETS_PWM_PEAK;
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_time_swing = (int16)(int64)(((int64)(pedal_planets_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32);
     int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
+    /* High Pass Filter and Correction */
     int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * (int64)pedal_planets_coefficient) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
+    if (high_pass_1 >= PEDAL_PLANETS_PWM_PEAK) high_pass_1 = PEDAL_PLANETS_PWM_PEAK;
+    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(high_pass_1)]) >> 32);
+    /* Low Pass Filster */
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
     pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
     pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
@@ -297,7 +303,7 @@ void pedal_planets_on_pwm_irq_wrap() {
     } else if (pedal_planets_mode == 1) {
         mixed_1 = high_pass_1;
     } else {
-        mixed_1 = normalized_1;
+        mixed_1 = (normalized_1 + low_pass_1) >> 1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
@@ -328,20 +334,25 @@ void pedal_planets_on_adc_irq_fifo() {
     for (uint16 i = 0; i < adc_fifo_level; i++) {
         //printf("@pedal_planets_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
-        temp &= 0x7FFF; // Clear Bit[15]: ERR
-        uint16 remainder = i % 3;
-        if (remainder == 2) {
-            pedal_planets_conversion_3_temp = temp;
-        } else if (remainder == 1) {
-            pedal_planets_conversion_2_temp = temp;
-        } else if (remainder == 0) {
-            pedal_planets_conversion_1_temp = temp;
+        if (temp & 0x8000) { // Procedure on Malfunction
+            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            break;
+        } else {
+            temp &= 0x7FFF; // Clear Bit[15]: ERR
+            uint16 remainder = i % 3;
+            if (remainder == 2) {
+                pedal_planets_conversion_3_temp = temp;
+            } else if (remainder == 1) {
+                pedal_planets_conversion_2_temp = temp;
+            } else if (remainder == 0) {
+               pedal_planets_conversion_1_temp = temp;
+            }
         }
     }
     //printf("@pedal_planets_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
     adc_fifo_drain();
     do {
-        __dsb();
+        tight_loop_contents();
     } while (! adc_fifo_is_empty);
     pedal_planets_is_outstanding_on_adc = false;
 }

@@ -22,6 +22,7 @@
 #include "hardware/adc.h"
 #include "hardware/irq.h"
 #include "hardware/sync.h"
+#include "hardware/resets.h"
 // raspi_pico/include
 #include "macros_pico.h"
 // Private header
@@ -281,6 +282,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
+     if (normalized_1 >= PEDAL_PHASER_PWM_PEAK) normalized_1 = PEDAL_PHASER_PWM_PEAK;
      normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the synthesis of the concurrent wave and the phase shifted concurrent wave.
@@ -331,7 +333,6 @@ void pedal_phaser_on_pwm_irq_wrap() {
     } else {
         mixed_1 = canceled_1;
     }
-    mixed_1 = (int32)(int64)((((int64)mixed_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1)]) >> 32);
     mixed_1 *= PEDAL_PHASER_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK) {
@@ -361,20 +362,25 @@ void pedal_phaser_on_adc_irq_fifo() {
     for (uint16 i = 0; i < adc_fifo_level; i++) {
         //printf("@pedal_phaser_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
-        temp &= 0x7FFF; // Clear Bit[15]: ERR
-        uint16 remainder = i % 3;
-        if (remainder == 2) {
-            pedal_phaser_conversion_3_temp = temp;
-        } else if (remainder == 1) {
-            pedal_phaser_conversion_2_temp = temp;
-        } else if (remainder == 0) {
-            pedal_phaser_conversion_1_temp = temp;
+        if (temp & 0x8000) { // Procedure on Malfunction
+            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            break;
+        } else {
+            temp &= 0x7FFF; // Clear Bit[15]: ERR
+            uint16 remainder = i % 3;
+            if (remainder == 2) {
+                pedal_phaser_conversion_3_temp = temp;
+            } else if (remainder == 1) {
+                pedal_phaser_conversion_2_temp = temp;
+            } else if (remainder == 0) {
+               pedal_phaser_conversion_1_temp = temp;
+            }
         }
     }
     //printf("@pedal_phaser_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
     adc_fifo_drain();
     do {
-        __dsb();
+        tight_loop_contents();
     } while (! adc_fifo_is_empty);
     pedal_phaser_is_outstanding_on_adc = false;
 }
