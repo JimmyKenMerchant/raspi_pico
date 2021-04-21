@@ -28,6 +28,7 @@
 // Private header
 #include "pedal_phaser.h"
 
+#define PEDAL_PHASER_TRANSIENT_RESPONSE 2000 // 2000 Micro Seconds
 #define PEDAL_PHASER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_PHASER_LED_GPIO 25
 #define PEDAL_PHASER_SWITCH_1_GPIO 14
@@ -84,6 +85,7 @@ void pedal_phaser_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    sleep_us(PEDAL_PHASER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_PHASER_LED_GPIO);
     gpio_set_dir(PEDAL_PHASER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_PHASER_LED_GPIO, true);

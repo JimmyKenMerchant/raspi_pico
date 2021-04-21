@@ -28,6 +28,7 @@
 // Private header
 #include "pedal_planets.h"
 
+#define PEDAL_PLANETS_TRANSIENT_RESPONSE 2000 // 2000 Micro Seconds
 #define PEDAL_PLANETS_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_PLANETS_LED_GPIO 25
 #define PEDAL_PLANETS_SWITCH_1_GPIO 14
@@ -83,6 +84,7 @@ void pedal_planets_on_adc_irq_fifo();
 int main(void) {
     //stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    sleep_us(PEDAL_PLANETS_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_PLANETS_LED_GPIO);
     gpio_set_dir(PEDAL_PLANETS_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_PLANETS_LED_GPIO, true);
