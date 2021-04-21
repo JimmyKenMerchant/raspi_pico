@@ -96,7 +96,7 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 
 * Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels).
 
-* Now on testing the durability and searching situations on happening the malfunction with audio input and output. Ripple voltage on power causes the malfunction (VERY NOISY). The ripple occurs from static electricity and so on. Grounding with 1M ohms and ripple filters seem to be effective for the malfunction so far.
+* Now on testing the durability and searching situations on happening the malfunction with audio input and output. Ripple voltage on power causes the malfunction (VERY NOISY). The ripple occurs from static electricity and so on. Grounding with 1M ohms and ripple filters seem to be effective for the malfunction so far. Especially, in addition to C2 of Pico, a 47uF 6.3V chip, more bypass capacitors to 3V3 are needed for audio input and output (see [EEVblog](https://www.eevblog.com/2016/03/11/eevblog-859-bypass-capacitor-tutorial/)!). The 3V3 line directly connected with RP2040, and the instability of this line is critical.
 
 * Pedals decides the middle point of the wave by the moving average. The number of moving average is fixed. The more number is slow to move the middle point. Whereas, the less number is fast, but is effected by the large peak of the wave.
 

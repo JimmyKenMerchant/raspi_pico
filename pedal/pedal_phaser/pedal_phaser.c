@@ -75,7 +75,6 @@ volatile char8 pedal_phaser_osc_start_threshold;
 volatile uint16 pedal_phaser_osc_start_count;
 volatile uint32 pedal_phaser_adc_middle_moving_average;
 volatile bool pedal_phaser_is_outstanding_on_adc;
-volatile bool pedal_phaser_is_error_on_adc;
 volatile uint32 pedal_phaser_debug_time;
 
 void pedal_phaser_core_1();
@@ -159,7 +158,6 @@ void pedal_phaser_core_1() {
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_phaser_pwm_slice_num);
     pedal_phaser_is_outstanding_on_adc = true;
-    pedal_phaser_is_error_on_adc = false;
     adc_select_input(0); // Ensure to Start from A0
     __dsb();
     __isb();
@@ -234,22 +232,10 @@ void pedal_phaser_on_pwm_irq_wrap() {
     uint16 conversion_3_temp = pedal_phaser_conversion_3_temp;
     if (! pedal_phaser_is_outstanding_on_adc) {
         pedal_phaser_is_outstanding_on_adc = true;
-        if (pedal_phaser_is_error_on_adc) {
-            pedal_phaser_is_error_on_adc = false;
-            uint32 middle_moving_average = pedal_phaser_adc_middle_moving_average / PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-            pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, (uint16)middle_moving_average);
-            pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel + 1, (uint16)middle_moving_average);
-            adc_select_input(0); // Ensure to Start from ADC0
-            __dsb();
-            __isb();
-            adc_run(true); // Stable Starting Point after PWM IRQ
-            return; // Pass Through Further Process
-        } else {
-            adc_select_input(0); // Ensure to Start from ADC0
-            __dsb();
-            __isb();
-            adc_run(true); // Stable Starting Point after PWM IRQ
-        }
+        adc_select_input(0); // Ensure to Start from ADC0
+        __dsb();
+        __isb();
+        adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_phaser_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_phaser_conversion_2) > PEDAL_PHASER_ADC_THRESHOLD) {
@@ -301,8 +287,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-     if (normalized_1 >= PEDAL_PHASER_PWM_PEAK) normalized_1 = PEDAL_PHASER_PWM_PEAK;
-     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_PHASER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the synthesis of the concurrent wave and the phase shifted concurrent wave.
      * The phase shifted concurrent wave is made by an all-pass filter.
@@ -353,18 +338,8 @@ void pedal_phaser_on_pwm_irq_wrap() {
         mixed_1 = (canceled_1 + phase_shift_2) >> 1;
     }
     mixed_1 *= PEDAL_PHASER_GAIN;
-    int32 output_1 = mixed_1 + middle_moving_average;
-    if (output_1 > PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK) {
-        output_1 = PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK;
-    } else if (output_1 < PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK) {
-        output_1 = PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK;
-    }
-    int32 output_1_inverted = -mixed_1 + middle_moving_average;
-    if (output_1_inverted > PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK) {
-        output_1_inverted = PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK;
-    } else if (output_1_inverted < PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK) {
-        output_1_inverted = PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK;
-    }
+    int32 output_1 = _cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
+    int32 output_1_inverted = _cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_phaser_debug_time = time_us_32() - from_time;
@@ -382,8 +357,7 @@ void pedal_phaser_on_adc_irq_fifo() {
         //printf("@pedal_phaser_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (temp & 0x8000) { // Procedure on Malfunction
-            //reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
-            pedal_phaser_is_error_on_adc = true;
+            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
             break;
         } else {
             temp &= 0x7FFF; // Clear Bit[15]: ERR

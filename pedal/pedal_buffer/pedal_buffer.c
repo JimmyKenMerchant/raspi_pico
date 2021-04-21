@@ -252,20 +252,10 @@ void pedal_buffer_on_pwm_irq_wrap() {
          * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
          * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
          */
-        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     }
-    int32 output_1 = normalized_1 + middle_moving_average;
-    if (output_1 > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
-        output_1 = PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK;
-    } else if (output_1 < PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK) {
-        output_1 = PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK;
-    }
-    int32 output_1_inverted = -normalized_1 + middle_moving_average;
-    if (output_1_inverted > PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK) {
-        output_1_inverted = PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK;
-    } else if (output_1_inverted < PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK) {
-        output_1_inverted = PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK;
-    }
+    int32 output_1 = _cutoff_biased(normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
+    int32 output_1_inverted = _cutoff_biased(-normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_buffer_debug_time = time_us_32() - from_time;
