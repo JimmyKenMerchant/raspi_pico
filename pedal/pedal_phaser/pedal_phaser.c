@@ -47,9 +47,6 @@
 #define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
 #define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
-#define PEDAL_PHASER_ADC_0_GPIO 26
-#define PEDAL_PHASER_ADC_1_GPIO 27
-#define PEDAL_PHASER_ADC_2_GPIO 28
 #define PEDAL_PHASER_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PHASER_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.

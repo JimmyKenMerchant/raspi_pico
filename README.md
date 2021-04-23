@@ -57,8 +57,22 @@ sudo minicom -b 115200 -o -D /dev/ttyACM0
 * You can also use OpenOCD. Chapter 5 and 6 of "Getting started with Raspberry Pi Pico" is useful for the installation of OpenOCD and GDB, a debugger.
 
 ```bash
-# Run through OpenOCD Tested in My Raspberry Pi 3B
+# Run through OpenOCD Tested in My Raspberry Pi 3B with USB Powered Pico
 openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program blinkers/blinkers.elf verify reset exit"
+# Or Use with GDB
+cd ../
+rm -r build
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ../
+make -j4
+openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg
+# On Another Terminal (File > New Window)
+gdb-multiarch blinkers/blinkdrs.elf
+# In gdb, Type "target remote localhost:3333", "load", and "monitor reset init"
+# "l (list)", "b (break) blinkers_on_pwm_irq_wrap", "c (continue)", "info breakpoints", "delete <Num>", "q (quit)", Ctrl+c (Stop Execution), etc.
+# Watchpoints detect changes of values, e.g., "watch blinkers_count", "print blinkers_count", etc.
+# For Multicore, "info threads", "thread 2", etc.
 ```
 
 ## Notes on Projects
