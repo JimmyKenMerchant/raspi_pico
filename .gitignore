@@ -2,3 +2,5 @@
 pico_sdk_import.cmake
 # Ignore Contents in build/
 build/
+# Ignore Contents in __pycache__/
+__pycache__/

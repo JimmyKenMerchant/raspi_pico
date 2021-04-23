@@ -16,6 +16,7 @@ target_link_libraries(${target_name}
     hardware_adc
     hardware_irq
     hardware_sync
+    util_pedal_pico
 )
 
 add_custom_target(${target_name}_header
@@ -43,4 +44,4 @@ elseif (PICO_ON_DEVICE)
 endif()
 
 # "printf" Messages via UART
-#pico_enable_stdio_uart(${target_name} 0)
+pico_enable_stdio_uart(${target_name} 1)

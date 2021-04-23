@@ -25,7 +25,7 @@ sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
 sudo apt install libstdc++-arm-none-eabi-newlib
 sudo apt install minicom
 # Several projects use Python-3 scripts to make headers. Add extra Python-3 libraries.
-sudo apt install python3-pip
+sudo apt install python3-pip libatlas-base-dev
 pip3 install numpy scipy
 # Make Directory
 mkdir ~/pico_projects
@@ -52,6 +52,13 @@ make -j4
 cp blinkers/blinkers.uf2 /media/$USER/RPI-RP2/
 # Monitor "printf" Messages from Console
 sudo minicom -b 115200 -o -D /dev/ttyACM0
+```
+
+* You can also use OpenOCD. Chapter 5 and 6 of "Getting started with Raspberry Pi Pico" is useful for the installation of OpenOCD and GDB, a debugger.
+
+```bash
+# Run through OpenOCD Tested in My Raspberry Pi 3B
+openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program blinkers/blinkers.elf verify reset exit"
 ```
 
 ## Notes on Projects

@@ -24,4 +24,4 @@ elseif (PICO_ON_DEVICE)
 endif()
 
 # "printf" Messages via UART
-#pico_enable_stdio_uart(${target_name} 0)
+pico_enable_stdio_uart(${target_name} 1)
