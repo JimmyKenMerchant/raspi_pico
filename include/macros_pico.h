@@ -189,10 +189,6 @@ extern "C" {
 
 #define _min(x, y) ((x) < (y) ? (x) : (y))
 
-#define _cutoff_normalized(x, y) (_max(-y, _min(x, y))) // X: Value, Y: Absolute Peak
-
-#define _cutoff_biased(x, y, z) (_max(z, _min(x, y))) // X: Value, Y: Peak, Z: Bottom
-
 #ifdef __cplusplus
 }
 #endif

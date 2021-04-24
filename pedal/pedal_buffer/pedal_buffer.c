@@ -28,7 +28,7 @@
 // Private header
 #include "pedal_buffer.h"
 
-#define PEDAL_BUFFER_TRANSIENT_RESPONSE 2000 // 2000 Micro Seconds
+#define PEDAL_BUFFER_TRANSIENT_RESPONSE 20000 // 20000 Micro Seconds
 #define PEDAL_BUFFER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_BUFFER_LED_GPIO 25
 #define PEDAL_BUFFER_SW_1_GPIO 14
@@ -57,7 +57,6 @@ volatile uint32 pedal_buffer_debug_time;
 
 void pedal_buffer_core_1();
 void pedal_buffer_on_pwm_irq_wrap();
-void pedal_buffer_on_adc_irq_fifo();
 
 int main(void) {
     //stdio_init_all();
@@ -184,18 +183,17 @@ void pedal_buffer_on_pwm_irq_wrap() {
     } else {
         normalized_1 /= abs(pedal_buffer_gain - 16);
     }
-    if (normalized_1 >= PEDAL_BUFFER_PWM_PEAK) normalized_1 = PEDAL_BUFFER_PWM_PEAK;
     if (util_pedal_pico_sw_mode == 0) {
         /**
          * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
          * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
          * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
          */
-        //normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+        //normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     } else if (util_pedal_pico_sw_mode == 1) {
-        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
+        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
     } else {
-        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
+        normalized_1 = (int32)(int64)(((int64)(normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
     }
     int32 output_1 = util_pedal_pico_cutoff_biased(normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
     int32 output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);

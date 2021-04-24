@@ -25,15 +25,15 @@
 #include "hardware/resets.h"
 // raspi_pico/include
 #include "macros_pico.h"
+#include "util_pedal_pico.h"
 // Private header
 #include "pedal_planets.h"
 
-#define PEDAL_PLANETS_TRANSIENT_RESPONSE 2000 // 2000 Micro Seconds
+#define PEDAL_PLANETS_TRANSIENT_RESPONSE 20000 // 20000 Micro Seconds
 #define PEDAL_PLANETS_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_PLANETS_LED_GPIO 25
-#define PEDAL_PLANETS_SWITCH_1_GPIO 14
-#define PEDAL_PLANETS_SWITCH_2_GPIO 15
-#define PEDAL_PLANETS_SWITCH_THRESHOLD 30
+#define PEDAL_PLANETS_SW_1_GPIO 14
+#define PEDAL_PLANETS_SW_2_GPIO 15
 #define PEDAL_PLANETS_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define PEDAL_PLANETS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define PEDAL_PLANETS_PWM_OFFSET 2048 // Ideal Middle Point
@@ -47,9 +47,6 @@
 #define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 4 // Multiply By 16 (1 - 32 to 16 - 512)
 #define PEDAL_PLANETS_OSC_START_THRESHOLD_FIXED_1 8 // From -48.13dB (Loss 255) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
-#define PEDAL_PLANETS_ADC_0_GPIO 26
-#define PEDAL_PLANETS_ADC_1_GPIO 27
-#define PEDAL_PLANETS_ADC_2_GPIO 28
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -59,10 +56,6 @@ volatile uint32 pedal_planets_pwm_channel;
 volatile uint16 pedal_planets_conversion_1;
 volatile uint16 pedal_planets_conversion_2;
 volatile uint16 pedal_planets_conversion_3;
-volatile uint16 pedal_planets_conversion_1_temp;
-volatile uint16 pedal_planets_conversion_2_temp;
-volatile uint16 pedal_planets_conversion_3_temp;
-volatile uchar8 pedal_planets_mode;
 volatile int32 pedal_planets_coefficient;
 volatile int16* pedal_planets_delay_x;
 volatile int16* pedal_planets_delay_y;
@@ -74,12 +67,10 @@ volatile uint16 pedal_planets_osc_speed;
 volatile char8 pedal_planets_osc_start_threshold;
 volatile uint16 pedal_planets_osc_start_count;
 volatile uint32 pedal_planets_adc_middle_moving_average;
-volatile bool pedal_planets_is_outstanding_on_adc;
 volatile uint32 pedal_planets_debug_time;
 
 void pedal_planets_core_1();
 void pedal_planets_on_pwm_irq_wrap();
-void pedal_planets_on_adc_irq_fifo();
 
 int main(void) {
     //stdio_init_all();
@@ -126,23 +117,13 @@ void pedal_planets_core_1() {
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel, PEDAL_PLANETS_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel + 1, PEDAL_PLANETS_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
-    adc_init();
-    adc_gpio_init(PEDAL_PLANETS_ADC_0_GPIO); // GPIO26 (ADC0)
-    adc_gpio_init(PEDAL_PLANETS_ADC_1_GPIO); // GPIO27 (ADC1)
-    adc_gpio_init(PEDAL_PLANETS_ADC_2_GPIO); // GPIO28 (ADC2)
-    adc_set_clkdiv(0.0f);
-    adc_set_round_robin(0b00111);
-    adc_fifo_setup(true, false, 3, true, false); // 12-bit Length (0-4095), Bit[15] for Error Flag
-    adc_fifo_drain(); // Clean FIFO
-    irq_set_exclusive_handler(ADC_IRQ_FIFO, pedal_planets_on_adc_irq_fifo);
-    irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
-    adc_irq_set_enabled(true);
+    util_pedal_pico_init_adc();
+    util_pedal_pico_on_adc_conversion_1 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
+    util_pedal_pico_on_adc_conversion_2 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
+    util_pedal_pico_on_adc_conversion_3 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_1 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_2 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_3 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_1_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_2_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_3_temp = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_adc_middle_moving_average = pedal_planets_conversion_1 * PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_planets_coefficient = PEDAL_PLANETS_COEFFICIENT_FIXED_1;
     pedal_planets_delay_x = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
@@ -157,79 +138,22 @@ void pedal_planets_core_1() {
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_planets_pwm_slice_num);
-    pedal_planets_is_outstanding_on_adc = true;
     adc_select_input(0); // Ensure to Start from A0
     __dsb();
     __isb();
     adc_run(true);
-    uint32 gpio_mask = 0b1<< PEDAL_PLANETS_SWITCH_1_GPIO|0b1 << PEDAL_PLANETS_SWITCH_2_GPIO;
-    gpio_init_mask(gpio_mask);
-    gpio_set_dir_masked(gpio_mask, 0b1 << PEDAL_PLANETS_LED_GPIO);
-    gpio_put(PEDAL_PLANETS_LED_GPIO, true);
-    gpio_pull_up(PEDAL_PLANETS_SWITCH_1_GPIO);
-    gpio_pull_up(PEDAL_PLANETS_SWITCH_2_GPIO);
-    uint16 count_switch_0 = 0; // Center
-    uint16 count_switch_1 = 0;
-    uint16 count_switch_2 = 0;
-    uchar8 mode = 0; // To Reduce Memory Access
-    while (true) {
-        switch (gpio_get_all() & (0b1 << PEDAL_PLANETS_SWITCH_1_GPIO|0b1 << PEDAL_PLANETS_SWITCH_2_GPIO)) {
-            case 0b1 << PEDAL_PLANETS_SWITCH_2_GPIO: // SWITCH_1: Low
-                count_switch_0 = 0;
-                count_switch_1++;
-                count_switch_2 = 0;
-                if (count_switch_1 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
-                    count_switch_1 = 0;
-                    if (mode != 1) {
-                        pedal_planets_mode = 1;
-                        mode = 1;
-                    }
-                }
-                break;
-            case 0b1 << PEDAL_PLANETS_SWITCH_1_GPIO: // SWITCH_2: Low
-                count_switch_0 = 0;
-                count_switch_1 = 0;
-                count_switch_2++;
-                if (count_switch_2 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
-                    count_switch_2 = 0;
-                    if (mode != 2) {
-                        pedal_planets_mode = 2;
-                        mode = 2;
-                    }
-                }
-                break;
-            default: // All High
-                count_switch_0++;
-                count_switch_1 = 0;
-                count_switch_2 = 0;
-                if (count_switch_0 >= PEDAL_PLANETS_SWITCH_THRESHOLD) {
-                    count_switch_0 = 0;
-                    if (mode != 0) {
-                        pedal_planets_mode = 0;
-                        mode = 0;
-                    }
-                }
-                break;
-        }
-        //printf("@main 3 - pedal_planets_conversion_1 %0x\n", pedal_planets_conversion_1);
-        //printf("@main 4 - pedal_planets_conversion_2 %0x\n", pedal_planets_conversion_2);
-        //printf("@main 5 - pedal_planets_conversion_3 %0x\n", pedal_planets_conversion_3);
-        //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 7 - pedal_planets_debug_time %d\n", pedal_planets_debug_time);
-        sleep_us(1000);
-        __dsb();
-    }
+    util_pedal_pico_sw_loop(PEDAL_PLANETS_SW_1_GPIO, PEDAL_PLANETS_SW_2_GPIO);
 }
 
 void pedal_planets_on_pwm_irq_wrap() {
     pwm_clear_irq(pedal_planets_pwm_slice_num);
     //uint32 from_time = time_us_32();
-    uint16 conversion_1_temp = pedal_planets_conversion_1_temp;
-    uint16 conversion_2_temp = pedal_planets_conversion_2_temp;
-    uint16 conversion_3_temp = pedal_planets_conversion_3_temp;
-    if (! pedal_planets_is_outstanding_on_adc) {
-        pedal_planets_is_outstanding_on_adc = true;
-        adc_select_input(0); // Ensure to Start from ADC0
+    uint16 conversion_1_temp = util_pedal_pico_on_adc_conversion_1;
+    uint16 conversion_2_temp = util_pedal_pico_on_adc_conversion_2;
+    uint16 conversion_3_temp = util_pedal_pico_on_adc_conversion_3;
+    if (! util_pedal_pico_on_adc_is_outstanding) {
+        util_pedal_pico_on_adc_is_outstanding = true;
+        adc_select_input(0); // Ensure to Start from A0
         __dsb();
         __isb();
         adc_run(true); // Stable Starting Point after PWM IRQ
@@ -284,13 +208,13 @@ void pedal_planets_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_time_swing = (int16)(int64)(((int64)(pedal_planets_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32);
     int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     /* High Pass Filter and Correction */
     int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * (int64)pedal_planets_coefficient) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
-    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
+    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
     /* Low Pass Filster */
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
     pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
@@ -298,52 +222,19 @@ void pedal_planets_on_pwm_irq_wrap() {
     pedal_planets_delay_index++;
     if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index = 0;
     int32 mixed_1;
-    if (pedal_planets_mode == 0) {
+    if (util_pedal_pico_sw_mode == 0) {
         mixed_1 = low_pass_1;
-    } else if (pedal_planets_mode == 1) {
+    } else if (util_pedal_pico_sw_mode == 1) {
         mixed_1 = high_pass_1;
     } else {
         mixed_1 = (normalized_1 + low_pass_1) >> 1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;
-    int32 output_1 = _cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
-    int32 output_1_inverted = _cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
+    int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
+    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_planets_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_planets_debug_time); // To send a made pointer, sync flag, etc.
-    __dsb();
-}
-
-void pedal_planets_on_adc_irq_fifo() {
-    adc_run(false);
-    __dsb();
-    __isb();
-    uint16 adc_fifo_level = adc_fifo_get_level(); // Seems 8 at Maximum
-    //printf("@pedal_planets_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
-    for (uint16 i = 0; i < adc_fifo_level; i++) {
-        //printf("@pedal_planets_on_adc_irq_fifo 2 - i: %d\n", i);
-        uint16 temp = adc_fifo_get();
-        if (temp & 0x8000) { // Procedure on Malfunction
-            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
-            break;
-        } else {
-            temp &= 0x7FFF; // Clear Bit[15]: ERR
-            uint16 remainder = i % 3;
-            if (remainder == 2) {
-                pedal_planets_conversion_3_temp = temp;
-            } else if (remainder == 1) {
-                pedal_planets_conversion_2_temp = temp;
-            } else if (remainder == 0) {
-               pedal_planets_conversion_1_temp = temp;
-            }
-        }
-    }
-    //printf("@pedal_planets_on_adc_irq_fifo 3 - adc_fifo_is_empty(): %d\n", adc_fifo_is_empty());
-    adc_fifo_drain();
-    do {
-        tight_loop_contents();
-    } while (! adc_fifo_is_empty);
-    pedal_planets_is_outstanding_on_adc = false;
     __dsb();
 }

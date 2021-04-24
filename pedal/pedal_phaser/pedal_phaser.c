@@ -29,7 +29,7 @@
 // Private header
 #include "pedal_phaser.h"
 
-#define PEDAL_PHASER_TRANSIENT_RESPONSE 2000 // 2000 Micro Seconds
+#define PEDAL_PHASER_TRANSIENT_RESPONSE 20000 // 20000 Micro Seconds
 #define PEDAL_PHASER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_PHASER_LED_GPIO 25
 #define PEDAL_PHASER_SW_1_GPIO 14

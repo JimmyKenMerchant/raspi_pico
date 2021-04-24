@@ -7,12 +7,16 @@ import math
 import numpy
 from scipy.stats import norm
 
-def makeTablePdf(header, number_pdf_length, number_pdf_halfwidth, number_pdf_scale):
-    list_pdf = norm.pdf(numpy.linspace(-number_pdf_halfwidth, number_pdf_halfwidth, number_pdf_length), scale=number_pdf_scale);
+# pdf_length: Number of Array
+# pdf_halfwidth: Center to Side
+# pdf_scale: Variance
+# pdf_height: Maximum Height
+def makeTablePdf(header, pdf_length, pdf_halfwidth, pdf_scale, pdf_height):
+    list_pdf = norm.pdf(numpy.linspace(-pdf_halfwidth, pdf_halfwidth, pdf_length), scale=pdf_scale);
     max_pdf = max(list_pdf)
-    for i in range(number_pdf_length):
+    for i in range(pdf_length):
         header.write("    ")
-        floating_point_value = list_pdf[i] / max_pdf # Floating Point Decimal
+        floating_point_value = (list_pdf[i] / max_pdf) * pdf_height # Floating Point Decimal
         if floating_point_value < 0:
             is_negative = True
             floating_point_value = abs(floating_point_value);
@@ -32,7 +36,7 @@ def makeTablePdf(header, number_pdf_length, number_pdf_halfwidth, number_pdf_sca
         if is_negative == True:
             fixed_point_value = -fixed_point_value;
         header.write(str(hex(fixed_point_value & 0xFFFFFFFF)))
-        if i != number_pdf_length - 1:
+        if i != pdf_length - 1:
             header.write(",")
         header.write("\n")
     header.write("};\n\n")

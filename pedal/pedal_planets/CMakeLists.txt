@@ -16,6 +16,7 @@ target_link_libraries(${target_name}
     hardware_adc
     hardware_irq
     hardware_sync
+    util_pedal_pico
 )
 
 add_custom_target(${target_name}_header

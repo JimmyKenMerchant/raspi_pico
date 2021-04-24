@@ -44,9 +44,10 @@ declare_pdf_1 = [
 "static int32 pedal_phaser_table_pdf_1[] = {\n"
 ]
 
-number_pdf_length_1 = 2047 # Number of Array
-number_pdf_halfwidth_1 = 1.0 # Center to Side
-number_pdf_scale_1 = 1.0 # Variance
+pdf_length_1 = 2047 # Number of Array
+pdf_halfwidth_1 = 1.0 # Center to Side
+pdf_scale_1 = 1.0 # Variance
+pdf_height_1 = 1.0 # Maximum Height
 
 postfix = [
 "#ifdef __cplusplus\n",
@@ -66,7 +67,7 @@ nt.makeTableSineHalf(header, number_sine_1)
 
 # Table PDF 1
 header.writelines(declare_pdf_1)
-nt.makeTablePdf(header, number_pdf_length_1, number_pdf_halfwidth_1, number_pdf_scale_1)
+nt.makeTablePdf(header, pdf_length_1, pdf_halfwidth_1, pdf_scale_1, pdf_height_1)
 
 header.writelines(postfix)
 header.close()
