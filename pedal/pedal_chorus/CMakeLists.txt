@@ -16,6 +16,7 @@ target_link_libraries(${target_name}
     hardware_adc
     hardware_irq
     hardware_sync
+    util_pedal_pico
 )
 
 add_custom_target(${target_name}_header
@@ -31,6 +32,10 @@ add_dependencies(${target_name}
 
 target_include_directories(${target_name} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+)
+
+target_compile_definitions(${target_name}
+    PRIVATE PICO_MALLOC_PANIC=1
 )
 
 # Beside elf, Create map/bin/hex/uf2 files.

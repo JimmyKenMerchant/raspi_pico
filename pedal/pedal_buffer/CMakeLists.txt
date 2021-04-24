@@ -34,6 +34,10 @@ target_include_directories(${target_name} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
+target_compile_definitions(${target_name}
+    PRIVATE PICO_MALLOC_PANIC=1
+)
+
 # Beside elf, Create map/bin/hex/uf2 files.
 pico_add_extra_outputs(${target_name})
 
