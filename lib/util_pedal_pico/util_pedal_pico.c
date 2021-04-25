@@ -69,7 +69,6 @@ void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) {
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_1);
     gpio_pull_up(gpio_2);
-    util_pedal_pico_sw_mode = 0;
     uint16 count_sw_0 = 0; // Center
     uint16 count_sw_1 = 0;
     uint16 count_sw_2 = 0;

@@ -34,21 +34,21 @@ prefix = [
 
 declare_sine_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_sideband_table_sine_1[] = {\n"
+"int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 30518
+number_sine_1 = 15258
 
 declare_sine_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_sideband_table_sine_2[] = {\n"
+"int32 pedal_sideband_table_sine_2[] = {\n"
 ]
 
-number_sine_2 = 20345
+number_sine_2 = 10680
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_sideband_table_pdf_1[] = {\n"
+"int32 pedal_sideband_table_pdf_1[] = {\n"
 ]
 
 pdf_length_1 = 2047 # Number of Array
@@ -58,7 +58,7 @@ pdf_height_1 = 1.0 # Maximum Height
 
 declare_pdf_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_sideband_table_pdf_2[] = {\n"
+"int32 pedal_sideband_table_pdf_2[] = {\n"
 ]
 
 pdf_length_2 = 2047 # Number of Array
@@ -68,7 +68,7 @@ pdf_height_2 = 1.2 # Maximum Height
 
 declare_pdf_3 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_sideband_table_pdf_3[] = {\n"
+"int32 pedal_sideband_table_pdf_3[] = {\n"
 ]
 
 pdf_length_3 = 2047 # Number of Array

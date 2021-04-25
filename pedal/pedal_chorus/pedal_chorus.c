@@ -28,7 +28,7 @@
 // Private header
 #include "pedal_chorus.h"
 
-#define PEDAL_CHORUS_TRANSIENT_RESPONSE 20000 // 20000 Micro Seconds
+#define PEDAL_CHORUS_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_CHORUS_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_CHORUS_LED_GPIO 25
 #define PEDAL_CHORUS_SW_1_GPIO 14
@@ -41,7 +41,7 @@
 #define PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_CHORUS_DELAY_TIME_MAX 1527
 #define PEDAL_CHORUS_DELAY_TIME_FIXED_1 PEDAL_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 30518 (0.05 Seconds)
-#define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 61036
+#define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 993
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 5 // Multiply By 32 (0-992), 992 Divided by 30518 (0.0325 Seconds = 11.06 Meters)
 #define PEDAL_CHORUS_ADC_MIDDLE_DEFAULT 2048
@@ -89,7 +89,8 @@ int main(void) {
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_chorus_debug_time %d\n", pedal_chorus_debug_time);
         //sleep_ms(500);
-        tight_loop_contents();
+        //tight_loop_contents();
+        __wfi();
     }
     return 0;
 }
@@ -131,6 +132,7 @@ void pedal_chorus_core_1() {
     pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_chorus_lr_distance_index = 0;
     /* Start IRQ, PWM and ADC */
+    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_chorus_pwm_slice_num);
     adc_select_input(0); // Ensure to Start from A0
@@ -183,8 +185,8 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_osc_sine_1_index += pedal_chorus_osc_speed;
     if (pedal_chorus_osc_sine_1_index >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX) pedal_chorus_osc_sine_1_index = 0;
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32);
-    int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
-    int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
+    int32 delay_1_l = (int32)(int64)((((int64)delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
+    int32 delay_1_r = (int32)(int64)((((int64)delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
     /* Push and Pop Distance */
     pedal_chorus_lr_distance_array[pedal_chorus_lr_distance_index] = (int16)(int32)((normalized_1 + delay_1_r) >> 1); // Push Current Value in Advance for 0
     int32 lr_distance_1 = (int32)pedal_chorus_lr_distance_array[((pedal_chorus_lr_distance_index + PEDAL_CHORUS_LR_DISTANCE_TIME_MAX) - pedal_chorus_lr_distance_time) % PEDAL_CHORUS_LR_DISTANCE_TIME_MAX];

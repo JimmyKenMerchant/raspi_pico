@@ -34,14 +34,14 @@ prefix = [
 
 declare_sine_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_phaser_table_sine_1[] = {\n"
+"int32 pedal_phaser_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 61036
+number_sine_1 = 30518
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_phaser_table_pdf_1[] = {\n"
+"int32 pedal_phaser_table_pdf_1[] = {\n"
 ]
 
 pdf_length_1 = 2047 # Number of Array

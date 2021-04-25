@@ -34,7 +34,7 @@ prefix = [
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"static int32 pedal_buffer_table_pdf_1[] = {\n"
+"int32 pedal_buffer_table_pdf_1[] = {\n"
 ]
 
 pdf_length_1 = 2047 # Number of Array

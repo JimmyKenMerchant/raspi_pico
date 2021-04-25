@@ -29,7 +29,7 @@
 // Private header
 #include "pedal_phaser.h"
 
-#define PEDAL_PHASER_TRANSIENT_RESPONSE 20000 // 20000 Micro Seconds
+#define PEDAL_PHASER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_PHASER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_PHASER_LED_GPIO 25
 #define PEDAL_PHASER_SW_1_GPIO 14
@@ -44,7 +44,7 @@
 #define PEDAL_PHASER_DELAY_TIME_FIXED_1 2048 // 30518 Divided by 2024 (15.07Hz, Folding Frequency is 7.53Hz)
 #define PEDAL_PHASER_DELAY_TIME_FIXED_2 256 // 30518 Divided by 256 (119.21Hz, Folding Frequency is 59.6Hz)
 #define PEDAL_PHASER_DELAY_TIME_FIXED_3 64 // 30518 Divided by 64 (476.84Hz, Folding Frequency is 238.42Hz)
-#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 61036
+#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
 #define PEDAL_PHASER_ADC_MIDDLE_DEFAULT 2048
@@ -94,7 +94,8 @@ int main(void) {
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
         //sleep_ms(500);
-        tight_loop_contents();
+        //tight_loop_contents();
+        __wfi();
     }
     return 0;
 }
@@ -138,6 +139,7 @@ void pedal_phaser_core_1() {
     pedal_phaser_osc_start_threshold = (pedal_phaser_conversion_3 >> 7) * PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_phaser_osc_start_count = 0;
     /* Start IRQ, PWM and ADC */
+    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
     pwm_set_mask_enabled(0b1 << pedal_phaser_pwm_slice_num);
     adc_select_input(0); // Ensure to Start from A0
@@ -246,7 +248,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     /* Second Stage All-pass Filter for Phaser */
     int16 delay_x_2 = pedal_phaser_delay_x_2[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
     int16 delay_y_2 = pedal_phaser_delay_y_2[((pedal_phaser_delay_index + PEDAL_PHASER_DELAY_TIME_MAX) - pedal_phaser_delay_time) % PEDAL_PHASER_DELAY_TIME_MAX];
-    int32 coefficient = (int32)(int64)(((int64)(pedal_phaser_coefficient_swing) * (int64)fixed_point_value_sine_1) >> 16); // Remain Decimal Part
+    int32 coefficient = (int32)(int64)(((int64)pedal_phaser_coefficient_swing * (int64)fixed_point_value_sine_1) >> 16); // Remain Decimal Part
     int32 phase_shift_2 = (int32)((int64)(((int64)delay_x_2 << 32) - (((int64)delay_y_2 << 16) * (int64)coefficient) + (((int64)canceled_1 << 16) * (int64)coefficient)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     pedal_phaser_delay_x_2[pedal_phaser_delay_index] = (int16)canceled_1;
     pedal_phaser_delay_y_2[pedal_phaser_delay_index] = (int16)phase_shift_2;

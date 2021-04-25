@@ -7,7 +7,7 @@ import sys
 sys.path.append("../../lib_python3")
 import number_table as nt
 
-headername = "pedal_tape.h"
+headername = "pedal_reverb.h"
 
 prefix = [
 "/**\n",
@@ -23,8 +23,8 @@ prefix = [
 " */\n",
 "\n",
 "/* THIS IS AN AUTOMATICALLY GENERATED HEADER FILE */\n",
-"#ifndef _PEDAL_TAPE_H\n",
-"#define _PEDAL_TAPE_H 1\n",
+"#ifndef _PEDAL_REVERB_H\n",
+"#define _PEDAL_REVERB_H 1\n",
 "\n",
 "#ifdef __cplusplus\n",
 "extern \"C\" {\n",
@@ -32,16 +32,9 @@ prefix = [
 "\n"
 ]
 
-declare_sine_1 = [
-"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_tape_table_sine_1[] = {\n"
-]
-
-number_sine_1 = 30518
-
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_tape_table_pdf_1[] = {\n"
+"int32 pedal_reverb_table_pdf_1[] = {\n"
 ]
 
 pdf_length_1 = 2047 # Number of Array
@@ -61,14 +54,9 @@ print (sys.version)
 header = open(headername, "w") # Write Only With UTF-8
 header.writelines(prefix)
 
-# Table Sine 1
-header.writelines(declare_sine_1)
-nt.makeTableSine(header, number_sine_1)
-
 # Table PDF 1
 header.writelines(declare_pdf_1)
 nt.makeTablePdf(header, pdf_length_1, pdf_halfwidth_1, pdf_scale_1, pdf_height_1)
 
 header.writelines(postfix)
 header.close()
-
