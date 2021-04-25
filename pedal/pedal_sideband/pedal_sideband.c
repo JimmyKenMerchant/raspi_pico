@@ -216,8 +216,9 @@ void pedal_sideband_on_pwm_irq_wrap() {
     if (pedal_sideband_osc_sine_2_index >= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX) pedal_sideband_osc_sine_2_index -= PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX;
     int32 osc_value = (int32)(int64)((((int64)pedal_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     osc_value = (int32)(int64)((((int64)osc_value << 16) * ((int64)abs(normalized_1) << 4)) >> 32); // Absolute normalized_2 to Bit[15:0] Decimal Part
-    int32 output_1 = util_pedal_pico_cutoff_biased(osc_value * PEDAL_SIDEBAND_GAIN + middle_moving_average, PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK, PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK);
-    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-osc_value * PEDAL_SIDEBAND_GAIN + middle_moving_average, PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK, PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK);
+    osc_value *= PEDAL_SIDEBAND_GAIN;
+    int32 output_1 = util_pedal_pico_cutoff_biased(osc_value + middle_moving_average, PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK, PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK);
+    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-osc_value + middle_moving_average, PEDAL_SIDEBAND_PWM_OFFSET + PEDAL_SIDEBAND_PWM_PEAK, PEDAL_SIDEBAND_PWM_OFFSET - PEDAL_SIDEBAND_PWM_PEAK);
     pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_sideband_debug_time = time_us_32() - from_time;

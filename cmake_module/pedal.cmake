@@ -40,7 +40,8 @@ target_compile_definitions(${target_name}
 pico_add_extra_outputs(${target_name})
 
 if (TARGET tinyusb_device)
-    pico_enable_stdio_usb(${target_name} 1)
+    pico_enable_stdio_usb(${target_name} 0)
+    message(NOTICE "You can't monitor outputting messages of ${target_name} via USB. Use UART.")
 elseif (PICO_ON_DEVICE)
     message(NOTICE "You can't monitor outputting messages via USB because of No TinyUSB.")
 endif()

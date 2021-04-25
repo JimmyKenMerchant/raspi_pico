@@ -187,8 +187,8 @@ void pedal_tape_on_pwm_irq_wrap() {
     if (pedal_tape_delay_index >= PEDAL_TAPE_DELAY_TIME_MAX) pedal_tape_delay_index -= PEDAL_TAPE_DELAY_TIME_MAX;
     mixed_1 *= PEDAL_TAPE_GAIN;
     /* Output */
-    int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 * PEDAL_TAPE_GAIN + middle_moving_average, PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK, PEDAL_TAPE_PWM_OFFSET - PEDAL_TAPE_PWM_PEAK);
-    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 * PEDAL_TAPE_GAIN + middle_moving_average, PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK, PEDAL_TAPE_PWM_OFFSET - PEDAL_TAPE_PWM_PEAK);
+    int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK, PEDAL_TAPE_PWM_OFFSET - PEDAL_TAPE_PWM_PEAK);
+    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_TAPE_PWM_OFFSET + PEDAL_TAPE_PWM_PEAK, PEDAL_TAPE_PWM_OFFSET - PEDAL_TAPE_PWM_PEAK);
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_tape_debug_time = time_us_32() - from_time;
