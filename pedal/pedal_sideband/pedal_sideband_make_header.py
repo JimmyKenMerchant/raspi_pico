@@ -37,7 +37,7 @@ declare_sine_1 = [
 "int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 15258
+number_sine_1 = 14063
 
 declare_sine_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",

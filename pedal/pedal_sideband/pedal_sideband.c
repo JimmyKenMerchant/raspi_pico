@@ -42,7 +42,7 @@
 #define PEDAL_SIDEBAND_OSC_SINE_2_TIME_MAX 10680
 #define PEDAL_SIDEBAND_OSC_AMPLITUDE_PEAK 4095
 #define PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
-#define PEDAL_SIDEBAND_OSC_START_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
+#define PEDAL_SIDEBAND_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 #define PEDAL_SIDEBAND_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_SIDEBAND_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_SIDEBAND_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -66,7 +66,8 @@ void pedal_sideband_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
-    //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    util_pedal_pico_set_sys_clock_115200khz();
+    //stdio_init_all(); // Re-init for UART Baud Rate
     sleep_us(PEDAL_SIDEBAND_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_SIDEBAND_LED_GPIO);
     gpio_set_dir(PEDAL_SIDEBAND_LED_GPIO, GPIO_OUT);
@@ -102,10 +103,9 @@ void pedal_sideband_core_1() {
     pwm_set_irq_enabled(pedal_sideband_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_sideband_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
+    // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
-    pwm_config_set_wrap(&config, 4095); // 0-4095, 4096 Cycles for 0.032768ms
+    util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_sideband_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel, PEDAL_SIDEBAND_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_sideband_pwm_slice_num, pedal_sideband_pwm_channel + 1, PEDAL_SIDEBAND_PWM_OFFSET); // Set Channel B
@@ -190,17 +190,17 @@ void pedal_sideband_on_pwm_irq_wrap() {
         pedal_sideband_osc_sine_1_index = 0;
         pedal_sideband_osc_sine_2_index = 0;
     }
-    if (util_pedal_pico_sw_mode == 0) {
+    if (util_pedal_pico_sw_mode == 1) {
         /**
          * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
          * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
          * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
          */
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    } else if (util_pedal_pico_sw_mode == 1) {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
-    } else {
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    } else if (util_pedal_pico_sw_mode == 2) {
         normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
+    } else {
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
     }
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

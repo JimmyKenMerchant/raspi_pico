@@ -38,11 +38,16 @@
 #define PEDAL_BUFFER_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_BUFFER_PWM_PEAK 2047
 #define PEDAL_BUFFER_GAIN 1
-#define PEDAL_BUFFER_DELAY_TIME_MAX 3969
-#define PEDAL_BUFFER_DELAY_TIME_SHIFT 7 // Multiply By 128 (0-3968), 3968 Divided by 28125 (0.14 Seconds)
+#define PEDAL_BUFFER_DELAY_TIME_MAX 7937
+#define PEDAL_BUFFER_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-7936), 7936 Divided by 28125 (0.282 Seconds)
 #define PEDAL_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM 1
 #define PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00004000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT 3 // Divide by 8
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_2 (int32)(0x00008000)
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_3 (int32)(0x0000F000)
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1 0x2
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2 0x4
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3 0x8
+#define PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT 6 // Divide by 64
 #define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 #define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
@@ -56,12 +61,13 @@ volatile uint16 pedal_buffer_conversion_2;
 volatile uint16 pedal_buffer_conversion_3;
 volatile int16* pedal_buffer_delay_array;
 volatile int32 pedal_buffer_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile int32 pedal_buffer_delay_amplitude_interpolation;
+volatile uchar8 pedal_buffer_delay_amplitude_accum;
 volatile uint16 pedal_buffer_delay_time;
 volatile uint16 pedal_buffer_delay_time_interpolation;
 volatile uint16 pedal_buffer_delay_index;
 volatile char8 pedal_buffer_noise_gate_threshold;
 volatile uint16 pedal_buffer_noise_gate_count;
-volatile bool pedal_buffer_noise_gate_is_sustain_on;
 volatile uint32 pedal_buffer_adc_middle_moving_average;
 volatile uint32 pedal_buffer_debug_time;
 
@@ -124,13 +130,14 @@ void pedal_buffer_core_1() {
     pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_delay_array = (int16*)calloc(PEDAL_BUFFER_DELAY_TIME_MAX, sizeof(int16));
     pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
+    pedal_buffer_delay_amplitude_interpolation = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
+    pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
     uint16 delay_time = (pedal_buffer_conversion_2 >> 7) << PEDAL_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_buffer_delay_time = delay_time;
     pedal_buffer_delay_time_interpolation = delay_time;
     pedal_buffer_delay_index = 0;
     pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_buffer_noise_gate_count = 0;
-    pedal_buffer_noise_gate_is_sustain_on = true;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -188,7 +195,7 @@ void pedal_buffer_on_pwm_irq_wrap() {
      */
     if (normalized_1 > pedal_buffer_noise_gate_threshold || normalized_1 < -pedal_buffer_noise_gate_threshold) {
         pedal_buffer_noise_gate_count = 1;
-        pedal_buffer_noise_gate_is_sustain_on = false;
+        pedal_buffer_delay_amplitude = 0x00000000;
     } else if (pedal_buffer_noise_gate_count != 0 && (normalized_1 > (pedal_buffer_noise_gate_threshold >> 1) || normalized_1 < -(pedal_buffer_noise_gate_threshold >> 1))) {
         pedal_buffer_noise_gate_count = 1;
     } else if (pedal_buffer_noise_gate_count != 0) {
@@ -196,38 +203,41 @@ void pedal_buffer_on_pwm_irq_wrap() {
     }
     if (pedal_buffer_noise_gate_count >= PEDAL_BUFFER_NOISE_GATE_COUNT_MAX) {
         pedal_buffer_noise_gate_count = 0;
-        pedal_buffer_noise_gate_is_sustain_on = true;
+        if (util_pedal_pico_sw_mode == 1) {
+            pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
+            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
+        } else if (util_pedal_pico_sw_mode == 2) {
+            pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_3;
+            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3;
+        } else {
+            pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_2;
+            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2;
+        }
     }
+    pedal_buffer_delay_amplitude_interpolation = util_pedal_pico_interpolate(pedal_buffer_delay_amplitude_interpolation, pedal_buffer_delay_amplitude, pedal_buffer_delay_amplitude_accum);
     if (pedal_buffer_noise_gate_count == 0) {
         normalized_1 >>= PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT;
     }
-    if (util_pedal_pico_sw_mode == 0) {
-        /**
-         * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
-         * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-         * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
-         */
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    } else if (util_pedal_pico_sw_mode == 1) {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
-    } else {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
-    }
+    /**
+     * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     */
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /* Make Sustain */
     int32 delay_1 = (int32)pedal_buffer_delay_array[((pedal_buffer_delay_index + PEDAL_BUFFER_DELAY_TIME_MAX) - pedal_buffer_delay_time_interpolation) % PEDAL_BUFFER_DELAY_TIME_MAX];
     if (pedal_buffer_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
-    int32 pedal_buffer_normalized_1_amplitude = 0x00010000 - pedal_buffer_delay_amplitude;
+    int32 pedal_buffer_normalized_1_amplitude = 0x00010000 - pedal_buffer_delay_amplitude_interpolation;
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_normalized_1_amplitude) >> 32);
-    delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_buffer_delay_amplitude) >> 32);
+    delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_buffer_delay_amplitude_interpolation) >> 32);
     int32 mixed_1 = normalized_1 + delay_1;
     pedal_buffer_delay_array[pedal_buffer_delay_index] = (int16)mixed_1;
     pedal_buffer_delay_index++;
     if (pedal_buffer_delay_index >= PEDAL_BUFFER_DELAY_TIME_MAX) pedal_buffer_delay_index -= PEDAL_BUFFER_DELAY_TIME_MAX;
-    if (pedal_buffer_noise_gate_is_sustain_on) normalized_1 = mixed_1;
-    normalized_1 *= PEDAL_BUFFER_GAIN;
+    mixed_1 *= PEDAL_BUFFER_GAIN;
     /* Output */
-    int32 output_1 = util_pedal_pico_cutoff_biased(normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
-    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
+    int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
+    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, (uint16)output_1_inverted);
     //pedal_buffer_debug_time = time_us_32() - from_time;
