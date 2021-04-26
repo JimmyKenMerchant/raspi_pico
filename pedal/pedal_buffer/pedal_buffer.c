@@ -68,6 +68,8 @@ void pedal_buffer_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
+    //util_pedal_pico_set_sys_clock_115200khz();
+    //stdio_init_all(); // Re-init for UART Baud Rate
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
     sleep_us(PEDAL_BUFFER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_BUFFER_LED_GPIO);
@@ -106,8 +108,7 @@ void pedal_buffer_core_1() {
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
     // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
-    pwm_config_set_wrap(&config, 4095); // 0-4095, 4096 Cycles for 0.032768ms
+    util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_buffer_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel, PEDAL_BUFFER_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, PEDAL_BUFFER_PWM_OFFSET); // Set Channel B

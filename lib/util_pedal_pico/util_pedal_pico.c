@@ -12,6 +12,24 @@
 
 #include "util_pedal_pico.h"
 
+void util_pedal_pico_set_sys_clock_115200khz() {
+    /**
+     * XOSC_MHZ is in platform_defs.h of pico-sdk
+     * MHZ and KHZ are in clocks.h of pico-sdk
+     */
+    if (XOSC_MHZ * MHZ == UTIL_PEDAL_PICO_XOSC) {
+        set_sys_clock_pll(XOSC_MHZ * MHZ * 96, 5, 2);
+    } else {
+        panic("Failure on Changing System Clock in Function, \"util_pedal_pico_set_clock_115200khz\"");
+    }
+}
+
+void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config) {
+    /* Divide 115200Khz by 4096hz */
+    pwm_config_set_clkdiv(ptr_config, 1.0f); // Set Clock Divider, 115,200,000 Divided by 1.0
+    pwm_config_set_wrap(ptr_config, 4095); // 0-4095, 4096 Cycles
+}
+
 void util_pedal_pico_init_adc() {
     /* ADC Settings */
     adc_init();
@@ -39,7 +57,10 @@ void util_pedal_pico_on_adc_irq_fifo() {
         //printf("@util_pedal_pico_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16 temp = adc_fifo_get();
         if (temp & 0x8000) { // Procedure on Malfunction
-            reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+            if (time_us_64() >= UTIL_PEDAL_PICO_ADC_ERROR_SINCE) {
+                reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
+                panic("Detected ADC Error in Function, \"util_pedal_pico_on_adc_irq_fifo\"");
+            }
             break;
         } else {
             temp &= 0x7FFF; // Clear Bit[15]: ERR

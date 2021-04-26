@@ -44,6 +44,7 @@
 #define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 30518
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 993
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 5 // Multiply By 32 (0-992), 992 Divided by 30518 (0.0325 Seconds = 11.06 Meters)
+#define PEDAL_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
 #define PEDAL_CHORUS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_CHORUS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -61,6 +62,7 @@ volatile uint16 pedal_chorus_delay_time;
 volatile uint16 pedal_chorus_delay_index;
 volatile int16* pedal_chorus_lr_distance_array;
 volatile uint16 pedal_chorus_lr_distance_time;
+volatile uint16 pedal_chorus_lr_distance_time_interpolation;
 volatile uint16 pedal_chorus_lr_distance_index;
 volatile uint32 pedal_chorus_adc_middle_moving_average;
 volatile uint32 pedal_chorus_debug_time;
@@ -130,6 +132,7 @@ void pedal_chorus_core_1() {
     pedal_chorus_osc_sine_1_index = 0;
     pedal_chorus_lr_distance_array =  (int16*)calloc(PEDAL_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16));
     pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_chorus_lr_distance_time_interpolation = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT;
     pedal_chorus_lr_distance_index = 0;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
@@ -165,6 +168,7 @@ void pedal_chorus_on_pwm_irq_wrap() {
         pedal_chorus_conversion_3 = conversion_3_temp;
         pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
+    pedal_chorus_lr_distance_time_interpolation = util_pedal_interpolate(pedal_chorus_lr_distance_time_interpolation, pedal_chorus_lr_distance_time, PEDAL_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM);
     uint32 middle_moving_average = pedal_chorus_adc_middle_moving_average / PEDAL_CHORUS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_chorus_adc_middle_moving_average -= middle_moving_average;
     pedal_chorus_adc_middle_moving_average += pedal_chorus_conversion_1;
