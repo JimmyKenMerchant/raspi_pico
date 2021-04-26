@@ -40,7 +40,7 @@ declare_pdf_1 = [
 pdf_length_1 = 2047 # Number of Array
 pdf_halfwidth_1 = 1.0 # Center to Side
 pdf_scale_1 = 1.0 # Variance
-pdf_height_1 = 1.0 # Maximum Height
+pdf_height_1 = 0.5 # Maximum Height
 
 declare_pdf_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -49,8 +49,8 @@ declare_pdf_2 = [
 
 pdf_length_2 = 2047 # Number of Array
 pdf_halfwidth_2 = 1.0 # Center to Side
-pdf_scale_2 = 1.5 # Variance
-pdf_height_2 = 1.2 # Maximum Height
+pdf_scale_2 = 1.0 # Variance
+pdf_height_2 = 1.0 # Maximum Height
 
 declare_pdf_3 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -59,8 +59,8 @@ declare_pdf_3 = [
 
 pdf_length_3 = 2047 # Number of Array
 pdf_halfwidth_3 = 1.0 # Center to Side
-pdf_scale_3 = 1.75 # Variance
-pdf_height_3 = 1.4 # Maximum Height
+pdf_scale_3 = 1.5 # Variance
+pdf_height_3 = 2.0 # Maximum Height
 
 postfix = [
 "#ifdef __cplusplus\n",

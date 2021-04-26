@@ -38,11 +38,13 @@
 #define PEDAL_BUFFER_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_BUFFER_PWM_PEAK 2047
 #define PEDAL_BUFFER_GAIN 1
-#define PEDAL_BUFFER_DELAY_TIME_MAX 1527
-#define PEDAL_BUFFER_DELAY_TIME_FIXED_1 PEDAL_BUFFER_DELAY_TIME_MAX - 1 // 1526 Divided by 30518 (0.05 Seconds)
-#define PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1 (int32)(0x0000A000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_BUFFER_DELAY_TIME_MAX 3969
+#define PEDAL_BUFFER_DELAY_TIME_SHIFT 7 // Multiply By 128 (0-3968), 3968 Divided by 28125 (0.14 Seconds)
+#define PEDAL_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM 1
+#define PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00004000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT 3 // Divide by 8
 #define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
-#define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 30518 Divided by 2000 = Approx. 15Hz
+#define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 #define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_BUFFER_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -52,10 +54,10 @@ volatile uint32 pedal_buffer_pwm_channel;
 volatile uint16 pedal_buffer_conversion_1;
 volatile uint16 pedal_buffer_conversion_2;
 volatile uint16 pedal_buffer_conversion_3;
-volatile char8 pedal_buffer_gain;
 volatile int16* pedal_buffer_delay_array;
 volatile int32 pedal_buffer_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 volatile uint16 pedal_buffer_delay_time;
+volatile uint16 pedal_buffer_delay_time_interpolation;
 volatile uint16 pedal_buffer_delay_index;
 volatile char8 pedal_buffer_noise_gate_threshold;
 volatile uint16 pedal_buffer_noise_gate_count;
@@ -68,9 +70,8 @@ void pedal_buffer_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
-    //util_pedal_pico_set_sys_clock_115200khz();
+    util_pedal_pico_set_sys_clock_115200khz();
     //stdio_init_all(); // Re-init for UART Baud Rate
-    //sleep_ms(2000); // Wait for Rediness of USB for Messages
     sleep_us(PEDAL_BUFFER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_BUFFER_LED_GPIO);
     gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
@@ -106,7 +107,7 @@ void pedal_buffer_core_1() {
     pwm_set_irq_enabled(pedal_buffer_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_buffer_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
+    // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_buffer_pwm_slice_num, &config, false); // Push Configufatio
@@ -121,14 +122,15 @@ void pedal_buffer_core_1() {
     pedal_buffer_conversion_2 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_conversion_3 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
     pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_buffer_gain = pedal_buffer_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_buffer_delay_array = (int16*)calloc(PEDAL_BUFFER_DELAY_TIME_MAX, sizeof(int16));
     pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
-    pedal_buffer_delay_time = PEDAL_BUFFER_DELAY_TIME_FIXED_1;
+    uint16 delay_time = (pedal_buffer_conversion_2 >> 7) << PEDAL_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    pedal_buffer_delay_time = delay_time;
+    pedal_buffer_delay_time_interpolation = delay_time;
     pedal_buffer_delay_index = 0;
     pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_buffer_noise_gate_count = 0;
-    pedal_buffer_noise_gate_is_sustain_on = false;
+    pedal_buffer_noise_gate_is_sustain_on = true;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -156,12 +158,13 @@ void pedal_buffer_on_pwm_irq_wrap() {
     pedal_buffer_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_buffer_conversion_2) > PEDAL_BUFFER_ADC_THRESHOLD) {
         pedal_buffer_conversion_2 = conversion_2_temp;
-        pedal_buffer_gain = pedal_buffer_conversion_2 >> 7; // Make 5-bit Value (0-31)
+        pedal_buffer_delay_time = (pedal_buffer_conversion_2 >> 7) << PEDAL_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     if (abs(conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
         pedal_buffer_conversion_3 = conversion_3_temp;
         pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
+    pedal_buffer_delay_time_interpolation = util_pedal_pico_interpolate(pedal_buffer_delay_time_interpolation, pedal_buffer_delay_time, PEDAL_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM);
     uint32 middle_moving_average = pedal_buffer_adc_middle_moving_average / PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_buffer_adc_middle_moving_average -= middle_moving_average;
     pedal_buffer_adc_middle_moving_average += pedal_buffer_conversion_1;
@@ -196,12 +199,7 @@ void pedal_buffer_on_pwm_irq_wrap() {
         pedal_buffer_noise_gate_is_sustain_on = true;
     }
     if (pedal_buffer_noise_gate_count == 0) {
-        normalized_1 = 0;
-    }
-    if (pedal_buffer_gain > 15) {
-        normalized_1 *= (pedal_buffer_gain - 15);
-    } else {
-        normalized_1 /= abs(pedal_buffer_gain - 16);
+        normalized_1 >>= PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT;
     }
     if (util_pedal_pico_sw_mode == 0) {
         /**
@@ -216,8 +214,8 @@ void pedal_buffer_on_pwm_irq_wrap() {
         normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32);
     }
     /* Make Sustain */
-    int32 delay_1 = (int32)pedal_buffer_delay_array[((pedal_buffer_delay_index + PEDAL_BUFFER_DELAY_TIME_MAX) - pedal_buffer_delay_time) % PEDAL_BUFFER_DELAY_TIME_MAX];
-    if (pedal_buffer_delay_time == 0) delay_1 = 0; // No Reverb, Otherwise Latest
+    int32 delay_1 = (int32)pedal_buffer_delay_array[((pedal_buffer_delay_index + PEDAL_BUFFER_DELAY_TIME_MAX) - pedal_buffer_delay_time_interpolation) % PEDAL_BUFFER_DELAY_TIME_MAX];
+    if (pedal_buffer_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
     int32 pedal_buffer_normalized_1_amplitude = 0x00010000 - pedal_buffer_delay_amplitude;
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_normalized_1_amplitude) >> 32);
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_buffer_delay_amplitude) >> 32);
@@ -226,6 +224,7 @@ void pedal_buffer_on_pwm_irq_wrap() {
     pedal_buffer_delay_index++;
     if (pedal_buffer_delay_index >= PEDAL_BUFFER_DELAY_TIME_MAX) pedal_buffer_delay_index -= PEDAL_BUFFER_DELAY_TIME_MAX;
     if (pedal_buffer_noise_gate_is_sustain_on) normalized_1 = mixed_1;
+    normalized_1 *= PEDAL_BUFFER_GAIN;
     /* Output */
     int32 output_1 = util_pedal_pico_cutoff_biased(normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);
     int32 output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + middle_moving_average, PEDAL_BUFFER_PWM_OFFSET + PEDAL_BUFFER_PWM_PEAK, PEDAL_BUFFER_PWM_OFFSET - PEDAL_BUFFER_PWM_PEAK);

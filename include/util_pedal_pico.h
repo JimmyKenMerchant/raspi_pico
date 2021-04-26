@@ -43,7 +43,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
 #define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
 #define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
-#define util_pedal_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
+#define util_pedal_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
 
 /* Global Variables */
 
