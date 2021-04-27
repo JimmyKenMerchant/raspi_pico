@@ -40,10 +40,10 @@
 #define PEDAL_TAPE_GAIN 1
 #define PEDAL_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1 (int32)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_TAPE_DELAY_TIME_MAX 3969
-#define PEDAL_TAPE_DELAY_TIME_FIXED_1 1984 // 1920 Divided by 30518 (0.063 Seconds)
+#define PEDAL_TAPE_DELAY_TIME_FIXED_1 1984 // 1920 Divided by 28125 (0.068 Seconds)
 #define PEDAL_TAPE_DELAY_TIME_SWING_PEAK_1 1984
 #define PEDAL_TAPE_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (0-1984)
-#define PEDAL_TAPE_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_TAPE_OSC_SINE_1_TIME_MAX 28125
 #define PEDAL_TAPE_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_TAPE_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_TAPE_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -68,7 +68,8 @@ void pedal_tape_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
-    //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    util_pedal_pico_set_sys_clock_115200khz();
+    //stdio_init_all(); // Re-init for UART Baud Rate
     sleep_us(PEDAL_TAPE_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_TAPE_LED_GPIO);
     gpio_set_dir(PEDAL_TAPE_LED_GPIO, GPIO_OUT);
@@ -104,10 +105,9 @@ void pedal_tape_core_1() {
     pwm_set_irq_enabled(pedal_tape_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_tape_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
+    // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
-    pwm_config_set_wrap(&config, 4095); // 0-4095, 4096 Cycles for 0.032768ms
+    util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_tape_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel, PEDAL_TAPE_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel + 1, PEDAL_TAPE_PWM_OFFSET); // Set Channel B
@@ -174,7 +174,7 @@ void pedal_tape_on_pwm_irq_wrap() {
     /* Get Oscillator */
     int32 fixed_point_value_sine_1 = pedal_tape_table_sine_1[pedal_tape_osc_sine_1_index];
     pedal_tape_osc_sine_1_index += pedal_tape_osc_speed;
-    if (pedal_tape_osc_sine_1_index >= PEDAL_TAPE_OSC_SINE_1_TIME_MAX) pedal_tape_osc_sine_1_index = 0;
+    if (pedal_tape_osc_sine_1_index >= PEDAL_TAPE_OSC_SINE_1_TIME_MAX) pedal_tape_osc_sine_1_index -= PEDAL_TAPE_OSC_SINE_1_TIME_MAX;
     int16 time_swing = (int16)(int64)((((int64)pedal_tape_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int32 delay_1 = (int32)pedal_tape_delay_array[((pedal_tape_delay_index + PEDAL_TAPE_DELAY_TIME_MAX) - ((int16)pedal_tape_delay_time + time_swing)) % PEDAL_TAPE_DELAY_TIME_MAX];
     if (pedal_tape_delay_time + time_swing == 0) delay_1 = 0; // No Delay, Otherwise Latest

@@ -39,14 +39,14 @@
 #define PEDAL_PLANETS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PLANETS_PWM_PEAK 2047
 #define PEDAL_PLANETS_GAIN 1
-#define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 28125
 #define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PLANETS_DELAY_TIME_MAX 1025 // Don't Use Delay Time = 0
-#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 513 // 30518 Divided by 513 (59.49Hz, Folding Frequency is 29.74Hz)
+#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 513 // 28125 Divided by 513 (54.82Hz, Folding Frequency is 27.41Hz)
 #define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 512 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 4 // Multiply By 16 (1 - 32 to 16 - 512)
 #define PEDAL_PLANETS_OSC_START_THRESHOLD_FIXED_1 8 // From -48.13dB (Loss 255) in ADC_VREF (Typically 3.3V)
-#define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
+#define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -74,7 +74,8 @@ void pedal_planets_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
-    //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    util_pedal_pico_set_sys_clock_115200khz();
+    //stdio_init_all(); // Re-init for UART Baud Rate
     sleep_us(PEDAL_PLANETS_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_PLANETS_LED_GPIO);
     gpio_set_dir(PEDAL_PLANETS_LED_GPIO, GPIO_OUT);
@@ -110,10 +111,9 @@ void pedal_planets_core_1() {
     pwm_set_irq_enabled(pedal_planets_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_planets_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
+    // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
-    pwm_config_set_wrap(&config, 4095); // 0-4095, 4096 Cycles for 0.032768ms
+    util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_planets_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel, PEDAL_PLANETS_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel + 1, PEDAL_PLANETS_PWM_OFFSET); // Set Channel B
@@ -222,14 +222,14 @@ void pedal_planets_on_pwm_irq_wrap() {
     pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
     pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
     pedal_planets_delay_index++;
-    if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index = 0;
+    if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index -= PEDAL_PLANETS_DELAY_TIME_MAX;
     int32 mixed_1;
-    if (util_pedal_pico_sw_mode == 0) {
-        mixed_1 = low_pass_1;
-    } else if (util_pedal_pico_sw_mode == 1) {
+    if (util_pedal_pico_sw_mode == 1) {
+        mixed_1 = low_pass_1 << 1 ;
+    } else if (util_pedal_pico_sw_mode == 2) {
         mixed_1 = high_pass_1;
     } else {
-        mixed_1 = (normalized_1 + low_pass_1) >> 1;
+        mixed_1 = high_pass_1 + low_pass_1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;
     int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);

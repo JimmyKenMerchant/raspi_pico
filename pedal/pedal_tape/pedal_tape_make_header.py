@@ -37,7 +37,7 @@ declare_sine_1 = [
 "int32 pedal_tape_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 30518
+number_sine_1 = 28125
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",

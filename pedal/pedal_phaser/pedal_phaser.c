@@ -41,12 +41,12 @@
 #define PEDAL_PHASER_GAIN 1
 #define PEDAL_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PHASER_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
-#define PEDAL_PHASER_DELAY_TIME_FIXED_1 2048 // 30518 Divided by 2024 (15.07Hz, Folding Frequency is 7.53Hz)
-#define PEDAL_PHASER_DELAY_TIME_FIXED_2 256 // 30518 Divided by 256 (119.21Hz, Folding Frequency is 59.6Hz)
-#define PEDAL_PHASER_DELAY_TIME_FIXED_3 64 // 30518 Divided by 64 (476.84Hz, Folding Frequency is 238.42Hz)
-#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 30518
+#define PEDAL_PHASER_DELAY_TIME_FIXED_1 2048 // 28125 Divided by 2024 (13.90Hz, Folding Frequency is 6.95Hz)
+#define PEDAL_PHASER_DELAY_TIME_FIXED_2 256 // 28125 Divided by 256 (109.86Hz, Folding Frequency is 59.93Hz)
+#define PEDAL_PHASER_DELAY_TIME_FIXED_3 64 // 28125 Divided by 64 (439.45Hz, Folding Frequency is 219.73Hz)
+#define PEDAL_PHASER_OSC_SINE_1_TIME_MAX 28125
 #define PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
-#define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 30518 Divided by 4000 = Approx. 8Hz
+#define PEDAL_PHASER_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 #define PEDAL_PHASER_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PHASER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PHASER_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -75,7 +75,8 @@ void pedal_phaser_on_pwm_irq_wrap();
 
 int main(void) {
     //stdio_init_all();
-    //sleep_ms(2000); // Wait for Rediness of USB for Messages
+    util_pedal_pico_set_sys_clock_115200khz();
+    //stdio_init_all(); // Re-init for UART Baud Rate
     sleep_us(PEDAL_PHASER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_PHASER_LED_GPIO);
     gpio_set_dir(PEDAL_PHASER_LED_GPIO, GPIO_OUT);
@@ -111,10 +112,9 @@ void pedal_phaser_core_1() {
     pwm_set_irq_enabled(pedal_phaser_pwm_slice_num, true);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_phaser_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration (Make Approx. 30518Hz from 125Mhz - 0.032768ms Cycle)
+    // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
-    pwm_config_set_clkdiv(&config, 1.0f); // Set Clock Divider, 125,000,000 Divided by 1.0 for 0.008us Cycle
-    pwm_config_set_wrap(&config, 4095); // 0-4095, 4096 Cycles for 0.032768ms
+    util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(pedal_phaser_pwm_slice_num, &config, false); // Push Configufatio
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, PEDAL_PHASER_PWM_OFFSET); // Set Channel A
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel + 1, PEDAL_PHASER_PWM_OFFSET); // Set Channel B
@@ -253,19 +253,17 @@ void pedal_phaser_on_pwm_irq_wrap() {
     pedal_phaser_delay_x_2[pedal_phaser_delay_index] = (int16)canceled_1;
     pedal_phaser_delay_y_2[pedal_phaser_delay_index] = (int16)phase_shift_2;
     pedal_phaser_delay_index++;
-    if (pedal_phaser_delay_index >= PEDAL_PHASER_DELAY_TIME_MAX) pedal_phaser_delay_index = 0;
-    int32 mixed_1;
-    if (util_pedal_pico_sw_mode == 0) {
+    if (pedal_phaser_delay_index >= PEDAL_PHASER_DELAY_TIME_MAX) pedal_phaser_delay_index -= PEDAL_PHASER_DELAY_TIME_MAX;
+    int32 mixed_1 = (canceled_1 - phase_shift_2) >> 1;
+    if (util_pedal_pico_sw_mode == 1) {
         pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_1;
-        mixed_1 = (canceled_1 - phase_shift_2) >> 1;
-    } else if (util_pedal_pico_sw_mode == 1) {
-        pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_2;
-        mixed_1 = (canceled_1 + phase_shift_2) >> 1;
-    } else {
+    } else if (util_pedal_pico_sw_mode == 2) {
         pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_3;
-        mixed_1 = (canceled_1 + phase_shift_2) >> 1;
+    } else {
+        pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_2;
     }
     mixed_1 *= PEDAL_PHASER_GAIN;
+    /* Output */
     int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
     int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, (uint16)output_1);

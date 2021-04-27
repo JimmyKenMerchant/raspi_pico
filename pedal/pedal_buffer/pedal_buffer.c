@@ -62,7 +62,7 @@ volatile uint16 pedal_buffer_conversion_3;
 volatile int16* pedal_buffer_delay_array;
 volatile int32 pedal_buffer_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 volatile int32 pedal_buffer_delay_amplitude_interpolation;
-volatile uchar8 pedal_buffer_delay_amplitude_accum;
+volatile uchar8 pedal_buffer_delay_amplitude_interpolation_accum;
 volatile uint16 pedal_buffer_delay_time;
 volatile uint16 pedal_buffer_delay_time_interpolation;
 volatile uint16 pedal_buffer_delay_index;
@@ -131,7 +131,7 @@ void pedal_buffer_core_1() {
     pedal_buffer_delay_array = (int16*)calloc(PEDAL_BUFFER_DELAY_TIME_MAX, sizeof(int16));
     pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
     pedal_buffer_delay_amplitude_interpolation = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
-    pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
+    pedal_buffer_delay_amplitude_interpolation_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
     uint16 delay_time = (pedal_buffer_conversion_2 >> 7) << PEDAL_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_buffer_delay_time = delay_time;
     pedal_buffer_delay_time_interpolation = delay_time;
@@ -205,16 +205,16 @@ void pedal_buffer_on_pwm_irq_wrap() {
         pedal_buffer_noise_gate_count = 0;
         if (util_pedal_pico_sw_mode == 1) {
             pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
-            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
+            pedal_buffer_delay_amplitude_interpolation_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
         } else if (util_pedal_pico_sw_mode == 2) {
             pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_3;
-            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3;
+            pedal_buffer_delay_amplitude_interpolation_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3;
         } else {
             pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_2;
-            pedal_buffer_delay_amplitude_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2;
+            pedal_buffer_delay_amplitude_interpolation_accum = PEDAL_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2;
         }
     }
-    pedal_buffer_delay_amplitude_interpolation = util_pedal_pico_interpolate(pedal_buffer_delay_amplitude_interpolation, pedal_buffer_delay_amplitude, pedal_buffer_delay_amplitude_accum);
+    pedal_buffer_delay_amplitude_interpolation = util_pedal_pico_interpolate(pedal_buffer_delay_amplitude_interpolation, pedal_buffer_delay_amplitude, pedal_buffer_delay_amplitude_interpolation_accum);
     if (pedal_buffer_noise_gate_count == 0) {
         normalized_1 >>= PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT;
     }
