@@ -39,14 +39,12 @@
 #define PEDAL_PLANETS_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_PLANETS_PWM_PEAK 2047
 #define PEDAL_PLANETS_GAIN 1
-#define PEDAL_PLANETS_OSC_SINE_1_TIME_MAX 28125
-#define PEDAL_PLANETS_COEFFICIENT_FIXED_1 (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_MAX 1025 // Don't Use Delay Time = 0
-#define PEDAL_PLANETS_DELAY_TIME_FIXED_1 513 // 28125 Divided by 513 (54.82Hz, Folding Frequency is 27.41Hz)
-#define PEDAL_PLANETS_DELAY_TIME_SWING_PEAK_1 512 // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT 4 // Multiply By 16 (1 - 32 to 16 - 512)
-#define PEDAL_PLANETS_OSC_START_THRESHOLD_FIXED_1 8 // From -48.13dB (Loss 255) in ADC_VREF (Typically 3.3V)
-#define PEDAL_PLANETS_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
+#define PEDAL_PLANETS_COEFFICIENT_PEAK (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PLANETS_COEFFICIENT_SHIFT 11 // Multiply by 4096 (0x00000800-0x00010000)
+#define PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 0x80 // Value to Accumulate
+#define PEDAL_PLANETS_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
+#define PEDAL_PLANETS_DELAY_TIME_SHIFT 6 // Multiply by 64 (64-2048)
+#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -57,15 +55,12 @@ volatile uint16 pedal_planets_conversion_1;
 volatile uint16 pedal_planets_conversion_2;
 volatile uint16 pedal_planets_conversion_3;
 volatile int32 pedal_planets_coefficient;
+volatile int32 pedal_planets_coefficient_interpolation;
 volatile int16* pedal_planets_delay_x;
 volatile int16* pedal_planets_delay_y;
 volatile uint16 pedal_planets_delay_time;
+volatile uint16 pedal_planets_delay_time_interpolation;
 volatile uint16 pedal_planets_delay_index;
-volatile uint16 pedal_planets_delay_time_swing;
-volatile uint16 pedal_planets_osc_sine_1_index;
-volatile uint16 pedal_planets_osc_speed;
-volatile char8 pedal_planets_osc_start_threshold;
-volatile uint16 pedal_planets_osc_start_count;
 volatile uint32 pedal_planets_adc_middle_moving_average;
 volatile uint32 pedal_planets_debug_time;
 
@@ -126,16 +121,15 @@ void pedal_planets_core_1() {
     pedal_planets_conversion_2 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_3 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
     pedal_planets_adc_middle_moving_average = pedal_planets_conversion_1 * PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_planets_coefficient = PEDAL_PLANETS_COEFFICIENT_FIXED_1;
+    int32 coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_planets_coefficient = coefficient;
+    pedal_planets_coefficient_interpolation = coefficient;
     pedal_planets_delay_x = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_y = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
-    pedal_planets_delay_time = PEDAL_PLANETS_DELAY_TIME_FIXED_1;
-    pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    uint16 delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    pedal_planets_delay_time = delay_time;
+    pedal_planets_delay_time_interpolation = delay_time;
     pedal_planets_delay_index = 0;
-    pedal_planets_osc_sine_1_index = 0;
-    pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
-    pedal_planets_osc_start_threshold = PEDAL_PLANETS_OSC_START_THRESHOLD_FIXED_1;
-    pedal_planets_osc_start_count = 0;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -163,73 +157,41 @@ void pedal_planets_on_pwm_irq_wrap() {
     pedal_planets_conversion_1 = conversion_1_temp;
     if (abs(conversion_2_temp - pedal_planets_conversion_2) > PEDAL_PLANETS_ADC_THRESHOLD) {
         pedal_planets_conversion_2 = conversion_2_temp;
-        pedal_planets_osc_speed = pedal_planets_conversion_2 >> 7; // Make 5-bit Value (0-31)
+        pedal_planets_coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     if (abs(conversion_3_temp - pedal_planets_conversion_3) > PEDAL_PLANETS_ADC_THRESHOLD) {
         pedal_planets_conversion_3 = conversion_3_temp;
-        pedal_planets_delay_time_swing = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_planets_delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
+    pedal_planets_coefficient_interpolation = util_pedal_pico_interpolate(pedal_planets_coefficient_interpolation, pedal_planets_coefficient, PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
+    pedal_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_planets_delay_time_interpolation, pedal_planets_delay_time, PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM);
     uint32 middle_moving_average = pedal_planets_adc_middle_moving_average / PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_planets_adc_middle_moving_average -= middle_moving_average;
     pedal_planets_adc_middle_moving_average += pedal_planets_conversion_1;
     int32 normalized_1 = (int32)pedal_planets_conversion_1 - (int32)middle_moving_average;
-    /**
-     * pedal_planets_osc_start_count:
-     *
-     * Over Positive Threshold       ## 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Positive Threshold     # 0 # 2      ### Reset to 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                  # 0   # 3   # 5   # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PLANETS_OSC_START_COUNT_MAX
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                         # 5 # 3      #### 4
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Negative Threshold           # 6 # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * Over Negative Threshold             ## Reset to 1
-     */
-    if (normalized_1 > pedal_planets_osc_start_threshold || normalized_1 < -pedal_planets_osc_start_threshold) {
-        pedal_planets_osc_start_count = 1;
-    } else if (pedal_planets_osc_start_count != 0 && (normalized_1 > (pedal_planets_osc_start_threshold >> 1) || normalized_1 < -(pedal_planets_osc_start_threshold >> 1))) {
-        pedal_planets_osc_start_count = 1;
-    } else if (pedal_planets_osc_start_count != 0) {
-        pedal_planets_osc_start_count++;
-    }
-    if (pedal_planets_osc_start_count >= PEDAL_PLANETS_OSC_START_COUNT_MAX) pedal_planets_osc_start_count = 0;
-    if (pedal_planets_osc_start_count == 0) {
-        pedal_planets_osc_sine_1_index = 0;
-    }
-    /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_planets_table_sine_1[pedal_planets_osc_sine_1_index];
-    pedal_planets_osc_sine_1_index += pedal_planets_osc_speed;
-    if (pedal_planets_osc_sine_1_index >= PEDAL_PLANETS_OSC_SINE_1_TIME_MAX) pedal_planets_osc_sine_1_index -= PEDAL_PLANETS_OSC_SINE_1_TIME_MAX;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    int16 delay_time_swing = (int16)(int64)((((int64)pedal_planets_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32);
-    int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
-    int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time + delay_time_swing)) % PEDAL_PLANETS_DELAY_TIME_MAX];
-    /* High Pass Filter and Correction */
-    int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * (int64)pedal_planets_coefficient) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
-    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
-    /* Low Pass Filster */
-    int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient))) >> 32);
-    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
+    int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
+    int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
+    /* First Stage: High Pass Filter */
+    int32 high_pass_1 = (int32)((int64)((((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation)) - (((int64)delay_x << 16) * (int64)pedal_planets_coefficient_interpolation)) >> 32);
+    /* Second Stage: Low Pass Filter to Sound from First Stage */
+    int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
+    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)high_pass_1;
     pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
     pedal_planets_delay_index++;
     if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index -= PEDAL_PLANETS_DELAY_TIME_MAX;
     int32 mixed_1;
     if (util_pedal_pico_sw_mode == 1) {
-        mixed_1 = low_pass_1 << 1 ;
+        mixed_1 = low_pass_1 << 1;
     } else if (util_pedal_pico_sw_mode == 2) {
         mixed_1 = high_pass_1;
     } else {
-        mixed_1 = high_pass_1 + low_pass_1;
+        mixed_1 = low_pass_1 << 1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;
     int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);

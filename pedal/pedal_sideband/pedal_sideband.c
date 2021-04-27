@@ -202,12 +202,6 @@ void pedal_sideband_on_pwm_irq_wrap() {
     } else {
         normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
     }
-    /**
-     * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
-     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
-     */
-     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[pedal_sideband_osc_sine_1_index];
     int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_2[pedal_sideband_osc_sine_2_index] >> 1; // Divide By 2
     pedal_sideband_osc_sine_1_index += pedal_sideband_osc_speed;

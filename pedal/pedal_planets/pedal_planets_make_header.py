@@ -32,13 +32,6 @@ prefix = [
 "\n"
 ]
 
-declare_sine_1 = [
-"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_planets_table_sine_1[] = {\n"
-]
-
-number_sine_1 = 28125
-
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
 "int32 pedal_planets_table_pdf_1[] = {\n"
@@ -60,10 +53,6 @@ postfix = [
 print (sys.version)
 header = open(headername, "w") # Write Only With UTF-8
 header.writelines(prefix)
-
-# Table Sine 1
-header.writelines(declare_sine_1)
-nt.makeTableSine(header, number_sine_1)
 
 # Table PDF 1
 header.writelines(declare_pdf_1)
