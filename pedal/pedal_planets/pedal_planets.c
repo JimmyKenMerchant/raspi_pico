@@ -44,7 +44,7 @@
 #define PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 0x80 // Value to Accumulate
 #define PEDAL_PLANETS_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
 #define PEDAL_PLANETS_DELAY_TIME_SHIFT 6 // Multiply by 64 (64-2048)
-#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
+#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate, Small Value Makes Froggy
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -177,8 +177,9 @@ void pedal_planets_on_pwm_irq_wrap() {
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
-    /* First Stage: High Pass Filter */
-    int32 high_pass_1 = (int32)((int64)((((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation)) - (((int64)delay_x << 16) * (int64)pedal_planets_coefficient_interpolation)) >> 32);
+    /* First Stage: High Pass Filter and Correction */
+    int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * -(int64)pedal_planets_coefficient_interpolation) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
+    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
     /* Second Stage: Low Pass Filter to Sound from First Stage */
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
     pedal_planets_delay_x[pedal_planets_delay_index] = (int16)high_pass_1;

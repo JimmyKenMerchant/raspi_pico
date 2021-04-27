@@ -141,7 +141,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * "pedal_phaser" is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. One of two outputs is inverted for balanced monaural. There are output modes to change the depth of phaser (it's the delay time in fact).
 
-* "pedal_planets" is using an band-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike "pedal_phaser", this pedal doesn't have any oscillator. One of two outputs is inverted for balanced monaural. There are output modes. The low state on GPIO15 sets high-pass filter mode. Note that it may be like a Wah-wah pedal. However, this uses a delay and sounds absolute digital.
+* "pedal_planets" is using a band-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike "pedal_phaser", this pedal doesn't have any oscillator. One of two outputs is inverted for balanced monaural. There are output modes. The low state on GPIO15 sets high-pass filter mode. Note that it may be like a Wah-wah pedal. However, this uses a delay and sounds absolute digital.
 
 ## Technical Notes
 
