@@ -182,7 +182,7 @@ void pedal_planets_on_pwm_irq_wrap() {
     high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
     /* Second Stage: Low Pass Filter to Sound from First Stage */
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
-    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)high_pass_1;
+    pedal_planets_delay_x[pedal_planets_delay_index] = (int16)normalized_1;
     pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
     pedal_planets_delay_index++;
     if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index -= PEDAL_PLANETS_DELAY_TIME_MAX;
