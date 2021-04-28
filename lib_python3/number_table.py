@@ -50,7 +50,7 @@ def makeTableSineHalf(header, length): # Make Sine Values in 0-180 Degrees
 # reach: Number to Reach from 1
 # number_log: Base Number
 # height: Multiplier
-def makeTableLog(header, length, reach, number_log, height): # Make Natural Log
+def makeTableLog(header, length, reach, number_log, height): # Make Logarithm
     list_log = numpy.linspace(1, reach, length)
     for i in range(length):
         floating_point_value = math.log(list_log[i], number_log) * height # Floating Point Decimal
@@ -64,7 +64,7 @@ def makeTableLog(header, length, reach, number_log, height): # Make Natural Log
 # length: Number of Array
 # reach: Number to Reach from 0
 # height: Multiplier
-def makeTablePower(header, length, reach, height): # Make Natural Log
+def makeTablePower(header, length, reach, height): # Make Power
     list_power = numpy.linspace(0, reach, length)
     for i in range(length):
         floating_point_value = list_power[i] * list_power[i] * height # Floating Point Decimal

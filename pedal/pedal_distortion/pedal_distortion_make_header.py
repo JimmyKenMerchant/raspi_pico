@@ -60,7 +60,7 @@ declare_log_2 = [
 log_length_2 = 2047 # Number of Array
 log_reach_2 = 2.0 # Number to Reach from 1
 log_number_log_2 = 2.0 # Base Number
-log_height_2 = 8.0 # Maximum Height
+log_height_2 = 10.0 # Maximum Height
 
 declare_power_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",

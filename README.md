@@ -149,6 +149,8 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * "pedal_planets" is using a band-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike "pedal_phaser", this pedal doesn't have any oscillator. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets high-pass filter mode. Note that it may be like a Wah-wah pedal. However, this uses a delay and sounds absolute digital.
 
+* "pedal_distortion" is simulating non-linear amplification. ADC0 is for the audio input, ADC1 is for the level of the output. There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+
 ## Technical Notes
 
 **I/O**
