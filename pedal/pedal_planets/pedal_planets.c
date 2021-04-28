@@ -44,7 +44,8 @@
 #define PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 0x80 // Value to Accumulate
 #define PEDAL_PLANETS_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
 #define PEDAL_PLANETS_DELAY_TIME_SHIFT 6 // Multiply by 64 (64-2048)
-#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate, Small Value Makes Froggy
+#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Small Value Makes Froggy
+#define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_2 16 // Value to Accumulate
 #define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
 #define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
@@ -60,6 +61,7 @@ volatile int16* pedal_planets_delay_x;
 volatile int16* pedal_planets_delay_y;
 volatile uint16 pedal_planets_delay_time;
 volatile uint16 pedal_planets_delay_time_interpolation;
+volatile uint16 pedal_planets_delay_time_interpolation_accum;
 volatile uint16 pedal_planets_delay_index;
 volatile uint32 pedal_planets_adc_middle_moving_average;
 volatile uint32 pedal_planets_debug_time;
@@ -129,6 +131,7 @@ void pedal_planets_core_1() {
     uint16 delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_planets_delay_time = delay_time;
     pedal_planets_delay_time_interpolation = delay_time;
+    pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1;
     pedal_planets_delay_index = 0;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
@@ -164,7 +167,7 @@ void pedal_planets_on_pwm_irq_wrap() {
         pedal_planets_delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     pedal_planets_coefficient_interpolation = util_pedal_pico_interpolate(pedal_planets_coefficient_interpolation, pedal_planets_coefficient, PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
-    pedal_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_planets_delay_time_interpolation, pedal_planets_delay_time, PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM);
+    pedal_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_planets_delay_time_interpolation, pedal_planets_delay_time, pedal_planets_delay_time_interpolation_accum);
     uint32 middle_moving_average = pedal_planets_adc_middle_moving_average / PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
     pedal_planets_adc_middle_moving_average -= middle_moving_average;
     pedal_planets_adc_middle_moving_average += pedal_planets_conversion_1;
@@ -181,6 +184,7 @@ void pedal_planets_on_pwm_irq_wrap() {
     int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * -(int64)pedal_planets_coefficient_interpolation) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
     high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
     /* Second Stage: Low Pass Filter to Sound from First Stage */
+    if (util_pedal_pico_sw_mode == 1) high_pass_1 = normalized_1; // Bypass High Pass Filter
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
     pedal_planets_delay_x[pedal_planets_delay_index] = (int16)high_pass_1;
     pedal_planets_delay_y[pedal_planets_delay_index] = (int16)low_pass_1;
@@ -188,13 +192,17 @@ void pedal_planets_on_pwm_irq_wrap() {
     if (pedal_planets_delay_index >= PEDAL_PLANETS_DELAY_TIME_MAX) pedal_planets_delay_index -= PEDAL_PLANETS_DELAY_TIME_MAX;
     int32 mixed_1;
     if (util_pedal_pico_sw_mode == 1) {
-        mixed_1 = low_pass_1 << 1;
+        mixed_1 = low_pass_1;
+        pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_2;
     } else if (util_pedal_pico_sw_mode == 2) {
         mixed_1 = high_pass_1;
+        pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_2;
     } else {
         mixed_1 = low_pass_1 << 1;
+        pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;
+    /* Output */
     int32 output_1 = util_pedal_pico_cutoff_biased(mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
     int32 output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + middle_moving_average, PEDAL_PLANETS_PWM_OFFSET + PEDAL_PLANETS_PWM_PEAK, PEDAL_PLANETS_PWM_OFFSET - PEDAL_PLANETS_PWM_PEAK);
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel, (uint16)output_1);
