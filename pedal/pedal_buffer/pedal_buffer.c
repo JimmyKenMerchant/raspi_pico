@@ -50,9 +50,6 @@
 #define PEDAL_BUFFER_NOISE_GATE_REDUCE_SHIFT 6 // Divide by 64
 #define PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
-#define PEDAL_BUFFER_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_BUFFER_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_buffer_pwm_slice_num;
 volatile uint32 pedal_buffer_pwm_channel;
@@ -68,7 +65,6 @@ volatile uint16 pedal_buffer_delay_time_interpolation;
 volatile uint16 pedal_buffer_delay_index;
 volatile char8 pedal_buffer_noise_gate_threshold;
 volatile uint16 pedal_buffer_noise_gate_count;
-volatile uint32 pedal_buffer_adc_middle_moving_average;
 volatile uint32 pedal_buffer_debug_time;
 
 void pedal_buffer_core_1();
@@ -121,13 +117,9 @@ void pedal_buffer_core_1() {
     pwm_set_chan_level(pedal_buffer_pwm_slice_num, pedal_buffer_pwm_channel + 1, PEDAL_BUFFER_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
     util_pedal_pico_init_adc();
-    util_pedal_pico_on_adc_conversion_1 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_2 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_3 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    pedal_buffer_conversion_1 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    pedal_buffer_conversion_2 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    pedal_buffer_conversion_3 = PEDAL_BUFFER_ADC_MIDDLE_DEFAULT;
-    pedal_buffer_adc_middle_moving_average = pedal_buffer_conversion_1 * PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_buffer_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_buffer_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_buffer_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_buffer_delay_array = (int16*)calloc(PEDAL_BUFFER_DELAY_TIME_MAX, sizeof(int16));
     pedal_buffer_delay_amplitude = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
     pedal_buffer_delay_amplitude_interpolation = PEDAL_BUFFER_DELAY_AMPLITUDE_FIXED_1;
@@ -163,18 +155,18 @@ void pedal_buffer_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_buffer_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_buffer_conversion_2) > PEDAL_BUFFER_ADC_THRESHOLD) {
+    if (abs(conversion_2_temp - pedal_buffer_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_buffer_conversion_2 = conversion_2_temp;
         pedal_buffer_delay_time = (pedal_buffer_conversion_2 >> 7) << PEDAL_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
-    if (abs(conversion_3_temp - pedal_buffer_conversion_3) > PEDAL_BUFFER_ADC_THRESHOLD) {
+    if (abs(conversion_3_temp - pedal_buffer_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_buffer_conversion_3 = conversion_3_temp;
         pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     pedal_buffer_delay_time_interpolation = util_pedal_pico_interpolate(pedal_buffer_delay_time_interpolation, pedal_buffer_delay_time, PEDAL_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM);
-    uint32 middle_moving_average = pedal_buffer_adc_middle_moving_average / PEDAL_BUFFER_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_buffer_adc_middle_moving_average -= middle_moving_average;
-    pedal_buffer_adc_middle_moving_average += pedal_buffer_conversion_1;
+    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average += pedal_buffer_conversion_1;
     int32 normalized_1 = (int32)pedal_buffer_conversion_1 - (int32)middle_moving_average;
     /**
      * pedal_buffer_noise_gate_count:

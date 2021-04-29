@@ -38,6 +38,9 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_1_GPIO 27
 #define UTIL_PEDAL_PICO_ADC_2_GPIO 28
 #define UTIL_PEDAL_PICO_ADC_ERROR_SINCE (uint64)1000000 // System Time (Micro Seconds) to Start Handling ADC Error
+#define UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT 2048
+#define UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 #define UTIL_PEDAL_PICO_SW_THRESHOLD 30
 #define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
@@ -51,6 +54,7 @@ volatile uint16 util_pedal_pico_on_adc_conversion_1;
 volatile uint16 util_pedal_pico_on_adc_conversion_2;
 volatile uint16 util_pedal_pico_on_adc_conversion_3;
 volatile bool util_pedal_pico_on_adc_is_outstanding;
+volatile uint32 util_pedal_pico_adc_middle_moving_average;
 volatile uchar8 util_pedal_pico_sw_mode;
 
 /* Functions */

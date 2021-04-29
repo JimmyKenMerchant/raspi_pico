@@ -38,9 +38,6 @@
 #define PEDAL_DISTORTION_PWM_OFFSET 2048 // Ideal Middle Point
 #define PEDAL_DISTORTION_PWM_PEAK 2047
 #define PEDAL_DISTORTION_GAIN 1
-#define PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_DISTORTION_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_DISTORTION_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 #define PEDAL_DISTORTION_CUTOFF_FIXED_1 0xC0
 
 volatile uint32 pedal_distortion_pwm_slice_num;
@@ -49,7 +46,6 @@ volatile uint16 pedal_distortion_conversion_1;
 volatile uint16 pedal_distortion_conversion_2;
 volatile uint16 pedal_distortion_conversion_3;
 volatile uint16 pedal_distortion_loss;
-volatile uint32 pedal_distortion_adc_middle_moving_average;
 volatile uint32 pedal_distortion_debug_time;
 
 void pedal_distortion_core_1();
@@ -102,13 +98,9 @@ void pedal_distortion_core_1() {
     pwm_set_chan_level(pedal_distortion_pwm_slice_num, pedal_distortion_pwm_channel + 1, PEDAL_DISTORTION_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
     util_pedal_pico_init_adc();
-    util_pedal_pico_on_adc_conversion_1 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_2 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_3 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    pedal_distortion_conversion_1 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    pedal_distortion_conversion_2 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    pedal_distortion_conversion_3 = PEDAL_DISTORTION_ADC_MIDDLE_DEFAULT;
-    pedal_distortion_adc_middle_moving_average = pedal_distortion_conversion_1 * PEDAL_DISTORTION_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_distortion_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_distortion_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_distortion_loss = 32 - (pedal_distortion_conversion_2 >> 7); // Make 5-bit Value (1-32)
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
@@ -135,16 +127,16 @@ void pedal_distortion_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_distortion_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_distortion_conversion_2) > PEDAL_DISTORTION_ADC_THRESHOLD) {
+    if (abs(conversion_2_temp - pedal_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_distortion_conversion_2 = conversion_2_temp;
         pedal_distortion_loss = 32 - (pedal_distortion_conversion_2 >> 7); // Make 5-bit Value (1-32)
     }
-    if (abs(conversion_3_temp - pedal_distortion_conversion_3) > PEDAL_DISTORTION_ADC_THRESHOLD) {
+    if (abs(conversion_3_temp - pedal_distortion_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_distortion_conversion_3 = conversion_3_temp;
     }
-    uint32 middle_moving_average = pedal_distortion_adc_middle_moving_average / PEDAL_DISTORTION_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_distortion_adc_middle_moving_average -= middle_moving_average;
-    pedal_distortion_adc_middle_moving_average += pedal_distortion_conversion_1;
+    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average += pedal_distortion_conversion_1;
     int32 normalized_1 = (int32)pedal_distortion_conversion_1 - (int32)middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

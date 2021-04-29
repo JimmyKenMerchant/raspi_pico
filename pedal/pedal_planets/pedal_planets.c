@@ -46,9 +46,6 @@
 #define PEDAL_PLANETS_DELAY_TIME_SHIFT 6 // Multiply by 64 (64-2048)
 #define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Small Value Makes Froggy
 #define PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_2 16 // Value to Accumulate
-#define PEDAL_PLANETS_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_PLANETS_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_planets_pwm_slice_num;
 volatile uint32 pedal_planets_pwm_channel;
@@ -63,7 +60,6 @@ volatile uint16 pedal_planets_delay_time;
 volatile uint16 pedal_planets_delay_time_interpolation;
 volatile uint16 pedal_planets_delay_time_interpolation_accum;
 volatile uint16 pedal_planets_delay_index;
-volatile uint32 pedal_planets_adc_middle_moving_average;
 volatile uint32 pedal_planets_debug_time;
 
 void pedal_planets_core_1();
@@ -116,13 +112,9 @@ void pedal_planets_core_1() {
     pwm_set_chan_level(pedal_planets_pwm_slice_num, pedal_planets_pwm_channel + 1, PEDAL_PLANETS_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
     util_pedal_pico_init_adc();
-    util_pedal_pico_on_adc_conversion_1 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_2 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_3 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_1 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_2 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_conversion_3 = PEDAL_PLANETS_ADC_MIDDLE_DEFAULT;
-    pedal_planets_adc_middle_moving_average = pedal_planets_conversion_1 * PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_planets_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_planets_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     int32 coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_planets_coefficient = coefficient;
     pedal_planets_coefficient_interpolation = coefficient;
@@ -158,19 +150,19 @@ void pedal_planets_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_planets_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_planets_conversion_2) > PEDAL_PLANETS_ADC_THRESHOLD) {
+    if (abs(conversion_2_temp - pedal_planets_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_planets_conversion_2 = conversion_2_temp;
         pedal_planets_coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
-    if (abs(conversion_3_temp - pedal_planets_conversion_3) > PEDAL_PLANETS_ADC_THRESHOLD) {
+    if (abs(conversion_3_temp - pedal_planets_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_planets_conversion_3 = conversion_3_temp;
         pedal_planets_delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     pedal_planets_coefficient_interpolation = util_pedal_pico_interpolate(pedal_planets_coefficient_interpolation, pedal_planets_coefficient, PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
     pedal_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_planets_delay_time_interpolation, pedal_planets_delay_time, pedal_planets_delay_time_interpolation_accum);
-    uint32 middle_moving_average = pedal_planets_adc_middle_moving_average / PEDAL_PLANETS_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_planets_adc_middle_moving_average -= middle_moving_average;
-    pedal_planets_adc_middle_moving_average += pedal_planets_conversion_1;
+    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average += pedal_planets_conversion_1;
     int32 normalized_1 = (int32)pedal_planets_conversion_1 - (int32)middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

@@ -42,9 +42,7 @@
 #define PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT 11
 #define PEDAL_REVERB_DELAY_TIME_MAX 7937
 #define PEDAL_REVERB_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-7936), 7936 Divided by 28125 (0.28 Seconds)
-#define PEDAL_REVERB_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_REVERB_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_REVERB_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
+#define PEDAL_REVERB_DELAY_TIME_INTERPOLATION_ACCUM 1
 
 volatile uint32 pedal_reverb_pwm_slice_num;
 volatile uint32 pedal_reverb_pwm_channel;
@@ -54,8 +52,8 @@ volatile uint16 pedal_reverb_conversion_3;
 volatile int16* pedal_reverb_delay_array;
 volatile int32 pedal_reverb_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 volatile uint16 pedal_reverb_delay_time;
+volatile uint16 pedal_reverb_delay_time_interpolation;
 volatile uint16 pedal_reverb_delay_index;
-volatile uint32 pedal_reverb_adc_middle_moving_average;
 volatile uint32 pedal_reverb_debug_time;
 
 void pedal_reverb_core_1();
@@ -108,16 +106,14 @@ void pedal_reverb_core_1() {
     pwm_set_chan_level(pedal_reverb_pwm_slice_num, pedal_reverb_pwm_channel + 1, PEDAL_REVERB_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
     util_pedal_pico_init_adc();
-    util_pedal_pico_on_adc_conversion_1 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_2 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_3 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    pedal_reverb_conversion_1 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    pedal_reverb_conversion_2 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    pedal_reverb_conversion_3 = PEDAL_REVERB_ADC_MIDDLE_DEFAULT;
-    pedal_reverb_adc_middle_moving_average = pedal_reverb_conversion_1 * PEDAL_REVERB_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_reverb_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_reverb_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_reverb_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_reverb_delay_array = (int16*)calloc(PEDAL_REVERB_DELAY_TIME_MAX, sizeof(int16));
     pedal_reverb_delay_amplitude = (int32)(pedal_reverb_conversion_2 >> 7) << PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
-    pedal_reverb_delay_time = (pedal_reverb_conversion_3 >> 7) << PEDAL_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
+    uint16 delay_time = (pedal_reverb_conversion_3 >> 7) << PEDAL_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
+    pedal_reverb_delay_time = delay_time;
+    pedal_reverb_delay_time_interpolation = delay_time;
     pedal_reverb_delay_index = 0;
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
@@ -145,17 +141,18 @@ void pedal_reverb_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_reverb_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_reverb_conversion_2) > PEDAL_REVERB_ADC_THRESHOLD) {
+    if (abs(conversion_2_temp - pedal_reverb_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_reverb_conversion_2 = conversion_2_temp;
         pedal_reverb_delay_amplitude = (int32)(pedal_reverb_conversion_2 >> 7) << PEDAL_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
-    if (abs(conversion_3_temp - pedal_reverb_conversion_3) > PEDAL_REVERB_ADC_THRESHOLD) {
+    if (abs(conversion_3_temp - pedal_reverb_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_reverb_conversion_3 = conversion_3_temp;
         pedal_reverb_delay_time = (pedal_reverb_conversion_3 >> 7) << PEDAL_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply Multiply
     }
-    uint32 middle_moving_average = pedal_reverb_adc_middle_moving_average / PEDAL_REVERB_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_reverb_adc_middle_moving_average -= middle_moving_average;
-    pedal_reverb_adc_middle_moving_average += pedal_reverb_conversion_1;
+    pedal_reverb_delay_time_interpolation = util_pedal_pico_interpolate(pedal_reverb_delay_time_interpolation, pedal_reverb_delay_time, PEDAL_REVERB_DELAY_TIME_INTERPOLATION_ACCUM);
+    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average += pedal_reverb_conversion_1;
     int32 normalized_1 = (int32)pedal_reverb_conversion_1 - (int32)middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
@@ -163,8 +160,8 @@ void pedal_reverb_on_pwm_irq_wrap() {
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_reverb_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_REVERB_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    int32 delay_1 = (int32)pedal_reverb_delay_array[((pedal_reverb_delay_index + PEDAL_REVERB_DELAY_TIME_MAX) - pedal_reverb_delay_time) % PEDAL_REVERB_DELAY_TIME_MAX];
-    if (pedal_reverb_delay_time == 0) delay_1 = 0; // No Reverb, Otherwise Latest
+    int32 delay_1 = (int32)pedal_reverb_delay_array[((pedal_reverb_delay_index + PEDAL_REVERB_DELAY_TIME_MAX) - pedal_reverb_delay_time_interpolation) % PEDAL_REVERB_DELAY_TIME_MAX];
+    if (pedal_reverb_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
     int32 pedal_reverb_normalized_1_amplitude = 0x00010000 - pedal_reverb_delay_amplitude;
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_reverb_normalized_1_amplitude) >> 32);
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_reverb_delay_amplitude) >> 32);

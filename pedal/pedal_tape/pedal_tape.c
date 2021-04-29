@@ -44,9 +44,6 @@
 #define PEDAL_TAPE_DELAY_TIME_SWING_PEAK_1 1984
 #define PEDAL_TAPE_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (0-1984)
 #define PEDAL_TAPE_OSC_SINE_1_TIME_MAX 28125
-#define PEDAL_TAPE_ADC_MIDDLE_DEFAULT 2048
-#define PEDAL_TAPE_ADC_MIDDLE_NUMBER_MOVING_AVERAGE 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_TAPE_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
 volatile uint32 pedal_tape_pwm_slice_num;
 volatile uint32 pedal_tape_pwm_channel;
@@ -60,7 +57,6 @@ volatile int32 pedal_tape_delay_amplitude; // Using 32-bit Signed (Two's Complim
 volatile uint16 pedal_tape_delay_time;
 volatile uint16 pedal_tape_delay_index;
 volatile uint16 pedal_tape_delay_time_swing;
-volatile uint32 pedal_tape_adc_middle_moving_average;
 volatile uint32 pedal_tape_debug_time;
 
 void pedal_tape_core_1();
@@ -113,13 +109,9 @@ void pedal_tape_core_1() {
     pwm_set_chan_level(pedal_tape_pwm_slice_num, pedal_tape_pwm_channel + 1, PEDAL_TAPE_PWM_OFFSET); // Set Channel B
     /* ADC Settings */
     util_pedal_pico_init_adc();
-    util_pedal_pico_on_adc_conversion_1 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_2 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    util_pedal_pico_on_adc_conversion_3 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    pedal_tape_conversion_1 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    pedal_tape_conversion_2 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    pedal_tape_conversion_3 = PEDAL_TAPE_ADC_MIDDLE_DEFAULT;
-    pedal_tape_adc_middle_moving_average = pedal_tape_conversion_1 * PEDAL_TAPE_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
+    pedal_tape_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_tape_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_tape_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_tape_delay_array = (int16*)calloc(PEDAL_TAPE_DELAY_TIME_MAX, sizeof(int16));
     pedal_tape_delay_amplitude = PEDAL_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1;
     pedal_tape_delay_time = PEDAL_TAPE_DELAY_TIME_FIXED_1;
@@ -153,17 +145,17 @@ void pedal_tape_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     pedal_tape_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_tape_conversion_2) > PEDAL_TAPE_ADC_THRESHOLD) {
+    if (abs(conversion_2_temp - pedal_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_tape_conversion_2 = conversion_2_temp;
         pedal_tape_delay_time_swing = (pedal_tape_conversion_2 >> 7) << PEDAL_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Multiply
     }
-    if (abs(conversion_3_temp - pedal_tape_conversion_3) > PEDAL_TAPE_ADC_THRESHOLD) {
+    if (abs(conversion_3_temp - pedal_tape_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_tape_conversion_3 = conversion_3_temp;
         pedal_tape_osc_speed = pedal_tape_conversion_3 >> 7; // Make 5-bit Value (0-31)
     }
-    uint32 middle_moving_average = pedal_tape_adc_middle_moving_average / PEDAL_TAPE_ADC_MIDDLE_NUMBER_MOVING_AVERAGE;
-    pedal_tape_adc_middle_moving_average -= middle_moving_average;
-    pedal_tape_adc_middle_moving_average += pedal_tape_conversion_1;
+    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average += pedal_tape_conversion_1;
     int32 normalized_1 = (int32)pedal_tape_conversion_1 - (int32)middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

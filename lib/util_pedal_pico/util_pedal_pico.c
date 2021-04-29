@@ -43,6 +43,10 @@ void util_pedal_pico_init_adc() {
     irq_set_exclusive_handler(ADC_IRQ_FIFO, util_pedal_pico_on_adc_irq_fifo);
     irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
     adc_irq_set_enabled(true);
+    util_pedal_pico_on_adc_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    util_pedal_pico_on_adc_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    util_pedal_pico_on_adc_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    util_pedal_pico_adc_middle_moving_average = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT * UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
     util_pedal_pico_on_adc_is_outstanding = true;
     __dsb();
 }
