@@ -37,14 +37,7 @@ declare_sine_1 = [
 "int32 pedal_sideband_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 14063
-
-declare_sine_2 = [
-"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 pedal_sideband_table_sine_2[] = {\n"
-]
-
-number_sine_2 = 10680
+number_sine_1 = 9375
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -91,10 +84,6 @@ header.writelines(prefix)
 # Table Sine 1
 header.writelines(declare_sine_1)
 nt.makeTableSineHalf(header, number_sine_1)
-
-# Table Sine 2
-header.writelines(declare_sine_2)
-nt.makeTableSineHalf(header, number_sine_2)
 
 # Table PDF 1
 header.writelines(declare_pdf_1)

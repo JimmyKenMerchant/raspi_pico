@@ -40,8 +40,7 @@
 #define PEDAL_DISTORTION_GAIN 1
 #define PEDAL_DISTORTION_CUTOFF_FIXED_1 0xC0
 
-volatile uint32 pedal_distortion_pwm_slice_num;
-volatile uint32 pedal_distortion_pwm_channel;
+volatile util_pedal_pico* pedal_distortion;
 volatile uint16 pedal_distortion_conversion_1;
 volatile uint16 pedal_distortion_conversion_2;
 volatile uint16 pedal_distortion_conversion_3;
@@ -50,6 +49,8 @@ volatile uint32 pedal_distortion_debug_time;
 
 void pedal_distortion_core_1();
 void pedal_distortion_on_pwm_irq_wrap();
+void pedal_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
+void pedal_distortion_free();
 
 int main(void) {
     //stdio_init_all();
@@ -81,63 +82,56 @@ int main(void) {
 
 void pedal_distortion_core_1() {
     /* PWM Settings */
-    gpio_set_function(PEDAL_DISTORTION_PWM_1_GPIO, GPIO_FUNC_PWM); // GPIO16 = PWM8 A
-    gpio_set_function(PEDAL_DISTORTION_PWM_2_GPIO, GPIO_FUNC_PWM); // GPIO17 = PWM8 B
-    pedal_distortion_pwm_slice_num = pwm_gpio_to_slice_num(PEDAL_DISTORTION_PWM_1_GPIO); // GPIO16 = PWM8
-    pedal_distortion_pwm_channel = pwm_gpio_to_channel(PEDAL_DISTORTION_PWM_1_GPIO); // GPIO16 = A
-    // Set IRQ and Handler for PWM
-    pwm_clear_irq(pedal_distortion_pwm_slice_num);
-    pwm_set_irq_enabled(pedal_distortion_pwm_slice_num, true);
+    pedal_distortion = util_pedal_pico_init(PEDAL_DISTORTION_PWM_1_GPIO, PEDAL_DISTORTION_PWM_2_GPIO);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_distortion_on_pwm_irq_wrap);
-    irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration
-    pwm_config config = pwm_get_default_config(); // Pull Configuration
-    util_pedal_pico_set_pwm_28125hz(&config);
-    pwm_init(pedal_distortion_pwm_slice_num, &config, false); // Push Configufatio
-    pwm_set_chan_level(pedal_distortion_pwm_slice_num, pedal_distortion_pwm_channel, PEDAL_DISTORTION_PWM_OFFSET); // Set Channel A
-    pwm_set_chan_level(pedal_distortion_pwm_slice_num, pedal_distortion_pwm_channel + 1, PEDAL_DISTORTION_PWM_OFFSET); // Set Channel B
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0);
+    pwm_set_chan_level(pedal_distortion->pwm_1_slice, pedal_distortion->pwm_1_channel, PEDAL_DISTORTION_PWM_OFFSET);
+    pwm_set_chan_level(pedal_distortion->pwm_2_slice, pedal_distortion->pwm_2_channel, PEDAL_DISTORTION_PWM_OFFSET);
     /* ADC Settings */
     util_pedal_pico_init_adc();
+    /* Unique Settings */
     pedal_distortion_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_distortion_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_distortion_loss = 32 - (pedal_distortion_conversion_2 >> 7); // Make 5-bit Value (1-32)
-    /* Start IRQ, PWM and ADC */
-    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
-    irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
-    pwm_set_mask_enabled(0b1 << pedal_distortion_pwm_slice_num);
-    adc_select_input(0); // Ensure to Start from A0
-    __dsb();
-    __isb();
-    adc_run(true);
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_distortion);
     util_pedal_pico_sw_loop(PEDAL_DISTORTION_SW_1_GPIO, PEDAL_DISTORTION_SW_2_GPIO);
 }
 
 void pedal_distortion_on_pwm_irq_wrap() {
-    pwm_clear_irq(pedal_distortion_pwm_slice_num);
+    pwm_clear_irq(pedal_distortion->pwm_1_slice);
     //uint32 from_time = time_us_32();
-    uint16 conversion_1_temp = util_pedal_pico_on_adc_conversion_1;
-    uint16 conversion_2_temp = util_pedal_pico_on_adc_conversion_2;
-    uint16 conversion_3_temp = util_pedal_pico_on_adc_conversion_3;
+    uint16 conversion_1 = util_pedal_pico_on_adc_conversion_1;
+    uint16 conversion_2 = util_pedal_pico_on_adc_conversion_2;
+    uint16 conversion_3 = util_pedal_pico_on_adc_conversion_3;
     if (! util_pedal_pico_on_adc_is_outstanding) {
         util_pedal_pico_on_adc_is_outstanding = true;
-        adc_select_input(0); // Ensure to Start from A0
+        adc_select_input(0); // Ensure to Start from ADC0
         __dsb();
         __isb();
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
-    pedal_distortion_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
-        pedal_distortion_conversion_2 = conversion_2_temp;
+    util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
+    pedal_distortion_process(conversion_1, conversion_2, conversion_3);
+    /* Output */
+    pwm_set_chan_level(pedal_distortion->pwm_1_slice, pedal_distortion->pwm_1_channel, (uint16)pedal_distortion->output_1);
+    pwm_set_chan_level(pedal_distortion->pwm_2_slice, pedal_distortion->pwm_2_channel, (uint16)pedal_distortion->output_1_inverted);
+    //pedal_distortion_debug_time = time_us_32() - from_time;
+    //multicore_fifo_push_blocking(pedal_distortion_debug_time); // To send a made pointer, sync flag, etc.
+    __dsb();
+}
+
+void pedal_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3) {
+    pedal_distortion_conversion_1 = conversion_1;
+    if (abs(conversion_2 - pedal_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+        pedal_distortion_conversion_2 = conversion_2;
         pedal_distortion_loss = 32 - (pedal_distortion_conversion_2 >> 7); // Make 5-bit Value (1-32)
     }
-    if (abs(conversion_3_temp - pedal_distortion_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
-        pedal_distortion_conversion_3 = conversion_3_temp;
+    if (abs(conversion_3 - pedal_distortion_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+        pedal_distortion_conversion_3 = conversion_3;
     }
-    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
-    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
-    util_pedal_pico_adc_middle_moving_average += pedal_distortion_conversion_1;
-    int32 normalized_1 = (int32)pedal_distortion_conversion_1 - (int32)middle_moving_average;
+    int32 normalized_1 = (int32)pedal_distortion_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
@@ -166,11 +160,13 @@ void pedal_distortion_on_pwm_irq_wrap() {
     }
     normalized_1 /= pedal_distortion_loss;
     normalized_1 *= PEDAL_DISTORTION_GAIN;
-    int32 output_1 = util_pedal_pico_cutoff_biased(normalized_1 + middle_moving_average, PEDAL_DISTORTION_PWM_OFFSET + PEDAL_DISTORTION_PWM_PEAK, PEDAL_DISTORTION_PWM_OFFSET - PEDAL_DISTORTION_PWM_PEAK);
-    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + middle_moving_average, PEDAL_DISTORTION_PWM_OFFSET + PEDAL_DISTORTION_PWM_PEAK, PEDAL_DISTORTION_PWM_OFFSET - PEDAL_DISTORTION_PWM_PEAK);
-    pwm_set_chan_level(pedal_distortion_pwm_slice_num, pedal_distortion_pwm_channel, (uint16)output_1);
-    pwm_set_chan_level(pedal_distortion_pwm_slice_num, pedal_distortion_pwm_channel + 1, (uint16)output_1_inverted);
-    //pedal_distortion_debug_time = time_us_32() - from_time;
-    //multicore_fifo_push_blocking(pedal_distortion_debug_time); // To send a made pointer, sync flag, etc.
+    /* Output */
+    pedal_distortion->output_1 = util_pedal_pico_cutoff_biased(normalized_1 + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_DISTORTION_PWM_OFFSET + PEDAL_DISTORTION_PWM_PEAK, PEDAL_DISTORTION_PWM_OFFSET - PEDAL_DISTORTION_PWM_PEAK);
+    pedal_distortion->output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_DISTORTION_PWM_OFFSET + PEDAL_DISTORTION_PWM_PEAK, PEDAL_DISTORTION_PWM_OFFSET - PEDAL_DISTORTION_PWM_PEAK);
+}
+
+void pedal_distortion_free() { // Free Except Object, pedal_distortion
+    util_pedal_pico_stop((util_pedal_pico*)pedal_distortion);
+    irq_remove_handler(PWM_IRQ_WRAP, pedal_distortion_on_pwm_irq_wrap);
     __dsb();
 }

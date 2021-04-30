@@ -41,18 +41,18 @@
 #define PEDAL_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_CHORUS_DELAY_TIME_MAX 1527
 #define PEDAL_CHORUS_DELAY_TIME_FIXED_1 PEDAL_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 28125 (0.054 Seconds)
-#define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 28125
+#define PEDAL_CHORUS_OSC_SINE_1_TIME_MAX 9375
+#define PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER 6
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_MAX 993
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT 5 // Multiply By 32 (0-992), 992 Divided by 28125 (0.0353 Seconds = 12.01 Meters)
 #define PEDAL_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
 
-volatile uint32 pedal_chorus_pwm_slice_num;
-volatile uint32 pedal_chorus_pwm_channel;
+volatile util_pedal_pico* pedal_chorus;
 volatile uint16 pedal_chorus_conversion_1;
 volatile uint16 pedal_chorus_conversion_2;
 volatile uint16 pedal_chorus_conversion_3;
-volatile uint16 pedal_chorus_osc_sine_1_index;
-volatile uint32 pedal_chorus_osc_speed;
+volatile uint32 pedal_chorus_osc_sine_1_index;
+volatile uint16 pedal_chorus_osc_speed;
 volatile int16* pedal_chorus_delay_array;
 volatile int32 pedal_chorus_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 volatile uint16 pedal_chorus_delay_time;
@@ -65,6 +65,8 @@ volatile uint32 pedal_chorus_debug_time;
 
 void pedal_chorus_core_1();
 void pedal_chorus_on_pwm_irq_wrap();
+void pedal_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
+void pedal_chorus_free();
 
 int main(void) {
     //stdio_init_all();
@@ -96,23 +98,14 @@ int main(void) {
 
 void pedal_chorus_core_1() {
     /* PWM Settings */
-    gpio_set_function(PEDAL_CHORUS_PWM_1_GPIO, GPIO_FUNC_PWM); // GPIO16 = PWM8 A
-    gpio_set_function(PEDAL_CHORUS_PWM_2_GPIO, GPIO_FUNC_PWM); // GPIO17 = PWM8 B
-    pedal_chorus_pwm_slice_num = pwm_gpio_to_slice_num(PEDAL_CHORUS_PWM_1_GPIO); // GPIO16 = PWM8
-    pedal_chorus_pwm_channel = pwm_gpio_to_channel(PEDAL_CHORUS_PWM_1_GPIO); // GPIO16 = A
-    // Set IRQ and Handler for PWM
-    pwm_clear_irq(pedal_chorus_pwm_slice_num);
-    pwm_set_irq_enabled(pedal_chorus_pwm_slice_num, true);
+    pedal_chorus = util_pedal_pico_init(PEDAL_CHORUS_PWM_1_GPIO, PEDAL_CHORUS_PWM_2_GPIO);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_chorus_on_pwm_irq_wrap);
-    irq_set_priority(PWM_IRQ_WRAP, 0xF0); // Higher Priority
-    // PWM Configuration
-    pwm_config config = pwm_get_default_config(); // Pull Configuration
-    util_pedal_pico_set_pwm_28125hz(&config);
-    pwm_init(pedal_chorus_pwm_slice_num, &config, false); // Push Configufatio
-    pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel, PEDAL_CHORUS_PWM_OFFSET); // Set Channel A
-    pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel + 1, PEDAL_CHORUS_PWM_OFFSET); // Set Channel B
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0);
+    pwm_set_chan_level(pedal_chorus->pwm_1_slice, pedal_chorus->pwm_1_channel, PEDAL_CHORUS_PWM_OFFSET);
+    pwm_set_chan_level(pedal_chorus->pwm_2_slice, pedal_chorus->pwm_2_channel, PEDAL_CHORUS_PWM_OFFSET);
     /* ADC Settings */
     util_pedal_pico_init_adc();
+    /* Unique Settings */
     pedal_chorus_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -127,45 +120,47 @@ void pedal_chorus_core_1() {
     pedal_chorus_lr_distance_time = lr_distance_time;
     pedal_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_chorus_lr_distance_index = 0;
-    /* Start IRQ, PWM and ADC */
-    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
-    irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
-    pwm_set_mask_enabled(0b1 << pedal_chorus_pwm_slice_num);
-    adc_select_input(0); // Ensure to Start from A0
-    __dsb();
-    __isb();
-    adc_run(true);
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_chorus);
     util_pedal_pico_sw_loop(PEDAL_CHORUS_SW_1_GPIO, PEDAL_CHORUS_SW_2_GPIO);
 }
 
+
 void pedal_chorus_on_pwm_irq_wrap() {
-    pwm_clear_irq(pedal_chorus_pwm_slice_num);
+    pwm_clear_irq(pedal_chorus->pwm_1_slice);
     //uint32 from_time = time_us_32();
-    /* Input */
-    uint16 conversion_1_temp = util_pedal_pico_on_adc_conversion_1;
-    uint16 conversion_2_temp = util_pedal_pico_on_adc_conversion_2;
-    uint16 conversion_3_temp = util_pedal_pico_on_adc_conversion_3;
+    uint16 conversion_1 = util_pedal_pico_on_adc_conversion_1;
+    uint16 conversion_2 = util_pedal_pico_on_adc_conversion_2;
+    uint16 conversion_3 = util_pedal_pico_on_adc_conversion_3;
     if (! util_pedal_pico_on_adc_is_outstanding) {
         util_pedal_pico_on_adc_is_outstanding = true;
-        adc_select_input(0); // Ensure to Start from A0
+        adc_select_input(0); // Ensure to Start from ADC0
         __dsb();
         __isb();
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
-    pedal_chorus_conversion_1 = conversion_1_temp;
-    if (abs(conversion_2_temp - pedal_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
-        pedal_chorus_conversion_2 = conversion_2_temp;
+    util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
+    pedal_chorus_process(conversion_1, conversion_2, conversion_3);
+    /* Output */
+    pwm_set_chan_level(pedal_chorus->pwm_1_slice, pedal_chorus->pwm_1_channel, (uint16)pedal_chorus->output_1);
+    pwm_set_chan_level(pedal_chorus->pwm_2_slice, pedal_chorus->pwm_2_channel, (uint16)pedal_chorus->output_1_inverted);
+    //pedal_chorus_debug_time = time_us_32() - from_time;
+    //multicore_fifo_push_blocking(pedal_chorus_debug_time); // To send a made pointer, sync flag, etc.
+    __dsb();
+}
+
+void pedal_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3) {
+    pedal_chorus_conversion_1 = conversion_1;
+    if (abs(conversion_2 - pedal_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+        pedal_chorus_conversion_2 = conversion_2;
         pedal_chorus_osc_speed = pedal_chorus_conversion_2 >> 7; // Make 5-bit Value (0-31)
     }
-    if (abs(conversion_3_temp - pedal_chorus_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
-        pedal_chorus_conversion_3 = conversion_3_temp;
+    if (abs(conversion_3 - pedal_chorus_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+        pedal_chorus_conversion_3 = conversion_3;
         pedal_chorus_lr_distance_time = (pedal_chorus_conversion_3 >> 7) << PEDAL_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     pedal_chorus_lr_distance_time_interpolation = util_pedal_pico_interpolate(pedal_chorus_lr_distance_time_interpolation, pedal_chorus_lr_distance_time, PEDAL_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM);
-    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
-    util_pedal_pico_adc_middle_moving_average -= middle_moving_average;
-    util_pedal_pico_adc_middle_moving_average += pedal_chorus_conversion_1;
-    int32 normalized_1 = (int32)pedal_chorus_conversion_1 - (int32)middle_moving_average;
+    int32 normalized_1 = (int32)pedal_chorus_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
@@ -178,9 +173,9 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_delay_index++;
     if (pedal_chorus_delay_index >= PEDAL_CHORUS_DELAY_TIME_MAX) pedal_chorus_delay_index -= PEDAL_CHORUS_DELAY_TIME_MAX;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[pedal_chorus_osc_sine_1_index];
+    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[pedal_chorus_osc_sine_1_index / PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_chorus_osc_sine_1_index += pedal_chorus_osc_speed;
-    if (pedal_chorus_osc_sine_1_index >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX) pedal_chorus_osc_sine_1_index -= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX;
+    if (pedal_chorus_osc_sine_1_index >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_chorus_osc_sine_1_index -= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32);
     int32 delay_1_l = (int32)(int64)((((int64)delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
     int32 delay_1_r = (int32)(int64)((((int64)delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
@@ -190,11 +185,14 @@ void pedal_chorus_on_pwm_irq_wrap() {
     pedal_chorus_lr_distance_index++;
     if (pedal_chorus_lr_distance_index >= PEDAL_CHORUS_LR_DISTANCE_TIME_MAX) pedal_chorus_lr_distance_index -= PEDAL_CHORUS_LR_DISTANCE_TIME_MAX;
     /* Output */
-    int32 output_1 = util_pedal_pico_cutoff_biased(((normalized_1 + delay_1_l) >> 1) * PEDAL_CHORUS_GAIN + middle_moving_average, PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK, PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK);
-    int32 output_1_inverted = util_pedal_pico_cutoff_biased(-lr_distance_1 * PEDAL_CHORUS_GAIN + middle_moving_average, PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK, PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK);
-    pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel, (uint16)output_1);
-    pwm_set_chan_level(pedal_chorus_pwm_slice_num, pedal_chorus_pwm_channel + 1, (uint16)output_1_inverted);
-    //pedal_chorus_debug_time = time_us_32() - from_time;
-    //multicore_fifo_push_blocking(pedal_chorus_debug_time); // To send a made pointer, sync flag, etc.
+    pedal_chorus->output_1 = util_pedal_pico_cutoff_biased(((normalized_1 + delay_1_l) >> 1) * PEDAL_CHORUS_GAIN + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK, PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK);
+    pedal_chorus->output_1_inverted = util_pedal_pico_cutoff_biased(-lr_distance_1 * PEDAL_CHORUS_GAIN + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_CHORUS_PWM_OFFSET + PEDAL_CHORUS_PWM_PEAK, PEDAL_CHORUS_PWM_OFFSET - PEDAL_CHORUS_PWM_PEAK);
+}
+
+void pedal_chorus_free() { // Free Except Object, pedal_chorus
+    util_pedal_pico_stop((util_pedal_pico*)pedal_chorus);
+    irq_remove_handler(PWM_IRQ_WRAP, pedal_chorus_on_pwm_irq_wrap);
+    free((void*)pedal_chorus_delay_array);
+    free((void*)pedal_chorus_lr_distance_array);
     __dsb();
 }

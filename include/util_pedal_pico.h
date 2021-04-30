@@ -15,6 +15,7 @@
 
 // Standards
 #include <stdio.h>
+#include <stdlib.h>
 // Dependancies
 #include "pico/stdlib.h"
 #include "pico/divider.h"
@@ -48,20 +49,36 @@ extern "C" {
 #define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
 #define util_pedal_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
 
+/* Structs */
+
+typedef struct {
+    uchar8 pwm_1_slice;
+    uchar8 pwm_1_channel;
+    uchar8 pwm_2_slice;
+    uchar8 pwm_2_channel;
+    int32 output_1;
+    int32 output_1_inverted;
+} util_pedal_pico;
+
 /* Global Variables */
 
 volatile uint16 util_pedal_pico_on_adc_conversion_1;
 volatile uint16 util_pedal_pico_on_adc_conversion_2;
 volatile uint16 util_pedal_pico_on_adc_conversion_3;
 volatile bool util_pedal_pico_on_adc_is_outstanding;
-volatile uint32 util_pedal_pico_adc_middle_moving_average;
+volatile uint16 util_pedal_pico_adc_middle_moving_average;
+volatile uint32 util_pedal_pico_adc_middle_moving_average_sum;
 volatile uchar8 util_pedal_pico_sw_mode;
 
 /* Functions */
 
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
+util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_init_adc();
+void util_pedal_pico_start(util_pedal_pico* util_pedal);
+void util_pedal_pico_stop(util_pedal_pico* util_pedal);
+void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);
 void util_pedal_pico_on_adc_irq_fifo();
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
 

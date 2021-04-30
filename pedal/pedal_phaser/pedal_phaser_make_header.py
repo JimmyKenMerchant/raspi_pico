@@ -23,8 +23,8 @@ prefix = [
 " */\n",
 "\n",
 "/* THIS IS AN AUTOMATICALLY GENERATED HEADER FILE */\n",
-"#ifndef _PEDAL_PHASER_H\n",
-"#define _PEDAL_PHASER_H 1\n",
+"#ifndef _PEDAL_PHASER_ARRAY_H\n",
+"#define _PEDAL_PHASER_ARRAY_H 1\n",
 "\n",
 "#ifdef __cplusplus\n",
 "extern \"C\" {\n",
@@ -37,7 +37,7 @@ declare_sine_1 = [
 "int32 pedal_phaser_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 28125
+number_sine_1 = 9375
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
