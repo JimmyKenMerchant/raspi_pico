@@ -1,1 +1,2 @@
 add_subdirectory(pedal_pico_buffer)
+add_subdirectory(pedal_pico_chorus)

@@ -1,0 +1,80 @@
+/**
+ * Written Codes:
+ * Copyright 2021 Kenta Ishii
+ * License: 3-Clause BSD License
+ * SPDX Short Identifier: BSD-3-Clause
+ *
+ * Raspberry Pi Pico SDK:
+ * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#ifndef _PEDAL_PICO_CHORUS_H
+#define _PEDAL_PICO_CHORUS_H 1
+
+// Standards
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+// Dependancies
+#include "pico/stdlib.h"
+#include "pico/divider.h"
+#include "pico/multicore.h"
+#include "hardware/pwm.h"
+#include "hardware/adc.h"
+#include "hardware/irq.h"
+#include "hardware/sync.h"
+// raspi_pico/include
+#include "macros_pico.h"
+#include "util_pedal_pico.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define PEDAL_PICO_CHORUS_SW_1_GPIO 14
+#define PEDAL_PICO_CHORUS_SW_2_GPIO 15
+#define PEDAL_PICO_CHORUS_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
+#define PEDAL_PICO_CHORUS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
+#define PEDAL_PICO_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
+#define PEDAL_PICO_CHORUS_PWM_PEAK 2047
+#define PEDAL_PICO_CHORUS_GAIN 1
+#define PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PICO_CHORUS_DELAY_TIME_MAX 1527
+#define PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1 PEDAL_PICO_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 28125 (0.054 Seconds)
+#define PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MAX 9375
+#define PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER 6
+#define PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX 993
+#define PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT 5 // Multiply By 32 (0-992), 992 Divided by 28125 (0.0353 Seconds = 12.01 Meters)
+#define PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
+
+volatile util_pedal_pico* pedal_pico_chorus;
+volatile uint16 pedal_pico_chorus_conversion_1;
+volatile uint16 pedal_pico_chorus_conversion_2;
+volatile uint16 pedal_pico_chorus_conversion_3;
+volatile uint32 pedal_pico_chorus_osc_sine_1_index;
+volatile uint16 pedal_pico_chorus_osc_speed;
+volatile int16* pedal_pico_chorus_delay_array;
+volatile int32 pedal_pico_chorus_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile uint16 pedal_pico_chorus_delay_time;
+volatile uint16 pedal_pico_chorus_delay_index;
+volatile int16* pedal_pico_chorus_lr_distance_array;
+volatile uint16 pedal_pico_chorus_lr_distance_time;
+volatile uint16 pedal_pico_chorus_lr_distance_time_interpolation;
+volatile uint16 pedal_pico_chorus_lr_distance_index;
+volatile int32* pedal_pico_chorus_table_pdf_1;
+volatile int32* pedal_pico_chorus_table_sine_1;
+volatile uint32 pedal_pico_chorus_debug_time;
+
+void pedal_pico_chorus_core_1();
+void pedal_pico_chorus_set();
+void pedal_pico_chorus_on_pwm_irq_wrap();
+void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
+void pedal_pico_chorus_free();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

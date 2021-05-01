@@ -15,6 +15,7 @@ target_link_libraries(${target_name}
     hardware_sync
     util_pedal_pico
     pedal_pico_buffer
+    pedal_pico_chorus
 )
 
 target_compile_definitions(${target_name}

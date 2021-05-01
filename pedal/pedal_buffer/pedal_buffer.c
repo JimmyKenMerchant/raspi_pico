@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <math.h>
 // raspi_pico/include
+#include "macros_pico.h"
 #include "pedal_pico/pedal_pico_buffer.h"
 #include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
@@ -32,7 +33,11 @@ int main(void) {
     gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_BUFFER_LED_GPIO, true);
     /* Assign Actual Array */
-    pedal_pico_buffer_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+    #if UTIL_PEDAL_PICO_EX_PEAK == PEDAL_PICO_BUFFER_PWM_PEAK
+        pedal_pico_buffer_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+    #else
+        #error Failure on Assigning Actual Array to pedal_pico_buffer_table_pdf_1
+    #endif
     uint32* stack_pointer = (int32*)malloc(PEDAL_BUFFER_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(pedal_pico_buffer_core_1, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
     //pedal_pico_buffer_debug_time = 0;

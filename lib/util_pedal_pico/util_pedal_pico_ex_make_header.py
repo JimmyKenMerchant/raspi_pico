@@ -8,6 +8,8 @@ sys.path.append("../../lib_python3")
 import number_table as nt
 
 headername = "util_pedal_pico_ex.h"
+osc_length = 9375
+peak_length = 2047
 
 prefix = [
 "/**\n",
@@ -29,6 +31,9 @@ prefix = [
 "#ifdef __cplusplus\n",
 "extern \"C\" {\n",
 "#endif\n",
+"\n",
+"#define UTIL_PEDAL_PICO_EX_OSC_TIME_MAX " + str(osc_length) + "\n",
+"#define UTIL_PEDAL_PICO_EX_PEAK " + str(peak_length) + "\n",
 "\n"
 ]
 
@@ -37,14 +42,14 @@ declare_sine_1 = [
 "int32 util_pedal_pico_ex_table_sine_1[] = {\n"
 ]
 
-number_sine_1 = 9375
+sine_length_1 = osc_length
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
 "int32 util_pedal_pico_ex_table_pdf_1[] = {\n"
 ]
 
-pdf_length_1 = 2047 # Number of Array
+pdf_length_1 = peak_length # Number of Array
 pdf_halfwidth_1 = 1.0 # Center to Side
 pdf_scale_1 = 1.0 # Variance
 pdf_height_1 = 2.0 # Maximum Height
@@ -54,7 +59,7 @@ declare_pdf_2 = [
 "int32 util_pedal_pico_ex_table_pdf_2[] = {\n"
 ]
 
-pdf_length_2 = 2047 # Number of Array
+pdf_length_2 = peak_length # Number of Array
 pdf_halfwidth_2 = 1.0 # Center to Side
 pdf_scale_2 = 1.5 # Variance
 pdf_height_2 = 1.2 # Maximum Height
@@ -64,7 +69,7 @@ declare_pdf_3 = [
 "int32 util_pedal_pico_ex_table_pdf_3[] = {\n"
 ]
 
-pdf_length_3 = 2047 # Number of Array
+pdf_length_3 = peak_length # Number of Array
 pdf_halfwidth_3 = 1.0 # Center to Side
 pdf_scale_3 = 1.75 # Variance
 pdf_height_3 = 1.4 # Maximum Height
@@ -74,7 +79,7 @@ declare_log_1 = [
 "int32 util_pedal_pico_ex_table_log_1[] = {\n"
 ]
 
-log_length_1 = 2047 # Number of Array
+log_length_1 = peak_length # Number of Array
 log_reach_1 = 2.0 # Number to Reach from 1
 log_number_log_1 = 2.0 # Base Number
 log_height_1 = 6.0 # Maximum Height
@@ -84,7 +89,7 @@ declare_log_2 = [
 "int32 util_pedal_pico_ex_table_log_2[] = {\n"
 ]
 
-log_length_2 = 2047 # Number of Array
+log_length_2 = peak_length # Number of Array
 log_reach_2 = 2.0 # Number to Reach from 1
 log_number_log_2 = 2.0 # Base Number
 log_height_2 = 10.0 # Maximum Height
@@ -94,7 +99,7 @@ declare_power_1 = [
 "int32 util_pedal_pico_ex_table_power_1[] = {\n"
 ]
 
-power_length_1 = 2047 # Number of Array
+power_length_1 = peak_length # Number of Array
 power_reach_1 = 1.0 # Number to Reach from 0
 power_height_1 = 1.0 # Variance
 
@@ -112,7 +117,7 @@ header.writelines(prefix)
 
 # Table Sine 1
 header.writelines(declare_sine_1)
-nt.makeTableSineHalf(header, number_sine_1)
+nt.makeTableSineHalf(header, sine_length_1)
 
 # Table PDF 1
 header.writelines(declare_pdf_1)
