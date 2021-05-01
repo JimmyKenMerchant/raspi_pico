@@ -16,21 +16,6 @@ target_link_libraries(${target_name}
     util_pedal_pico
 )
 
-add_custom_target(${target_name}_header
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ./${target_name}_make_header.py
-    COMMAND cp ${target_name}.h ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND rm ${target_name}.h
-)
-
-add_dependencies(${target_name}
-    ${target_name}_header
-)
-
-target_include_directories(${target_name} PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-)
-
 target_compile_definitions(${target_name}
     PRIVATE PICO_MALLOC_PANIC=1
     PRIVATE PICO_DEBUG_MALLOC=0

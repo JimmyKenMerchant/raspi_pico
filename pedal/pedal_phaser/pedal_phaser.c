@@ -26,8 +26,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_phaser.h"
+//#include "pedal_phaser.h"
 
 #define PEDAL_PHASER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_PHASER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -67,6 +68,7 @@ volatile uint16 pedal_phaser_osc_start_count;
 volatile uint32 pedal_phaser_debug_time;
 
 void pedal_phaser_core_1();
+void pedal_phaser_set();
 void pedal_phaser_on_pwm_irq_wrap();
 void pedal_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_phaser_free();
@@ -109,6 +111,13 @@ void pedal_phaser_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_phaser_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_phaser);
+    util_pedal_pico_sw_loop(PEDAL_PHASER_SW_1_GPIO, PEDAL_PHASER_SW_2_GPIO);
+}
+
+void pedal_phaser_set() {
     pedal_phaser_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_phaser_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_phaser_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -123,9 +132,6 @@ void pedal_phaser_core_1() {
     pedal_phaser_osc_speed = pedal_phaser_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_phaser_osc_start_threshold = (pedal_phaser_conversion_3 >> 7) * PEDAL_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_phaser_osc_start_count = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_phaser);
-    util_pedal_pico_sw_loop(PEDAL_PHASER_SW_1_GPIO, PEDAL_PHASER_SW_2_GPIO);
 }
 
 void pedal_phaser_on_pwm_irq_wrap() {
@@ -191,7 +197,7 @@ void pedal_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
         pedal_phaser_osc_sine_1_index = 0;
     }
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_phaser_table_sine_1[pedal_phaser_osc_sine_1_index / PEDAL_PHASER_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_1 = util_pedal_pico_ex_table_sine_1[pedal_phaser_osc_sine_1_index / PEDAL_PHASER_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_phaser_osc_sine_1_index += pedal_phaser_osc_speed;
     if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX * PEDAL_PHASER_OSC_SINE_1_TIME_MULTIPLIER) pedal_phaser_osc_sine_1_index -= (PEDAL_PHASER_OSC_SINE_1_TIME_MAX * PEDAL_PHASER_OSC_SINE_1_TIME_MULTIPLIER);
     /**
@@ -199,7 +205,7 @@ void pedal_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PHASER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PHASER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the synthesis of the concurrent wave and the phase shifted concurrent wave.
      * The phase shifted concurrent wave is made by an all-pass filter.
@@ -249,6 +255,7 @@ void pedal_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
     } else {
         pedal_phaser_delay_time = PEDAL_PHASER_DELAY_TIME_FIXED_2;
     }
+    mixed_1 *= PEDAL_PHASER_GAIN;
     pedal_phaser->output_1 = util_pedal_pico_cutoff_biased(mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
     pedal_phaser->output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK, PEDAL_PHASER_PWM_OFFSET - PEDAL_PHASER_PWM_PEAK);
 }

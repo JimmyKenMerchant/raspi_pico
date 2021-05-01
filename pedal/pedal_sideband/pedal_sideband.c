@@ -25,8 +25,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_sideband.h"
+//#include "pedal_sideband.h"
 
 #define PEDAL_SIDEBAND_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_SIDEBAND_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -59,6 +60,7 @@ volatile uint16 pedal_sideband_osc_start_count;
 volatile uint32 pedal_sideband_debug_time;
 
 void pedal_sideband_core_1();
+void pedal_sideband_set();
 void pedal_sideband_on_pwm_irq_wrap();
 void pedal_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_sideband_free();
@@ -101,6 +103,13 @@ void pedal_sideband_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_sideband_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_sideband);
+    util_pedal_pico_sw_loop(PEDAL_SIDEBAND_SW_1_GPIO, PEDAL_SIDEBAND_SW_2_GPIO);
+}
+
+void pedal_sideband_set() {
     pedal_sideband_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_sideband_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_sideband_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -110,9 +119,6 @@ void pedal_sideband_core_1() {
     pedal_sideband_osc_speed = pedal_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_sideband_osc_start_threshold = (pedal_sideband_conversion_3 >> 7) * PEDAL_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_sideband_osc_start_count = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_sideband);
-    util_pedal_pico_sw_loop(PEDAL_SIDEBAND_SW_1_GPIO, PEDAL_SIDEBAND_SW_2_GPIO);
 }
 
 void pedal_sideband_on_pwm_irq_wrap() {
@@ -184,15 +190,15 @@ void pedal_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 con
          * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
          * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
          */
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     } else if (util_pedal_pico_sw_mode == 2) {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
     } else {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_sideband_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_PWM_PEAK))]) >> 32);
     }
     normalized_1 = util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_SIDEBAND_CUTOFF_FIXED_1);
-    int32 fixed_point_value_sine_1 = pedal_sideband_table_sine_1[pedal_sideband_osc_sine_1_index / PEDAL_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER];
-    int32 fixed_point_value_sine_2 = pedal_sideband_table_sine_1[pedal_sideband_osc_sine_2_index / PEDAL_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER] >> 1; // Divide By 2
+    int32 fixed_point_value_sine_1 = util_pedal_pico_ex_table_sine_1[pedal_sideband_osc_sine_1_index / PEDAL_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_2 = util_pedal_pico_ex_table_sine_1[pedal_sideband_osc_sine_2_index / PEDAL_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER] >> 1; // Divide By 2
     pedal_sideband_osc_sine_1_index += pedal_sideband_osc_speed;
     pedal_sideband_osc_sine_2_index += pedal_sideband_osc_speed;
     if (pedal_sideband_osc_sine_1_index >= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX * PEDAL_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER) pedal_sideband_osc_sine_1_index -= PEDAL_SIDEBAND_OSC_SINE_1_TIME_MAX * PEDAL_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER;

@@ -25,8 +25,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_buffer.h"
+//#include "pedal_buffer.h"
 
 #define PEDAL_BUFFER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_BUFFER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -67,6 +68,7 @@ volatile uint16 pedal_buffer_noise_gate_count;
 volatile uint32 pedal_buffer_debug_time;
 
 void pedal_buffer_core_1();
+void pedal_buffer_set();
 void pedal_buffer_on_pwm_irq_wrap();
 void pedal_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_buffer_free();
@@ -109,6 +111,13 @@ void pedal_buffer_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_buffer_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_buffer);
+    util_pedal_pico_sw_loop(PEDAL_BUFFER_SW_1_GPIO, PEDAL_BUFFER_SW_2_GPIO);
+}
+
+void pedal_buffer_set() {
     pedal_buffer_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_buffer_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_buffer_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -122,9 +131,6 @@ void pedal_buffer_core_1() {
     pedal_buffer_delay_index = 0;
     pedal_buffer_noise_gate_threshold = (pedal_buffer_conversion_3 >> 7) * PEDAL_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_buffer_noise_gate_count = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_buffer);
-    util_pedal_pico_sw_loop(PEDAL_BUFFER_SW_1_GPIO, PEDAL_BUFFER_SW_2_GPIO);
 }
 
 void pedal_buffer_on_pwm_irq_wrap() {
@@ -209,7 +215,7 @@ void pedal_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_buffer_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_BUFFER_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /* Make Sustain */
     int32 delay_1 = (int32)pedal_buffer_delay_array[((pedal_buffer_delay_index + PEDAL_BUFFER_DELAY_TIME_MAX) - pedal_buffer_delay_time_interpolation) % PEDAL_BUFFER_DELAY_TIME_MAX];
     if (pedal_buffer_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest

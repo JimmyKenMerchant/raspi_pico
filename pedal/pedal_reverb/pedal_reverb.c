@@ -25,8 +25,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_reverb.h"
+//#include "pedal_reverb.h"
 
 #define PEDAL_REVERB_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_REVERB_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -56,6 +57,7 @@ volatile uint16 pedal_reverb_delay_index;
 volatile uint32 pedal_reverb_debug_time;
 
 void pedal_reverb_core_1();
+void pedal_reverb_set();
 void pedal_reverb_on_pwm_irq_wrap();
 void pedal_reverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_reverb_free();
@@ -98,6 +100,13 @@ void pedal_reverb_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_reverb_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_reverb);
+    util_pedal_pico_sw_loop(PEDAL_REVERB_SW_1_GPIO, PEDAL_REVERB_SW_2_GPIO);
+}
+
+void pedal_reverb_set() {
     pedal_reverb_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_reverb_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_reverb_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -107,9 +116,6 @@ void pedal_reverb_core_1() {
     pedal_reverb_delay_time = delay_time;
     pedal_reverb_delay_time_interpolation = delay_time;
     pedal_reverb_delay_index = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_reverb);
-    util_pedal_pico_sw_loop(PEDAL_REVERB_SW_1_GPIO, PEDAL_REVERB_SW_2_GPIO);
 }
 
 void pedal_reverb_on_pwm_irq_wrap() {
@@ -152,7 +158,7 @@ void pedal_reverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_reverb_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_REVERB_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_REVERB_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int32 delay_1 = (int32)pedal_reverb_delay_array[((pedal_reverb_delay_index + PEDAL_REVERB_DELAY_TIME_MAX) - pedal_reverb_delay_time_interpolation) % PEDAL_REVERB_DELAY_TIME_MAX];
     if (pedal_reverb_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
     int32 pedal_reverb_normalized_1_amplitude = 0x00010000 - pedal_reverb_delay_amplitude;

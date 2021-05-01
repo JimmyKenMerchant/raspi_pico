@@ -26,8 +26,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_planets.h"
+//#include "pedal_planets.h"
 
 #define PEDAL_PLANETS_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_PLANETS_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -62,6 +63,7 @@ volatile uint16 pedal_planets_delay_index;
 volatile uint32 pedal_planets_debug_time;
 
 void pedal_planets_core_1();
+void pedal_planets_set();
 void pedal_planets_on_pwm_irq_wrap();
 void pedal_planets_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_planets_free();
@@ -104,22 +106,26 @@ void pedal_planets_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_planets_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_planets);
+    util_pedal_pico_sw_loop(PEDAL_PLANETS_SW_1_GPIO, PEDAL_PLANETS_SW_2_GPIO);
+}
+
+void pedal_planets_set() {
     pedal_planets_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    int32 coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    int32 coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_planets_coefficient = coefficient;
     pedal_planets_coefficient_interpolation = coefficient;
     pedal_planets_delay_x = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_planets_delay_y = (int16*)calloc(PEDAL_PLANETS_DELAY_TIME_MAX, sizeof(int16));
-    uint16 delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    uint16 delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
     pedal_planets_delay_time = delay_time;
     pedal_planets_delay_time_interpolation = delay_time;
     pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1;
     pedal_planets_delay_index = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_planets);
-    util_pedal_pico_sw_loop(PEDAL_PLANETS_SW_1_GPIO, PEDAL_PLANETS_SW_2_GPIO);
 }
 
 void pedal_planets_on_pwm_irq_wrap() {
@@ -163,12 +169,12 @@ void pedal_planets_process(uint16 conversion_1, uint16 conversion_2, uint16 conv
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_x = pedal_planets_delay_x[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     int16 delay_y = pedal_planets_delay_y[((pedal_planets_delay_index + PEDAL_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_planets_delay_time_interpolation)) % PEDAL_PLANETS_DELAY_TIME_MAX];
     /* First Stage: High Pass Filter and Correction */
     int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * -(int64)pedal_planets_coefficient_interpolation) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
-    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
+    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, PEDAL_PLANETS_PWM_PEAK))]) >> 32);
     /* Second Stage: Low Pass Filter to Sound from First Stage */
     if (util_pedal_pico_sw_mode == 1) high_pass_1 = normalized_1; // Bypass High Pass Filter
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_planets_coefficient_interpolation))) >> 32);
@@ -184,7 +190,7 @@ void pedal_planets_process(uint16 conversion_1, uint16 conversion_2, uint16 conv
         mixed_1 = high_pass_1;
         pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_2;
     } else {
-        mixed_1 = low_pass_1 << 1;
+        mixed_1 = low_pass_1;
         pedal_planets_delay_time_interpolation_accum = PEDAL_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1;
     }
     mixed_1 *= PEDAL_PLANETS_GAIN;

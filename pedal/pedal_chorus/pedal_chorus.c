@@ -25,8 +25,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_chorus.h"
+//#include "pedal_chorus.h"
 
 #define PEDAL_CHORUS_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_CHORUS_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -64,6 +65,7 @@ volatile uint16 pedal_chorus_lr_distance_index;
 volatile uint32 pedal_chorus_debug_time;
 
 void pedal_chorus_core_1();
+void pedal_chorus_set();
 void pedal_chorus_on_pwm_irq_wrap();
 void pedal_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_chorus_free();
@@ -106,6 +108,13 @@ void pedal_chorus_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_chorus_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_chorus);
+    util_pedal_pico_sw_loop(PEDAL_CHORUS_SW_1_GPIO, PEDAL_CHORUS_SW_2_GPIO);
+}
+
+void pedal_chorus_set() {
     pedal_chorus_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -120,11 +129,7 @@ void pedal_chorus_core_1() {
     pedal_chorus_lr_distance_time = lr_distance_time;
     pedal_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_chorus_lr_distance_index = 0;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_chorus);
-    util_pedal_pico_sw_loop(PEDAL_CHORUS_SW_1_GPIO, PEDAL_CHORUS_SW_2_GPIO);
 }
-
 
 void pedal_chorus_on_pwm_irq_wrap() {
     pwm_clear_irq(pedal_chorus->pwm_1_slice);
@@ -166,14 +171,14 @@ void pedal_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conve
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_chorus_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_CHORUS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_CHORUS_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /* Push and Pop Delay */
     pedal_chorus_delay_array[pedal_chorus_delay_index] = (int16)normalized_1; // Push Current Value in Advance for 0
     int32 delay_1 = (int32)pedal_chorus_delay_array[((pedal_chorus_delay_index + PEDAL_CHORUS_DELAY_TIME_MAX) - pedal_chorus_delay_time) % PEDAL_CHORUS_DELAY_TIME_MAX];
     pedal_chorus_delay_index++;
     if (pedal_chorus_delay_index >= PEDAL_CHORUS_DELAY_TIME_MAX) pedal_chorus_delay_index -= PEDAL_CHORUS_DELAY_TIME_MAX;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_chorus_table_sine_1[pedal_chorus_osc_sine_1_index / PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_1 = util_pedal_pico_ex_table_sine_1[pedal_chorus_osc_sine_1_index / PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_chorus_osc_sine_1_index += pedal_chorus_osc_speed;
     if (pedal_chorus_osc_sine_1_index >= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_chorus_osc_sine_1_index -= PEDAL_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32);

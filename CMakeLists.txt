@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.13)
 set(PICO_SDK_PATH ../../pico-sdk)
 
 include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+)
 # Commented out because CMAKE_MODULE_PATH may/will be used in pico-sdk and others
 # Omit ".cmake" extension in "include" if you use CMAKE_MODULE_PATH.
 #set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_module)

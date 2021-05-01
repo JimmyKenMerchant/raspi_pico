@@ -25,8 +25,9 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "util_pedal_pico.h"
+#include "util_pedal_pico_ex.h"
 // Private header
-#include "pedal_tape.h"
+//#include "pedal_tape.h"
 
 #define PEDAL_TAPE_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_TAPE_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
@@ -61,6 +62,7 @@ volatile uint16 pedal_tape_delay_time_swing;
 volatile uint32 pedal_tape_debug_time;
 
 void pedal_tape_core_1();
+void pedal_tape_set();
 void pedal_tape_on_pwm_irq_wrap();
 void pedal_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
 void pedal_tape_free();
@@ -103,6 +105,13 @@ void pedal_tape_core_1() {
     /* ADC Settings */
     util_pedal_pico_init_adc();
     /* Unique Settings */
+    pedal_tape_set();
+    /* Start */
+    util_pedal_pico_start((util_pedal_pico*)pedal_tape);
+    util_pedal_pico_sw_loop(PEDAL_TAPE_SW_1_GPIO, PEDAL_TAPE_SW_2_GPIO);
+}
+
+void pedal_tape_set() {
     pedal_tape_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_tape_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_tape_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -114,9 +123,6 @@ void pedal_tape_core_1() {
     pedal_tape_osc_speed = pedal_tape_conversion_3 >> 7; // Make 5-bit Value (0-31)
     pedal_tape_osc_sine_1_index = 0;
     pedal_tape_osc_is_negative = false;
-    /* Start */
-    util_pedal_pico_start((util_pedal_pico*)pedal_tape);
-    util_pedal_pico_sw_loop(PEDAL_TAPE_SW_1_GPIO, PEDAL_TAPE_SW_2_GPIO);
 }
 
 void pedal_tape_on_pwm_irq_wrap() {
@@ -158,9 +164,9 @@ void pedal_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 convers
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_tape_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_TAPE_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_ex_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_TAPE_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_tape_table_sine_1[pedal_tape_osc_sine_1_index / PEDAL_TAPE_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_1 = util_pedal_pico_ex_table_sine_1[pedal_tape_osc_sine_1_index / PEDAL_TAPE_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_tape_osc_sine_1_index += pedal_tape_osc_speed;
     if (pedal_tape_osc_sine_1_index >= PEDAL_TAPE_OSC_SINE_1_TIME_MAX * PEDAL_TAPE_OSC_SINE_1_TIME_MULTIPLIER) {
         pedal_tape_osc_sine_1_index -= PEDAL_TAPE_OSC_SINE_1_TIME_MAX * PEDAL_TAPE_OSC_SINE_1_TIME_MULTIPLIER;
