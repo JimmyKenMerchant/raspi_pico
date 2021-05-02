@@ -59,7 +59,7 @@ void pedal_pico_chorus_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
-    pedal_pico_chorus_process(conversion_1, conversion_2, conversion_3);
+    pedal_pico_chorus_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
     /* Output */
     pwm_set_chan_level(pedal_pico_chorus->pwm_1_slice, pedal_pico_chorus->pwm_1_channel, (uint16)pedal_pico_chorus->output_1);
     pwm_set_chan_level(pedal_pico_chorus->pwm_2_slice, pedal_pico_chorus->pwm_2_channel, (uint16)pedal_pico_chorus->output_1_inverted);
@@ -68,7 +68,7 @@ void pedal_pico_chorus_on_pwm_irq_wrap() {
     __dsb();
 }
 
-void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3) {
+void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     pedal_pico_chorus_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_chorus_conversion_2 = conversion_2;

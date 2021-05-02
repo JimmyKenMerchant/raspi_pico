@@ -58,7 +58,7 @@ void pedal_pico_buffer_on_pwm_irq_wrap() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
-    pedal_pico_buffer_process(conversion_1, conversion_2, conversion_3);
+    pedal_pico_buffer_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
     /* Output */
     pwm_set_chan_level(pedal_pico_buffer->pwm_1_slice, pedal_pico_buffer->pwm_1_channel, (uint16)pedal_pico_buffer->output_1);
     pwm_set_chan_level(pedal_pico_buffer->pwm_2_slice, pedal_pico_buffer->pwm_2_channel, (uint16)pedal_pico_buffer->output_1_inverted);
@@ -67,7 +67,7 @@ void pedal_pico_buffer_on_pwm_irq_wrap() {
     __dsb();
 }
 
-void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3) {
+void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     pedal_pico_buffer_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_buffer_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_buffer_conversion_2 = conversion_2;
@@ -106,10 +106,10 @@ void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 
     }
     if (pedal_pico_buffer_noise_gate_count >= PEDAL_PICO_BUFFER_NOISE_GATE_COUNT_MAX) {
         pedal_pico_buffer_noise_gate_count = 0;
-        if (util_pedal_pico_sw_mode == 1) {
+        if (sw_mode == 1) {
             pedal_pico_buffer_delay_amplitude = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_1;
             pedal_pico_buffer_delay_amplitude_interpolation_accum = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
-        } else if (util_pedal_pico_sw_mode == 2) {
+        } else if (sw_mode == 2) {
             pedal_pico_buffer_delay_amplitude = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_3;
             pedal_pico_buffer_delay_amplitude_interpolation_accum = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3;
         } else {

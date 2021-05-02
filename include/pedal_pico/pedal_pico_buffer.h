@@ -72,7 +72,7 @@ volatile uint32 pedal_pico_buffer_debug_time;
 void pedal_pico_buffer_core_1();
 void pedal_pico_buffer_set();
 void pedal_pico_buffer_on_pwm_irq_wrap();
-void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3);
+void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_buffer_free();
 
 #ifdef __cplusplus
