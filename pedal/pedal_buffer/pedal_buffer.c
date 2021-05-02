@@ -32,6 +32,10 @@ int main(void) {
     gpio_init(PEDAL_BUFFER_LED_GPIO);
     gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_BUFFER_LED_GPIO, true);
+    /* Initialize PWM */
+    pedal_pico_buffer = util_pedal_pico_init(PEDAL_PICO_BUFFER_PWM_1_GPIO, PEDAL_PICO_BUFFER_PWM_2_GPIO);
+    /* Initialize ADC */
+    util_pedal_pico_init_adc();
     /* Assign Actual Array */
     #if UTIL_PEDAL_PICO_EX_PEAK == PEDAL_PICO_BUFFER_PWM_PEAK
         pedal_pico_buffer_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;

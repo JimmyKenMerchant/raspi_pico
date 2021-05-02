@@ -13,14 +13,12 @@
 #include "pedal_pico/pedal_pico_buffer.h"
 
 void pedal_pico_buffer_core_1() {
+    if (! pedal_pico_buffer) panic("pedal_pico_buffer is not initialized.");
     /* PWM Settings */
-    pedal_pico_buffer = util_pedal_pico_init(PEDAL_PICO_BUFFER_PWM_1_GPIO, PEDAL_PICO_BUFFER_PWM_2_GPIO);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_pico_buffer_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0);
     pwm_set_chan_level(pedal_pico_buffer->pwm_1_slice, pedal_pico_buffer->pwm_1_channel, PEDAL_PICO_BUFFER_PWM_OFFSET);
     pwm_set_chan_level(pedal_pico_buffer->pwm_2_slice, pedal_pico_buffer->pwm_2_channel, PEDAL_PICO_BUFFER_PWM_OFFSET);
-    /* ADC Settings */
-    util_pedal_pico_init_adc();
     /* Unique Settings */
     pedal_pico_buffer_set();
     /* Start */
