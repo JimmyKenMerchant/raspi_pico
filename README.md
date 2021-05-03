@@ -43,7 +43,8 @@ cp pico-sdk/external/pico_sdk_import.cmake raspi_pico/
 cd raspi_pico
 mkdir build
 cd build
-cmake ../
+# I prefer not to use XIP (Execute in place) to make a tricky memory extension for execution.
+cmake -DPICO_COPY_TO_RAM=1 ../
 # You can also make in each individual folder of each project.
 make -j4
 # Connect Pico and Your PC through USB2.0
@@ -139,7 +140,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * "pedal_sideband" is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. Note that I renamed this pedal from "pedal_chorus" to "pedal_sideband", and I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. Outputs are added the pulsating wave. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the threshold to start the oscillator. Frequencies of main pulsating wave and sub pulsating wave are fixed so far. There are output modes. The low state on GPIO14 sets the regular gain, and the low state on GPIO15 sets the high gain.
 
-* "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
+* "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
 
 * "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
 
@@ -183,6 +184,14 @@ func_debug_time = time_us_32() - from_time;
 * RP2040 has 5 ADC inputs (ADC0-4), and ADC4 is dedicated for a implemented temperature sensor. Pico can be freely used 3 ADC inputs, and ADC3 is connected to the VSYS/3 measurement (see page 7 and page 24 of Raspberry Pi Pico Datasheet). Third-party RP2040 hardware may be able to use 4 ADC inputs. You also see page 579 of RP2040 Datasheet to check the note which describes existence of diodes on ADC inputs. However, for safety, you need a zener diode to GND on the audio input. The input impedance is 100K ohms at minimum (see page 634 of RP2040 Datasheet). This impedance is small as an input from a coil pick up of an electric guitar, and the direct connection apparently reduces the harmonics in my experience.
 
 * Pico executes commands from the external flash memory in default (see page 273 of Raspberry Pi Pico C/C++ SDK). This means the external flash memory is always busy, and it seems to be difficult to access as a data storage like SRAM. For example, data arrays with "static" modifiers don't occupy the space of SRAM. However, in my experience, the modifier seems to cause the malfunction because Pico accesses to the flash memory for both instructions and data on a bus at the same time. The solution is use immediate values embedded in instructions.
+
+**Tricky XIP**
+
+* Several discussions have been already held in the Raspberry Pi forum.
+
+* [XIP a near-useless feature?](https://www.raspberrypi.org/forums/viewtopic.php?f=144&t=300125)
+
+* I think it's a sort of the zenith of the complexity in developing technologies (note that I like city simulators rather than civilization simulators). In fact, Cortex M0+ has von Neumann architecture which doesn't separate memory space between data and instruction (note that renowned MPUs, Intel 8080 and Z80 have this architecture). However, in the high-level usage such as C language, the chip is used as if it has Harvard architecture which separates memory space because modern MPUs, such as AVR, used to have Harvard architecture. This trick came true by XIP (Execute in place) which has instruction cache with an external flash chip. Note that the flash chip is also accessible as a data storage without any restriction because M0+ has only one set of instruction system for SRAM and memory mapped peripherals including XIP. In the recent context, Harvard architecture is described for its performance, but this architecture is also known as having the safe space for instructions, i.e., the instruction code can't easily corrupt the code itself by memory overflow, etc. In assembler, Pico is just a von Neumann. However, in pico-sdk with C language, Pico is a Harvard-like. Just in my experience, reading data from the flash chip on using XIP seems to cause the delay from the cache miss for instructions, and even the malfunction. Caution that this trick causes a critical situation because the plotter of an application doesn't recognize that the von Neumann has memory space for XIP which may destroy the premised system of the application. Besides, the coder of an application doesn't recognize that the chip has von Neumann that may destroy instruction code by memory overflow, etc.
 
 **C Language**
 

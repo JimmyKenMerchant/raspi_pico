@@ -67,7 +67,7 @@ volatile int32* pedal_pico_chorus_table_pdf_1;
 volatile int32* pedal_pico_chorus_table_sine_1;
 volatile uint32 pedal_pico_chorus_debug_time;
 
-void pedal_pico_chorus_core_1();
+void pedal_pico_chorus_start();
 void pedal_pico_chorus_set();
 void pedal_pico_chorus_on_pwm_irq_wrap();
 void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

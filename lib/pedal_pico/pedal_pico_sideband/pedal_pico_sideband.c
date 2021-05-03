@@ -12,7 +12,7 @@
 
 #include "pedal_pico/pedal_pico_sideband.h"
 
-void pedal_pico_sideband_core_1() {
+void pedal_pico_sideband_start() {
     if (! pedal_pico_sideband) panic("pedal_pico_sideband is not initialized.");
     /* PWM Settings */
     pedal_pico_sideband = util_pedal_pico_init(PEDAL_PICO_SIDEBAND_PWM_1_GPIO, PEDAL_PICO_SIDEBAND_PWM_2_GPIO);
@@ -28,6 +28,7 @@ void pedal_pico_sideband_core_1() {
 }
 
 void pedal_pico_sideband_set() {
+    if (! pedal_pico_sideband) panic("pedal_pico_sideband is not initialized.");
     pedal_pico_sideband_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_sideband_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_sideband_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;

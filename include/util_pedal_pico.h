@@ -19,6 +19,7 @@
 // Dependancies
 #include "pico/stdlib.h"
 #include "pico/divider.h"
+#include "pico/multicore.h"
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "hardware/irq.h"
@@ -78,6 +79,7 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_init_adc();
 void util_pedal_pico_start(util_pedal_pico* util_pedal);
 void util_pedal_pico_stop(util_pedal_pico* util_pedal);
+void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core();
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);
 void util_pedal_pico_on_adc_irq_fifo();
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch

@@ -97,6 +97,13 @@ void util_pedal_pico_stop(util_pedal_pico* util_pedal) {
     __dsb();
 }
 
+void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core() {
+    // "irq_get_exclusive_handler" returns null not only for no handler, but also existance of shared handler.
+    irq_handler_t handler = irq_get_exclusive_handler(PWM_IRQ_WRAP);
+    if (handler) irq_remove_handler(PWM_IRQ_WRAP, handler);
+    multicore_fifo_push_blocking((uint32)handler); // To send a made pointer, sync flag, etc.
+}
+
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion) {
     uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average_sum / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
     util_pedal_pico_adc_middle_moving_average_sum -= middle_moving_average;

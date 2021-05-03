@@ -12,7 +12,7 @@
 
 #include "pedal_pico/pedal_pico_buffer.h"
 
-void pedal_pico_buffer_core_1() {
+void pedal_pico_buffer_start() {
     if (! pedal_pico_buffer) panic("pedal_pico_buffer is not initialized.");
     /* PWM Settings */
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_pico_buffer_on_pwm_irq_wrap);
@@ -27,6 +27,7 @@ void pedal_pico_buffer_core_1() {
 }
 
 void pedal_pico_buffer_set() {
+    if (! pedal_pico_buffer) panic("pedal_pico_buffer is not initialized.");
     pedal_pico_buffer_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_buffer_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_buffer_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;

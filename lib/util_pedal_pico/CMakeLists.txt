@@ -11,6 +11,7 @@ add_library(${target_name} STATIC
 target_link_libraries(${target_name}
     pico_stdlib
     pico_divider
+    pico_multicore
     hardware_pwm
     hardware_adc
     hardware_irq

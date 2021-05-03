@@ -12,7 +12,7 @@
 
 #include "pedal_pico/pedal_pico_chorus.h"
 
-void pedal_pico_chorus_core_1() {
+void pedal_pico_chorus_start() {
     if (! pedal_pico_chorus) panic("pedal_pico_chorus is not initialized.");
     /* PWM Settings */
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_pico_chorus_on_pwm_irq_wrap);
@@ -27,6 +27,7 @@ void pedal_pico_chorus_core_1() {
 }
 
 void pedal_pico_chorus_set() {
+    if (! pedal_pico_chorus) panic("pedal_pico_chorus is not initialized.");
     pedal_pico_chorus_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;

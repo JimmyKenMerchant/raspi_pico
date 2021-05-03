@@ -43,7 +43,7 @@ int main(void) {
         #error Failure on Assigning Actual Array to pedal_pico_buffer_table_pdf_1
     #endif
     uint32* stack_pointer = (int32*)malloc(PEDAL_BUFFER_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(pedal_pico_buffer_core_1, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(pedal_pico_buffer_start, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
     //pedal_pico_buffer_debug_time = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");

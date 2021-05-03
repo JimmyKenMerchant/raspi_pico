@@ -69,7 +69,7 @@ volatile uint16 pedal_pico_buffer_noise_gate_count;
 volatile int32* pedal_pico_buffer_table_pdf_1;
 volatile uint32 pedal_pico_buffer_debug_time;
 
-void pedal_pico_buffer_core_1();
+void pedal_pico_buffer_start();
 void pedal_pico_buffer_set();
 void pedal_pico_buffer_on_pwm_irq_wrap();
 void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
