@@ -17,6 +17,8 @@ target_link_libraries(${target_name}
     pedal_pico_buffer
     pedal_pico_chorus
     pedal_pico_sideband
+    pedal_pico_reverb
+    pedal_pico_tape
 )
 
 target_compile_definitions(${target_name}

@@ -43,8 +43,8 @@ cp pico-sdk/external/pico_sdk_import.cmake raspi_pico/
 cd raspi_pico
 mkdir build
 cd build
-# I prefer not to use XIP (Execute in place) to make a tricky memory extension for execution.
-cmake -DPICO_COPY_TO_RAM=1 ../
+# In CMakeLists.txt at the top level, PICO_COPY_TO_RAM is set because I prefer not to use XIP (Execute in place) to make a tricky memory extension for execution.
+cmake ../
 # You can also make in each individual folder of each project.
 make -j4
 # Connect Pico and Your PC through USB2.0

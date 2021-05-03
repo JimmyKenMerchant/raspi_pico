@@ -41,7 +41,7 @@
 #define PEDAL_PLANETS_PWM_PEAK 2047
 #define PEDAL_PLANETS_GAIN 1
 #define PEDAL_PLANETS_COEFFICIENT_PEAK (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PLANETS_COEFFICIENT_SHIFT 11 // Multiply by 4096 (0x00000800-0x00010000)
+#define PEDAL_PLANETS_COEFFICIENT_SHIFT 10 // Multiply by 2048 (0x00000800-0x00007C00)
 #define PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 0x80 // Value to Accumulate
 #define PEDAL_PLANETS_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
 #define PEDAL_PLANETS_DELAY_TIME_SHIFT 6 // Multiply by 64 (64-2048)
@@ -155,11 +155,11 @@ void pedal_planets_process(uint16 conversion_1, uint16 conversion_2, uint16 conv
     pedal_planets_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_planets_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_planets_conversion_2 = conversion_2;
-        pedal_planets_coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_planets_coefficient = ((pedal_planets_conversion_2 >> 7) + 1) << PEDAL_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     if (abs(conversion_3 - pedal_planets_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_planets_conversion_3 = conversion_3;
-        pedal_planets_delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+        pedal_planets_delay_time = ((pedal_planets_conversion_3 >> 7) + 1) << PEDAL_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
     }
     pedal_planets_coefficient_interpolation = util_pedal_pico_interpolate(pedal_planets_coefficient_interpolation, pedal_planets_coefficient, PEDAL_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
     pedal_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_planets_delay_time_interpolation, pedal_planets_delay_time, pedal_planets_delay_time_interpolation_accum);

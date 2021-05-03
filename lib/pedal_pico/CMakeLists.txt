@@ -1,3 +1,5 @@
 add_subdirectory(pedal_pico_buffer)
 add_subdirectory(pedal_pico_chorus)
 add_subdirectory(pedal_pico_sideband)
+add_subdirectory(pedal_pico_reverb)
+add_subdirectory(pedal_pico_tape)
