@@ -193,6 +193,35 @@ func_debug_time = time_us_32() - from_time;
 
 * I think it's a sort of the zenith of the complexity in developing technologies (note that I like city simulators rather than civilization simulators). In fact, Cortex M0+ has von Neumann architecture which doesn't separate memory space between data and instruction (note that renowned MPUs, Intel 8080 and Z80 have this architecture). However, in the high-level usage such as C language, the chip is used as if it has Harvard architecture which separates memory space because modern MPUs, such as AVR, used to have Harvard architecture. This trick came true by XIP (Execute in place) which has instruction cache with an external flash chip. Note that the flash chip is also accessible as a data storage without any restriction because M0+ has only one set of instruction system for SRAM and memory mapped peripherals including XIP. In the recent context, Harvard architecture is described for its performance, but this architecture is also known as having the safe space for instructions, i.e., the instruction code can't easily corrupt the code itself by memory overflow, etc. In assembler, Pico is just a von Neumann. However, in pico-sdk with C language, Pico is a Harvard-like. Just in my experience, reading data from the flash chip on using XIP seems to cause the time delay from the cache miss for instructions, and even the malfunction. Caution that this trick causes a critical situation because the plotter of an application doesn't recognize that the von Neumann has memory space for XIP which may destroy the premised system of the application. Besides, the coder of an application doesn't recognize that the chip has von Neumann that may destroy instruction code by memory overflow, etc. I have to say that XIP is not an intended tool in a civilization game. The region for XIP is aliased by caching status (see page 25 and 150 of RP2040 Datasheet). However, if you make a static array in the flash memory with C language, the C ignores aliasing because XIP is an external peripheral and C considers of RAM or ROM as a primary storage. In fact, the modern technology publishes nonvolatile SRAM. However, XIP is like a virtual memory space using a cache which causes the time delay. Cortex M23 seems to be improved this issue and this is certified as a Harvard architecture. However, although I haven't ever touched M23, the instruction set to access memory space for data and instruction is the same as opposed to AVR. This simplification is noticeable in terms of the possible corruption of instruction code.
 
+* You can back to v0.8a and build. You can watch how XIP is read in "pedal_phaser.dis":
+
+```
+1000042e:	4cb0      	ldr	r4, [pc, #704]	; (100006f0 <pedal_phaser_on_pwm_irq_wrap+0x394>)
+```
+* 100006f0 is stored:
+
+```
+100006f0:	10005374 	.word	0x10005374
+```
+
+* On the 1897th and 1898th lines in "pedal_phaser.elf.map":
+
+```
+ .rodata.pedal_phaser_table_sine_1
+                0x10005374    0x3b9b0 CMakeFiles/pedal_phaser.dir/pedal_phaser.c.obj
+```
+
+* In "pedal_phaser_make_header.py" at the source folder:
+
+```python
+declare_sine_1 = [
+"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
+"static int32 pedal_phaser_table_sine_1[] = {\n"
+]
+```
+
+* In this version, I met the "so noisy" malfuction. 0x10005374 in RP2040 is in the space for XIP with cacheable and allocating status (see page 150 of RP2040 Datasheet). Caution that XIP is an instruction cache, i.e., reading data from XIP from this status can rewrite instruction code on the cache.
+
 **C Language**
 
 * C language needs strict declarations of variable types. Unlike Python, which converts the variable type by functions explicitly, the declaration is implicitly kept through the life of the variable. To change the variables types in C language, we need to make a type casting. For example:
