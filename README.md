@@ -198,13 +198,13 @@ func_debug_time = time_us_32() - from_time;
 ```
 1000042e:	4cb0      	ldr	r4, [pc, #704]	; (100006f0 <pedal_phaser_on_pwm_irq_wrap+0x394>)
 ```
-* 100006f0 is stored:
+* The address 100006f0 stores:
 
 ```
 100006f0:	10005374 	.word	0x10005374
 ```
 
-* On the 1897th and 1898th lines in "pedal_phaser.elf.map":
+* On 1897th and 1898th lines in "pedal_phaser.elf.map":
 
 ```
  .rodata.pedal_phaser_table_sine_1
@@ -220,15 +220,15 @@ declare_sine_1 = [
 ]
 ```
 
-* In this version, I met the "so noisy" malfuction. 0x10005374 in RP2040 is in the space for XIP with cacheable and allocating status (see page 150 of RP2040 Datasheet). Caution that XIP is an instruction cache, i.e., reading data from XIP from this status can rewrite instruction code on the cache. The size of the cache is 16KB, i.e., 0x0000 to 0x3FFF. If the cache has four ways and no bit offset, the index would be 12 least significant bits. The address, 0x10000374 and 0x10001374 would be shared with 0x10005374. In "pedal_phaser.dis":
+* In this version, I met the "so noisy" malfuction. 0x10005374 in RP2040 is in the space for XIP with cacheable and allocating status (see page 150 of RP2040 Datasheet). Caution that XIP is an instruction cache, i.e., reading data from XIP from this status can rewrite instruction code on the cache. The size of the cache is 16KB, i.e., 0x0000 to 0x3FFF. If the cache has four ways and no bit offset, the index would be 12 least significant bits. Addresses, 0x10000374 and 0x10001374 would be shared with 0x10005374. In "pedal_phaser.dis":
 
 '''
 1000035c <pedal_phaser_on_pwm_irq_wrap>:
-...
+
 10000374:	4acd      	ldr	r2, [pc, #820]	; (100006ac <pedal_phaser_on_pwm_irq_wrap+0x350>)
 '''
 
-* pedal_phaser_table_sine_1 is an array with 61036 words and 244144 bytes. If XIP tries to cache this amount of data at the same time, all cached instructions are replaced with the data of the array. Although reading this array is in a routine of a PWM IRQ handler, the conflict between the array data and the instruction possibly occurs.
+* pedal_phaser_table_sine_1 is an array with 61036 words, 244144 bytes. If XIP tries to cache this amount of data at the same time, all cached instructions are replaced with the data of the array. Although reading this array is in a routine of a PWM IRQ handler, the conflict between the array data and the instruction code possibly occurs.
 
 **C Language**
 
