@@ -131,7 +131,5 @@ void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint1
 }
 
 void pedal_pico_sideband_free() { // Free Except Object, pedal_pico_sideband
-    util_pedal_pico_stop((util_pedal_pico*)pedal_pico_sideband);
-    irq_remove_handler(PWM_IRQ_WRAP, pedal_pico_sideband_on_pwm_irq_wrap);
     __dsb();
 }

@@ -108,8 +108,6 @@ void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 
 }
 
 void pedal_pico_chorus_free() { // Free Except Object, pedal_pico_chorus
-    util_pedal_pico_stop((util_pedal_pico*)pedal_pico_chorus);
-    irq_remove_handler(PWM_IRQ_WRAP, pedal_pico_chorus_on_pwm_irq_wrap);
     free((void*)pedal_pico_chorus_delay_array);
     free((void*)pedal_pico_chorus_lr_distance_array);
     __dsb();

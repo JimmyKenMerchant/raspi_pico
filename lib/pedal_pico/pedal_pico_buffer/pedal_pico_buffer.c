@@ -142,8 +142,6 @@ void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 
 }
 
 void pedal_pico_buffer_free() { // Free Except Object, pedal_pico_buffer
-    util_pedal_pico_stop((util_pedal_pico*)pedal_pico_buffer);
-    irq_remove_handler(PWM_IRQ_WRAP, pedal_pico_buffer_on_pwm_irq_wrap);
     free((void*)pedal_pico_buffer_delay_array);
     __dsb();
 }

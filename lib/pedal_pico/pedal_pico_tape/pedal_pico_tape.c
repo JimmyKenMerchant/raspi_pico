@@ -107,8 +107,6 @@ void pedal_pico_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 co
 }
 
 void pedal_pico_tape_free() { // Free Except Object, pedal_pico_tape
-    util_pedal_pico_stop((util_pedal_pico*)pedal_pico_tape);
-    irq_remove_handler(PWM_IRQ_WRAP, pedal_pico_tape_on_pwm_irq_wrap);
     free((void*)pedal_pico_tape_delay_array);
     __dsb();
 }

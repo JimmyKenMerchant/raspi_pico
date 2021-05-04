@@ -19,6 +19,8 @@ target_link_libraries(${target_name}
     pedal_pico_sideband
     pedal_pico_reverb
     pedal_pico_tape
+    pedal_pico_phaser
+    pedal_pico_planets
 )
 
 target_compile_definitions(${target_name}

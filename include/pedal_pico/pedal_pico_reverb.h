@@ -33,9 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_REVERB_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
-#define PEDAL_PICO_REVERB_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
-#define PEDAL_PICO_REVERB_LED_GPIO 25
 #define PEDAL_PICO_REVERB_SW_1_GPIO 14
 #define PEDAL_PICO_REVERB_SW_2_GPIO 15
 #define PEDAL_PICO_REVERB_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
