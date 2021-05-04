@@ -197,6 +197,8 @@ func_debug_time = time_us_32() - from_time;
 
 ```
 1000042e:	4cb0      	ldr	r4, [pc, #704]	; (100006f0 <pedal_phaser_on_pwm_irq_wrap+0x394>)
+10000430:	0089      	lsls	r1, r1, #2
+10000432:	5909      	ldr	r1, [r1, r4]
 ```
 * The address 100006f0 stores:
 
@@ -211,7 +213,7 @@ func_debug_time = time_us_32() - from_time;
                 0x10005374    0x3b9b0 CMakeFiles/pedal_phaser.dir/pedal_phaser.c.obj
 ```
 
-* In "pedal_phaser_make_header.py" at the source folder:
+* ".rodata" section is for EEPROM and other types of ROM. In "pedal_phaser_make_header.py" at the source folder:
 
 ```python
 declare_sine_1 = [
@@ -220,15 +222,17 @@ declare_sine_1 = [
 ]
 ```
 
-* In this version, I met the "so noisy" malfuction. 0x10005374 in RP2040 is in the space for XIP with cacheable and allocating status (see page 150 of RP2040 Datasheet). Caution that XIP is an instruction cache, i.e., reading data from XIP from this status can rewrite instruction code on the cache. The size of the cache is 16KB, i.e., 0x0000 to 0x3FFF. If the cache has four ways and no bit offset, the index would be 12 least significant bits. Addresses, 0x10000374 and 0x10001374 would be shared with 0x10005374. In "pedal_phaser.dis":
+* In this version, I met the "so noisy" malfuction with pedal_phaser. 0x10005374 in RP2040 is in the space for XIP with cacheable and allocating status (see page 150 of RP2040 Datasheet). Caution that XIP is an instruction cache, i.e., reading data from XIP from this status can rewrite instruction code on the cache. The size of the cache is 16KB, i.e., 0x0000 to 0x3FFF. If the cache has four ways and no bit offset, the index would be 12 least significant bits. Addresses, 0x10000374 and 0x10001374 would be shared with 0x10005374. In "pedal_phaser.dis":
 
-'''
+```
 1000035c <pedal_phaser_on_pwm_irq_wrap>:
-
+...
 10000374:	4acd      	ldr	r2, [pc, #820]	; (100006ac <pedal_phaser_on_pwm_irq_wrap+0x350>)
-'''
+```
 
-* pedal_phaser_table_sine_1 is an array with 61036 words, 244144 bytes. If XIP tries to cache this amount of data at the same time, all cached instructions are replaced with the data of the array. Although reading this array is in a routine of a PWM IRQ handler, the conflict between the array data and the instruction code possibly occurs.
+* pedal_phaser_table_sine_1 is an array with 61036 words, 244144 bytes. If XIP tries to cache this amount of data at the same time, all cached instructions are replaced with the data of the array. Although reading this array is in a routine of a PWM IRQ handler, the conflict between the array data and the instruction code possibly occurs. This description as above just tells that cache miss and non-synchronization data occur. We need another evidence to know whether the data would be executed instead of instruction code or not. Besides, XIP could distinguish between data and instruction and bypasses the cache even if your assigned address is cacheable and allocating, i.e., the fault of pedal_phaser isn't caused from XIP.
+
+* I'm not in favor of the concept of XIP because the time delay affects the performance of pedals, and I pursue low energy consumption. However, the solution may become from an aliased region. The region starting from 0x13000000 bypasses the cache. Offsetting 0x3000000 to the static array may resolve this issue, but I haven't tested it yet.
 
 **C Language**
 
