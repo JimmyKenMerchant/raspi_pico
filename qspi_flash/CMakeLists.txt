@@ -10,9 +10,8 @@ add_executable(${target_name}
 # Add libraries by target names on "add_library" of themselves.
 target_link_libraries(${target_name}
     pico_stdlib
-    hardware_pwm
-    hardware_irq
-    function_generator_pico
+    hardware_flash
+    hardware_sync
 )
 
 # Beside elf, Create map/bin/hex/uf2 files.
