@@ -6,13 +6,6 @@ add_executable(${target_name}
 
 # Add libraries by target names on "add_library" of themselves.
 target_link_libraries(${target_name}
-    pico_stdlib
-    pico_multicore
-    pico_divider
-    hardware_pwm
-    hardware_adc
-    hardware_irq
-    hardware_sync
     util_pedal_pico
     pedal_pico_buffer
     pedal_pico_chorus
@@ -21,6 +14,7 @@ target_link_libraries(${target_name}
     pedal_pico_tape
     pedal_pico_phaser
     pedal_pico_planets
+    pedal_pico_distortion
 )
 
 target_compile_definitions(${target_name}

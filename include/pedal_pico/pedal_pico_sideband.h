@@ -67,7 +67,7 @@ volatile uint32 pedal_pico_sideband_debug_time;
 void pedal_pico_sideband_start();
 void pedal_pico_sideband_set();
 void pedal_pico_sideband_on_pwm_irq_wrap();
-void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3,  uchar8 sw_mode);
+void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_sideband_free();
 
 #ifdef __cplusplus

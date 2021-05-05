@@ -15,7 +15,6 @@
 void pedal_pico_sideband_start() {
     if (! pedal_pico_sideband) panic("pedal_pico_sideband is not initialized.");
     /* PWM Settings */
-    pedal_pico_sideband = util_pedal_pico_init(PEDAL_PICO_SIDEBAND_PWM_1_GPIO, PEDAL_PICO_SIDEBAND_PWM_2_GPIO);
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pedal_pico_sideband_on_pwm_irq_wrap);
     irq_set_priority(PWM_IRQ_WRAP, 0xF0);
     pwm_set_chan_level(pedal_pico_sideband->pwm_1_slice, pedal_pico_sideband->pwm_1_channel, PEDAL_PICO_SIDEBAND_PWM_OFFSET);
