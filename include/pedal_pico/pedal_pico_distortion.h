@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_DISTORTION_SW_1_GPIO 14
-#define PEDAL_PICO_DISTORTION_SW_2_GPIO 15
-#define PEDAL_PICO_DISTORTION_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_DISTORTION_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_DISTORTION_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_DISTORTION_PWM_PEAK 2047
 #define PEDAL_PICO_DISTORTION_GAIN 1
 #define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0xC0
 
@@ -51,11 +45,8 @@ volatile int32* pedal_pico_distortion_table_pdf_1;
 volatile int32* pedal_pico_distortion_table_log_1;
 volatile int32* pedal_pico_distortion_table_log_2;
 volatile int32* pedal_pico_distortion_table_power_1;
-volatile uint32 pedal_pico_distortion_debug_time;
 
-void pedal_pico_distortion_start();
 void pedal_pico_distortion_set();
-void pedal_pico_distortion_on_pwm_irq_wrap();
 void pedal_pico_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_distortion_free();
 

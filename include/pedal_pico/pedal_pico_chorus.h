@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_CHORUS_SW_1_GPIO 14
-#define PEDAL_PICO_CHORUS_SW_2_GPIO 15
-#define PEDAL_PICO_CHORUS_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_CHORUS_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_CHORUS_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_CHORUS_PWM_PEAK 2047
 #define PEDAL_PICO_CHORUS_GAIN 1
 #define PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_CHORUS_DELAY_TIME_MAX 1527
@@ -65,11 +59,8 @@ volatile uint16 pedal_pico_chorus_lr_distance_time_interpolation;
 volatile uint16 pedal_pico_chorus_lr_distance_index;
 volatile int32* pedal_pico_chorus_table_pdf_1;
 volatile int32* pedal_pico_chorus_table_sine_1;
-volatile uint32 pedal_pico_chorus_debug_time;
 
-void pedal_pico_chorus_start();
 void pedal_pico_chorus_set();
-void pedal_pico_chorus_on_pwm_irq_wrap();
 void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_chorus_free();
 

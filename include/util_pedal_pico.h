@@ -36,6 +36,12 @@ extern "C" {
 /* Definitions */
 
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
+#define UTIL_PEDAL_PICO_SW_1_GPIO 14
+#define UTIL_PEDAL_PICO_SW_2_GPIO 15
+#define UTIL_PEDAL_PICO_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
+#define UTIL_PEDAL_PICO_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
+#define UTIL_PEDAL_PICO_PWM_OFFSET 2048 // Ideal Middle Point
+#define UTIL_PEDAL_PICO_PWM_PEAK 2047
 #define UTIL_PEDAL_PICO_ADC_0_GPIO 26
 #define UTIL_PEDAL_PICO_ADC_1_GPIO 27
 #define UTIL_PEDAL_PICO_ADC_2_GPIO 28
@@ -63,22 +69,29 @@ typedef struct {
 
 /* Global Variables */
 
+volatile util_pedal_pico* util_pedal_pico_obj; // Pointer Needed to Be Initialized
 volatile uint16 util_pedal_pico_on_adc_conversion_1;
 volatile uint16 util_pedal_pico_on_adc_conversion_2;
 volatile uint16 util_pedal_pico_on_adc_conversion_3;
 volatile bool util_pedal_pico_on_adc_is_outstanding;
 volatile uint16 util_pedal_pico_adc_middle_moving_average;
 volatile uint32 util_pedal_pico_adc_middle_moving_average_sum;
+volatile uchar8 util_pedal_pico_sw_1_gpio;
+volatile uchar8 util_pedal_pico_sw_2_gpio;
 volatile uchar8 util_pedal_pico_sw_mode;
+volatile uint32 util_pedal_pico_debug_time;
 
 /* Functions */
 
+void (*util_pedal_pico_on_pwm_irq_wrap_handler)(); // Pointer Needed to Be Assigned
+void (*util_pedal_pico_process)(uint16, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_init_adc();
-void util_pedal_pico_start(util_pedal_pico* util_pedal);
-void util_pedal_pico_stop(util_pedal_pico* util_pedal);
+void util_pedal_pico_start();
+irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single();
+void util_pedal_pico_stop();
 void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core();
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);
 void util_pedal_pico_on_adc_irq_fifo();

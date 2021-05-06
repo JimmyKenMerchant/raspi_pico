@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_BUFFER_SW_1_GPIO 14
-#define PEDAL_PICO_BUFFER_SW_2_GPIO 15
-#define PEDAL_PICO_BUFFER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_BUFFER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_BUFFER_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_BUFFER_PWM_PEAK 2047
 #define PEDAL_PICO_BUFFER_GAIN 1
 #define PEDAL_PICO_BUFFER_DELAY_TIME_MAX 7937
 #define PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-7936), 7936 Divided by 28125 (0.282 Seconds)
@@ -67,11 +61,8 @@ volatile uint16 pedal_pico_buffer_delay_index;
 volatile char8 pedal_pico_buffer_noise_gate_threshold;
 volatile uint16 pedal_pico_buffer_noise_gate_count;
 volatile int32* pedal_pico_buffer_table_pdf_1;
-volatile uint32 pedal_pico_buffer_debug_time;
 
-void pedal_pico_buffer_start();
 void pedal_pico_buffer_set();
-void pedal_pico_buffer_on_pwm_irq_wrap();
 void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_buffer_free();
 

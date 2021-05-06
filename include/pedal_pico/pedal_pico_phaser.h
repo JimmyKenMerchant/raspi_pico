@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_PHASER_SW_1_GPIO 14
-#define PEDAL_PICO_PHASER_SW_2_GPIO 15
-#define PEDAL_PICO_PHASER_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_PHASER_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_PHASER_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_PHASER_PWM_PEAK 2047
 #define PEDAL_PICO_PHASER_GAIN 1
 #define PEDAL_PICO_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_PHASER_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
@@ -67,11 +61,8 @@ volatile char8 pedal_pico_phaser_osc_start_threshold;
 volatile uint16 pedal_pico_phaser_osc_start_count;
 volatile int32* pedal_pico_phaser_table_pdf_1;
 volatile int32* pedal_pico_phaser_table_sine_1;
-volatile uint32 pedal_pico_phaser_debug_time;
 
-void pedal_pico_phaser_start();
 void pedal_pico_phaser_set();
-void pedal_pico_phaser_on_pwm_irq_wrap();
 void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_phaser_free();
 

@@ -234,6 +234,8 @@ declare_sine_1 = [
 
 * I'm not in favor of the concept of XIP because the time delay affects the performance of pedals, and I pursue low energy consumption. However, the solution may become from an aliased region. The region starting from 0x13000000 bypasses the cache. Offsetting 0x3000000 to the static array may resolve this issue, but I haven't tested it yet. Besides, If we turn off XIP's cache unit, this could be an ordinal flash storage with QSPI (4-bit parallel interface). I use "PICO_COPY_TO_RAM" not to execute code from the flash storage.
 
+* The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world.
+
 **C Language**
 
 * C language needs strict declarations of variable types. Unlike Python, which converts the variable type by functions explicitly, the declaration is implicitly kept through the life of the variable. To change the variables types in C language, we need to make a type casting. For example:

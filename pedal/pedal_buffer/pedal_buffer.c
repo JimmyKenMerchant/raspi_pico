@@ -32,24 +32,29 @@ int main(void) {
     gpio_init(PEDAL_BUFFER_LED_GPIO);
     gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_BUFFER_LED_GPIO, true);
-    /* Initialize PWM */
-    pedal_pico_buffer = util_pedal_pico_init(PEDAL_PICO_BUFFER_PWM_1_GPIO, PEDAL_PICO_BUFFER_PWM_2_GPIO);
+    /* Initialize PWM and Switch */
+    pedal_pico_buffer = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     /* Initialize ADC */
     util_pedal_pico_init_adc();
     /* Assign Actual Array */
-    #if UTIL_PEDAL_PICO_EX_PEAK == PEDAL_PICO_BUFFER_PWM_PEAK
+    #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
         pedal_pico_buffer_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
     #else
         #error Failure on Assigning Actual Array to pedal_pico_buffer_table_pdf_1
     #endif
+    /* Unique Variables and Functions */
+    pedal_pico_buffer_set();
+    util_pedal_pico_on_pwm_irq_wrap_handler = (void*)util_pedal_pico_on_pwm_irq_wrap_handler_single;
+    util_pedal_pico_process = pedal_pico_buffer_process;
+    /* Launch Core 1 */
     uint32* stack_pointer = (int32*)malloc(PEDAL_BUFFER_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(pedal_pico_buffer_start, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
     while (true) {
-        //printf("@main 3 - pedal_pico_buffer_conversion_1 %0x\n", pedal_pico_buffer_conversion_1);
-        //printf("@main 4 - pedal_pico_buffer_conversion_2 %0x\n", pedal_pico_buffer_conversion_2);
-        //printf("@main 5 - pedal_pico_buffer_conversion_3 %0x\n", pedal_pico_buffer_conversion_3);
-        //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 7 - pedal_pico_buffer_debug_time %d\n", pedal_pico_buffer_debug_time);
+        //printf("@main 1 - pedal_pico_buffer_conversion_1 %0x\n", pedal_pico_buffer_conversion_1);
+        //printf("@main 2 - pedal_pico_buffer_conversion_2 %0x\n", pedal_pico_buffer_conversion_2);
+        //printf("@main 3 - pedal_pico_buffer_conversion_3 %0x\n", pedal_pico_buffer_conversion_3);
+        //printf("@main 4 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
+        //printf("@main 5 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
         //sleep_ms(500);
         __wfi();
     }

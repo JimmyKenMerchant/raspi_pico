@@ -34,22 +34,27 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
     /* PWM Settings */
     gpio_set_function(gpio_1, GPIO_FUNC_PWM);
     gpio_set_function(gpio_2, GPIO_FUNC_PWM);
-    util_pedal_pico* util_pedal = (util_pedal_pico*)malloc(sizeof(util_pedal_pico));
-    util_pedal->pwm_1_slice = pwm_gpio_to_slice_num(gpio_1);
-    util_pedal->pwm_1_channel = pwm_gpio_to_channel(gpio_1);
-    util_pedal->pwm_2_slice = pwm_gpio_to_slice_num(gpio_2);
-    util_pedal->pwm_2_channel = pwm_gpio_to_channel(gpio_2);
+    util_pedal_pico_obj = (util_pedal_pico*)malloc(sizeof(util_pedal_pico));
+    util_pedal_pico_obj->pwm_1_slice = pwm_gpio_to_slice_num(gpio_1);
+    util_pedal_pico_obj->pwm_1_channel = pwm_gpio_to_channel(gpio_1);
+    util_pedal_pico_obj->pwm_2_slice = pwm_gpio_to_slice_num(gpio_2);
+    util_pedal_pico_obj->pwm_2_channel = pwm_gpio_to_channel(gpio_2);
     // Set IRQ and Handler for PWM
-    pwm_clear_irq(util_pedal->pwm_1_slice);
-    pwm_set_irq_enabled(util_pedal->pwm_1_slice, true);
+    pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
+    pwm_set_irq_enabled(util_pedal_pico_obj->pwm_1_slice, true);
     // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     util_pedal_pico_set_pwm_28125hz(&config);
-    pwm_init(util_pedal->pwm_1_slice, &config, false); // Push Configration
-    if (util_pedal->pwm_1_slice != util_pedal->pwm_2_slice) pwm_init(util_pedal->pwm_2_slice, &config, false); // Push Configration
+    pwm_init(util_pedal_pico_obj->pwm_1_slice, &config, false); // Push Configration
+    if (util_pedal_pico_obj->pwm_1_slice != util_pedal_pico_obj->pwm_2_slice) pwm_init(util_pedal_pico_obj->pwm_2_slice, &config, false); // Push Configration
+    /* Switch Configuration */
+    util_pedal_pico_sw_1_gpio = UTIL_PEDAL_PICO_SW_1_GPIO;
+    util_pedal_pico_sw_2_gpio = UTIL_PEDAL_PICO_SW_2_GPIO;
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
+    /* Configuration for Debugging */
+    util_pedal_pico_debug_time = 0;
     __dsb();
-    return util_pedal;
+    return (util_pedal_pico*)util_pedal_pico_obj;
 }
 
 void util_pedal_pico_init_adc() {
@@ -73,19 +78,51 @@ void util_pedal_pico_init_adc() {
     __dsb();
 }
 
-void util_pedal_pico_start(util_pedal_pico* util_pedal) {
+void util_pedal_pico_start() {
+    if (! util_pedal_pico_obj) panic("util_pedal_pico_obj is not initialized.");
+    if (! util_pedal_pico_on_pwm_irq_wrap_handler) panic("util_pedal_pico_on_pwm_irq_wrap_handler is null.");
+    if (! util_pedal_pico_process) panic("util_pedal_pico_process is null.");
+    /* PWM Settings */
+    irq_set_exclusive_handler(PWM_IRQ_WRAP, util_pedal_pico_on_pwm_irq_wrap_handler);
+    irq_set_priority(PWM_IRQ_WRAP, 0xF0);
+    pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, UTIL_PEDAL_PICO_PWM_OFFSET);
+    pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, UTIL_PEDAL_PICO_PWM_OFFSET);
     /* Start IRQ, PWM and ADC */
     util_pedal_pico_on_adc_is_outstanding = true;
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
-    pwm_set_mask_enabled(0b1 << util_pedal->pwm_1_slice|0b1 << util_pedal->pwm_2_slice);
+    pwm_set_mask_enabled(0b1 << util_pedal_pico_obj->pwm_1_slice|0b1 << util_pedal_pico_obj->pwm_2_slice);
     adc_select_input(0); // Ensure to Start from A0
     __dsb();
     __isb();
     adc_run(true);
+    util_pedal_pico_sw_loop(util_pedal_pico_sw_1_gpio, util_pedal_pico_sw_2_gpio);
 }
 
-void util_pedal_pico_stop(util_pedal_pico* util_pedal) {
-    pwm_clear_irq(util_pedal->pwm_1_slice);
+irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single() {
+    pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
+    //uint32 from_time = time_us_32();
+    uint16 conversion_1 = util_pedal_pico_on_adc_conversion_1;
+    uint16 conversion_2 = util_pedal_pico_on_adc_conversion_2;
+    uint16 conversion_3 = util_pedal_pico_on_adc_conversion_3;
+    if (! util_pedal_pico_on_adc_is_outstanding) {
+        util_pedal_pico_on_adc_is_outstanding = true;
+        adc_select_input(0); // Ensure to Start from ADC0
+        __dsb();
+        __isb();
+        adc_run(true); // Stable Starting Point after PWM IRQ
+    }
+    util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
+    util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
+    /* Output */
+    pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
+    pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted);
+    //util_pedal_pico_debug_time = time_us_32() - from_time;
+    //multicore_fifo_push_blocking(util_pedal_pico_debug_time); // To send a made pointer, sync flag, etc.
+    __dsb();
+}
+
+void util_pedal_pico_stop() {
+    if (! util_pedal_pico_obj) panic("util_pedal_pico_obj is not initialized.");
     adc_run(false);
     __dsb();
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, false);

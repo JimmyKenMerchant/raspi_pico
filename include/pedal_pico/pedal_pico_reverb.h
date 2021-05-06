@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_REVERB_SW_1_GPIO 14
-#define PEDAL_PICO_REVERB_SW_2_GPIO 15
-#define PEDAL_PICO_REVERB_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_REVERB_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_REVERB_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_REVERB_PWM_PEAK 2047
 #define PEDAL_PICO_REVERB_GAIN 1
 #define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_PEAK (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT 11
@@ -56,11 +50,8 @@ volatile uint16 pedal_pico_reverb_delay_time;
 volatile uint16 pedal_pico_reverb_delay_time_interpolation;
 volatile uint16 pedal_pico_reverb_delay_index;
 volatile int32* pedal_pico_reverb_table_pdf_1;
-volatile uint32 pedal_pico_reverb_debug_time;
 
-void pedal_pico_reverb_start();
 void pedal_pico_reverb_set();
-void pedal_pico_reverb_on_pwm_irq_wrap();
 void pedal_pico_reverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_reverb_free();
 

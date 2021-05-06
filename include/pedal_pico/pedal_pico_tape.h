@@ -33,12 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_TAPE_SW_1_GPIO 14
-#define PEDAL_PICO_TAPE_SW_2_GPIO 15
-#define PEDAL_PICO_TAPE_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define PEDAL_PICO_TAPE_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
-#define PEDAL_PICO_TAPE_PWM_OFFSET 2048 // Ideal Middle Point
-#define PEDAL_PICO_TAPE_PWM_PEAK 2047
 #define PEDAL_PICO_TAPE_GAIN 1
 #define PEDAL_PICO_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1 (int32)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_TAPE_DELAY_TIME_MAX 3969
@@ -62,11 +56,8 @@ volatile uint16 pedal_pico_tape_delay_index;
 volatile uint16 pedal_pico_tape_delay_time_swing;
 volatile int32* pedal_pico_tape_table_pdf_1;
 volatile int32* pedal_pico_tape_table_sine_1;
-volatile uint32 pedal_pico_tape_debug_time;
 
-void pedal_pico_tape_start();
 void pedal_pico_tape_set();
-void pedal_pico_tape_on_pwm_irq_wrap();
 void pedal_pico_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_tape_free();
 
