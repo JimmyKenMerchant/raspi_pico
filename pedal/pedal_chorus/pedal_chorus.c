@@ -49,11 +49,6 @@ int main(void) {
     #endif
     uint32* stack_pointer = (int32*)malloc(PEDAL_CHORUS_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(pedal_pico_chorus_start, stack_pointer, PEDAL_CHORUS_CORE_1_STACK_SIZE);
-    //pedal_pico_chorus_debug_time = 0;
-    //uint32 from_time = time_us_32();
-    //printf("@main 1 - Let's Start!\n");
-    //pedal_pico_chorus_debug_time = time_us_32() - from_time;
-    //printf("@main 2 - pedal_pico_chorus_debug_time %d\n", pedal_pico_chorus_debug_time);
     while (true) {
         //printf("@main 3 - pedal_pico_chorus_conversion_1 %0x\n", pedal_pico_chorus_conversion_1);
         //printf("@main 4 - pedal_pico_chorus_conversion_2 %0x\n", pedal_pico_chorus_conversion_2);
@@ -61,7 +56,6 @@ int main(void) {
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 7 - pedal_pico_chorus_debug_time %d\n", pedal_pico_chorus_debug_time);
         //sleep_ms(500);
-        //tight_loop_contents();
         __wfi();
     }
     return 0;

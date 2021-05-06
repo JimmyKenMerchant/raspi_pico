@@ -42,6 +42,7 @@ void pedal_pico_chorus_set() {
     pedal_pico_chorus_lr_distance_time = lr_distance_time;
     pedal_pico_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_pico_chorus_lr_distance_index = 0;
+    //pedal_pico_chorus_debug_time = 0;
 }
 
 void pedal_pico_chorus_on_pwm_irq_wrap() {

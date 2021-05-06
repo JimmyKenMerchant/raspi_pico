@@ -32,6 +32,7 @@ void pedal_pico_distortion_set() {
     pedal_pico_distortion_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_loss = 32 - (pedal_pico_distortion_conversion_2 >> 7); // Make 5-bit Value (1-32)
+    //pedal_pico_distortion_debug_time = 0;
 }
 
 void pedal_pico_distortion_on_pwm_irq_wrap() {

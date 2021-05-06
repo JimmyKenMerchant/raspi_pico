@@ -42,6 +42,7 @@ void pedal_pico_phaser_set() {
     pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> 7; // Make 5-bit Value (0-31)
     pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> 7) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_pico_phaser_osc_start_count = 0;
+    //pedal_pico_phaser_debug_time = 0;
 }
 
 void pedal_pico_phaser_on_pwm_irq_wrap() {

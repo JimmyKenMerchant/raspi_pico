@@ -41,6 +41,7 @@ void pedal_pico_buffer_set() {
     pedal_pico_buffer_delay_index = 0;
     pedal_pico_buffer_noise_gate_threshold = (pedal_pico_buffer_conversion_3 >> 7) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_pico_buffer_noise_gate_count = 0;
+    //pedal_pico_buffer_debug_time = 0;
 }
 
 void pedal_pico_buffer_on_pwm_irq_wrap() {

@@ -39,7 +39,7 @@ void pedal_pico_tape_set() {
     pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> 7; // Make 5-bit Value (0-31)
     pedal_pico_tape_osc_sine_1_index = 0;
     pedal_pico_tape_osc_is_negative = false;
-
+    //pedal_pico_tape_debug_time = 0;
 }
 
 void pedal_pico_tape_on_pwm_irq_wrap() {

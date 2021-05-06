@@ -37,7 +37,7 @@ void pedal_pico_reverb_set() {
     pedal_pico_reverb_delay_time = delay_time;
     pedal_pico_reverb_delay_time_interpolation = delay_time;
     pedal_pico_reverb_delay_index = 0;
-
+    //pedal_pico_reverb_debug_time = 0;
 }
 
 void pedal_pico_reverb_on_pwm_irq_wrap() {

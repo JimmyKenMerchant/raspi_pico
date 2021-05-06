@@ -41,6 +41,7 @@ void pedal_pico_planets_set() {
     pedal_pico_planets_delay_time_interpolation = delay_time;
     pedal_pico_planets_delay_time_interpolation_accum = PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1;
     pedal_pico_planets_delay_index = 0;
+    //pedal_pico_planets_debug_time = 0;
 }
 
 void pedal_pico_planets_on_pwm_irq_wrap() {
