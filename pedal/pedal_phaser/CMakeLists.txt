@@ -37,10 +37,10 @@ target_include_directories(${target_name} PRIVATE
 pico_add_extra_outputs(${target_name})
 
 if (TARGET tinyusb_device)
-    pico_enable_stdio_usb(${target_name} 1)
+    pico_enable_stdio_usb(${target_name} 0)
 elseif (PICO_ON_DEVICE)
     message(NOTICE "You can't monitor outputting messages via USB because of No TinyUSB.")
 endif()
 
 # "printf" Messages via UART
-#pico_enable_stdio_uart(${target_name} 0)
+pico_enable_stdio_uart(${target_name} 1)

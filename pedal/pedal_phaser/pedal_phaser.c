@@ -74,19 +74,24 @@ volatile uint32 pedal_phaser_adc_middle_moving_average;
 volatile bool pedal_phaser_is_outstanding_on_adc;
 volatile uint32 pedal_phaser_debug_time;
 
+/* Additional Definition and Variable to Evaluate Bug */
+#define PEDAL_PHASER_DEBUG_XIP_OFFSET (0x0000000 / 4) // Bytes to Words
+volatile uint32 pedal_phaer_debug_xip_offset;
+
 void pedal_phaser_core_1();
 void pedal_phaser_on_pwm_irq_wrap();
 void pedal_phaser_on_adc_irq_fifo();
 
 int main(void) {
-    //stdio_init_all();
+    stdio_init_all();
     //sleep_ms(2000); // Wait for Rediness of USB for Messages
     gpio_init(PEDAL_PHASER_LED_GPIO);
     gpio_set_dir(PEDAL_PHASER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_PHASER_LED_GPIO, true);
+    pedal_phaer_debug_xip_offset = PEDAL_PHASER_DEBUG_XIP_OFFSET; // Additional Process to Evaluate Bug
     uint32* stack_pointer = (int32*)malloc(PEDAL_PHASER_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(pedal_phaser_core_1, stack_pointer, PEDAL_PHASER_CORE_1_STACK_SIZE);
-    //pedal_phaser_debug_time = 0;
+    pedal_phaser_debug_time = 0;
     //uint32 from_time = time_us_32();
     //printf("@main 1 - Let's Start!\n");
     //pedal_phaser_debug_time = time_us_32() - from_time;
@@ -96,9 +101,9 @@ int main(void) {
         //printf("@main 4 - pedal_phaser_conversion_2 %0x\n", pedal_phaser_conversion_2);
         //printf("@main 5 - pedal_phaser_conversion_3 %0x\n", pedal_phaser_conversion_3);
         //printf("@main 6 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
-        //sleep_ms(500);
-        tight_loop_contents();
+        printf("@main 7 - pedal_phaser_debug_time %d\n", pedal_phaser_debug_time);
+        sleep_ms(500);
+        //tight_loop_contents();
     }
     return 0;
 }
@@ -220,7 +225,7 @@ void pedal_phaser_core_1() {
 
 void pedal_phaser_on_pwm_irq_wrap() {
     pwm_clear_irq(pedal_phaser_pwm_slice_num);
-    //uint32 from_time = time_us_32();
+    uint32 from_time = time_us_32();
     uint16 conversion_1_temp = pedal_phaser_conversion_1_temp;
     uint16 conversion_2_temp = pedal_phaser_conversion_2_temp;
     uint16 conversion_3_temp = pedal_phaser_conversion_3_temp;
@@ -273,7 +278,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
         pedal_phaser_osc_sine_1_index = 0;
     }
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_phaser_table_sine_1[pedal_phaser_osc_sine_1_index];
+    int32 fixed_point_value_sine_1 = pedal_phaser_table_sine_1[pedal_phaser_osc_sine_1_index + pedal_phaer_debug_xip_offset];
     pedal_phaser_osc_sine_1_index += pedal_phaser_osc_speed;
     if (pedal_phaser_osc_sine_1_index >= PEDAL_PHASER_OSC_SINE_1_TIME_MAX) pedal_phaser_osc_sine_1_index -= PEDAL_PHASER_OSC_SINE_1_TIME_MAX;
     /**
@@ -281,7 +286,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1)]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1) + pedal_phaer_debug_xip_offset]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the synthesis of the concurrent wave and the phase shifted concurrent wave.
      * The phase shifted concurrent wave is made by an all-pass filter.
@@ -331,7 +336,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     } else {
         mixed_1 = canceled_1;
     }
-    mixed_1 = (int32)(int64)((((int64)mixed_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1)]) >> 32);
+    mixed_1 = (int32)(int64)((((int64)mixed_1 << 16) * (int64)pedal_phaser_table_pdf_1[abs(normalized_1) + pedal_phaer_debug_xip_offset]) >> 32);
     mixed_1 *= PEDAL_PHASER_GAIN;
     int32 output_1 = mixed_1 + middle_moving_average;
     if (output_1 > PEDAL_PHASER_PWM_OFFSET + PEDAL_PHASER_PWM_PEAK) {
@@ -347,7 +352,7 @@ void pedal_phaser_on_pwm_irq_wrap() {
     }
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel, (uint16)output_1);
     pwm_set_chan_level(pedal_phaser_pwm_slice_num, pedal_phaser_pwm_channel + 1, (uint16)output_1_inverted);
-    //pedal_phaser_debug_time = time_us_32() - from_time;
+    pedal_phaser_debug_time = time_us_32() - from_time;
     //multicore_fifo_push_blocking(pedal_phaser_debug_time); // To send a made pointer, sync flag, etc.
     __dsb();
 }
