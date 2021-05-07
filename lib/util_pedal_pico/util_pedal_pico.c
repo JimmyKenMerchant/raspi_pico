@@ -39,18 +39,15 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
     util_pedal_pico_obj->pwm_1_channel = pwm_gpio_to_channel(gpio_1);
     util_pedal_pico_obj->pwm_2_slice = pwm_gpio_to_slice_num(gpio_2);
     util_pedal_pico_obj->pwm_2_channel = pwm_gpio_to_channel(gpio_2);
-    // Set IRQ and Handler for PWM
+    // Set IRQ for PWM
     pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
     pwm_set_irq_enabled(util_pedal_pico_obj->pwm_1_slice, true);
+    irq_set_priority(PWM_IRQ_WRAP, UTIL_PEDAL_PICO_PWM_IRQ_WRAP_PRIORITY);
     // PWM Configuration
     pwm_config config = pwm_get_default_config(); // Pull Configuration
     util_pedal_pico_set_pwm_28125hz(&config);
     pwm_init(util_pedal_pico_obj->pwm_1_slice, &config, false); // Push Configration
     if (util_pedal_pico_obj->pwm_1_slice != util_pedal_pico_obj->pwm_2_slice) pwm_init(util_pedal_pico_obj->pwm_2_slice, &config, false); // Push Configration
-    /* Switch Configuration */
-    util_pedal_pico_sw_1_gpio = UTIL_PEDAL_PICO_SW_1_GPIO;
-    util_pedal_pico_sw_2_gpio = UTIL_PEDAL_PICO_SW_2_GPIO;
-    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
     /* Configuration for Debugging */
     util_pedal_pico_debug_time = 0;
     __dsb();
@@ -68,7 +65,7 @@ void util_pedal_pico_init_adc() {
     adc_fifo_setup(true, false, 3, true, false); // 12-bit Length (0-4095), Bit[15] for Error Flag
     adc_fifo_drain(); // Clean FIFO
     irq_set_exclusive_handler(ADC_IRQ_FIFO, util_pedal_pico_on_adc_irq_fifo);
-    irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
+    irq_set_priority(ADC_IRQ_FIFO, UTIL_PEDAL_PICO_ADC_IRQ_FIFO_PRIORITY);
     adc_irq_set_enabled(true);
     util_pedal_pico_on_adc_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     util_pedal_pico_on_adc_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
@@ -84,7 +81,6 @@ void util_pedal_pico_start() {
     if (! util_pedal_pico_process) panic("util_pedal_pico_process is null.");
     /* PWM Settings */
     irq_set_exclusive_handler(PWM_IRQ_WRAP, util_pedal_pico_on_pwm_irq_wrap_handler);
-    irq_set_priority(PWM_IRQ_WRAP, 0xF0);
     pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, UTIL_PEDAL_PICO_PWM_OFFSET);
     pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, UTIL_PEDAL_PICO_PWM_OFFSET);
     /* Start IRQ, PWM and ADC */
@@ -184,13 +180,26 @@ void util_pedal_pico_on_adc_irq_fifo() {
     __dsb();
 }
 
-
-void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) {
+void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2) {
+    /* Switch Configuration */
     uint32 gpio_mask = 0b1<< gpio_1|0b1 << gpio_2;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_1);
     gpio_pull_up(gpio_2);
+    util_pedal_pico_sw_1_gpio = gpio_1;
+    util_pedal_pico_sw_2_gpio = gpio_2;
+    util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
+}
+
+void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2) {
+    gpio_disable_pulls(gpio_1);
+    gpio_disable_pulls(gpio_2);
+    util_pedal_pico_sw_1_gpio = 0;
+    util_pedal_pico_sw_2_gpio = 0;
+}
+
+void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) { // Considered Reducing to Access SRAM
     uint16 count_sw_0 = 0; // Center
     uint16 count_sw_1 = 0;
     uint16 count_sw_2 = 0;

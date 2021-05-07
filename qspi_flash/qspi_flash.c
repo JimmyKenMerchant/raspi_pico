@@ -74,7 +74,7 @@ int main(void) {
     if ((uint32)free_start % 4096) free_start = (uint32*)((uint32)(binary_end + 1024) & 0xFFFFF000); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
     printf("@main 6 - free_start %0x\n", free_start);
     printf("@main 7 - *free_start %0x\n", *free_start);
-    int32 free_start_offset = (uint32)free_start - 0x10000000;
+    int32 free_start_offset = (uint32)free_start - XIP_BASE; // XIP_BASE = 0x10000000
     printf("@main 8 - free_start_offset %0x\n", free_start_offset);
     uchar8 array_int[FLASH_SECTOR_SIZE];
     qspi_flash_debug_time = 0;

@@ -38,10 +38,14 @@ extern "C" {
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
 #define UTIL_PEDAL_PICO_SW_1_GPIO 14
 #define UTIL_PEDAL_PICO_SW_2_GPIO 15
+#define UTIL_PEDAL_PICO_SW_THRESHOLD 30
+#define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
+#define UTIL_PEDAL_PICO_PWM_IRQ_WRAP_PRIORITY 0xF0
 #define UTIL_PEDAL_PICO_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
 #define UTIL_PEDAL_PICO_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define UTIL_PEDAL_PICO_PWM_OFFSET 2048 // Ideal Middle Point
 #define UTIL_PEDAL_PICO_PWM_PEAK 2047
+#define UTIL_PEDAL_PICO_ADC_IRQ_FIFO_PRIORITY 0xFF
 #define UTIL_PEDAL_PICO_ADC_0_GPIO 26
 #define UTIL_PEDAL_PICO_ADC_1_GPIO 27
 #define UTIL_PEDAL_PICO_ADC_2_GPIO 28
@@ -50,8 +54,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 
-#define UTIL_PEDAL_PICO_SW_THRESHOLD 30
-#define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
+/* Macros */
 #define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
 #define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
 #define util_pedal_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
@@ -95,6 +98,8 @@ void util_pedal_pico_stop();
 void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core();
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);
 void util_pedal_pico_on_adc_irq_fifo();
+void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
+void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
 
 #ifdef __cplusplus

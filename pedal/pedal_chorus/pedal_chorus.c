@@ -25,9 +25,8 @@
 #define PEDAL_CHORUS_LED_GPIO 25
 
 int main(void) {
-    //stdio_init_all();
     util_pedal_pico_set_sys_clock_115200khz();
-    //stdio_init_all(); // Re-init for UART Baud Rate
+    //stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
     sleep_us(PEDAL_CHORUS_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_CHORUS_LED_GPIO);
     gpio_set_dir(PEDAL_CHORUS_LED_GPIO, GPIO_OUT);
@@ -47,6 +46,8 @@ int main(void) {
     #else
         #error Failure on Assigning Actual Array to pedal_pico_chorus_table_sine_1
     #endif
+    /* Initialize Switch */
+    util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
     pedal_pico_chorus_set();
     util_pedal_pico_on_pwm_irq_wrap_handler = (void*)util_pedal_pico_on_pwm_irq_wrap_handler_single;
