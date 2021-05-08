@@ -73,6 +73,11 @@ gdb-multiarch blinkers/blinkdrs.elf
 # In gdb, Type "target remote localhost:3333", "load", and "monitor reset init"
 # "l (list)", "b (break) blinkers_on_pwm_irq_wrap", "c (continue)", "info breakpoints", "delete <Num>", "q (quit)", Ctrl+c (Stop Execution), etc.
 # Watchpoints detect changes of values, e.g., "watch blinkers_count", "print blinkers_count", etc.
+# Use "display <Variable Name>" for local variables. To unset, use "undisplay <Variable Name>"
+# Use "info registers" to know values of registers.
+# Write Value e.g., "set {int}0x4003000C = 0x10", 0x4003000C is BUSCTRL: PERFSEL0.
+# "x/1xx 0x40030008" to know value in the memory space. 0x40030008 is BUSCTRL: PERFCTR0.
+# 0x40030008 is needed to clear by any write to measure counting correctly.
 # For Multicore, "info threads", "thread 2", etc.
 ```
 
@@ -233,6 +238,10 @@ declare_sine_1 = [
 * pedal_phaser_table_sine_1 is an array with 61036 words, 244144 bytes. If XIP tries to cache this amount of data at the same time, all cached instructions are replaced with the data of the array. Although reading this array is in a routine of a PWM IRQ handler, the conflict between the array data and the instruction code possibly occurs. This description as above just tells that cache miss and non-synchronized data occur. We need another evidence to know whether the data would be executed instead of instruction code or not. If each cache block has a tag to know an address, this glitch wouldn't occur. However, we need to beware of the cache is for instruction code which is sequential. Meanwhile, XIP could distinguish between data and instruction and bypasses the cache even if your assigned address is cacheable and allocating, i.e., the fault of pedal_phaser isn't caused from XIP.
 
 * I'm not in favor of the concept of XIP because the time delay affects the performance of pedals, and I pursue low energy consumption. However, the solution may become from an aliased region. The region starting from 0x13000000 bypasses the cache. Offsetting 0x3000000 to the static array may resolve this issue, but I haven't tested it yet. Besides, If we turn off XIP's cache unit, this could be an ordinal flash storage with QSPI (4-bit parallel interface). I use "PICO_COPY_TO_RAM" not to execute code from the flash storage.
+
+* I made a new branch, "bugtrack_1" to evaluate this bug. In the debug code for pedal_phaser, I experienced offsetting 0x3000000 to XIP BASE stops the noise. Comparing to my updated one to utilize SRAM for instruction code which runs the process in the IRQ around 7 to 8 micro seconds, the debug code delays up to 10 micro seconds. However, I should notice that the measured time delay is not significantly changed by the difference of the offset on XIP, and the instruction code stays running after making the noise, i.e., XIP unit seems to be functioned correctly. SO, WHY IT MAKES NOISE?
+
+* I used gdb to search the phenomenon in the inner bus by a bus performance counter (see page 17-24 of RP2040 Datasheet). In the debug code, XIP is actually contested with other users, and it would made the delay (I counted up xip_main_contested, 0x10). To know how much XIP accesses the bus, you can also count xip_main, 0x11. In the updated code, although APB access is contested as well, XIP is not used and counted 0.
 
 * The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world.
 
