@@ -55,7 +55,7 @@ cp blinkers/blinkers.uf2 /media/$USER/RPI-RP2/
 sudo minicom -b 115200 -o -D /dev/ttyACM0
 ```
 
-* You can also use OpenOCD. Chapter 5 and 6 of "Getting started with Raspberry Pi Pico" is useful for the installation of OpenOCD and GDB, a debugger.
+* You can also use OpenOCD. Chapter 5 and 6 of "Getting started with Raspberry Pi Pico" is useful for the installation of OpenOCD and GDB, a debugger. On Raspberry Pi 3B with Raspbian 10:
 
 ```bash
 # Run through OpenOCD Tested in My Raspberry Pi 3B with USB Powered Pico
@@ -76,7 +76,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 # Use "display <Variable Name>" for local variables. To unset, use "undisplay <Variable Name>"
 # Use "info registers" to know values of registers.
 # Write Value e.g., "set {int}0x4003000C = 0x10", 0x4003000C is BUSCTRL: PERFSEL0.
-# "x/1xx 0x40030008" to know value in the memory space. 0x40030008 is BUSCTRL: PERFCTR0.
+# "x/1xw 0x40030008" to know value in the memory space. 0x40030008 is BUSCTRL: PERFCTR0.
 # 0x40030008 is needed to clear by any write to measure counting correctly.
 # For Multicore, "info threads", "thread 2", etc.
 ```
@@ -198,7 +198,7 @@ func_debug_time = time_us_32() - from_time;
 
 * [XIP a near-useless feature?](https://www.raspberrypi.org/forums/viewtopic.php?f=144&t=300125)
 
-* I think it's a sort of the zenith of the complexity in developing technologies (note that I like city simulators rather than civilization simulators). In fact, Cortex M0+ has von Neumann architecture which doesn't separate memory space between data and instruction (note that renowned MPUs, Intel 8080 and Z80 have this architecture). However, in the high-level usage such as C language, the chip is used as if it has Harvard architecture which separates memory space because modern MPUs, such as AVR, used to have Harvard architecture. This trick came true by XIP (Execute in place) which has instruction cache with an external flash memory. Note that the flash memory is also accessible as a data storage without any restriction because M0+ has only one set of instruction system for SRAM and memory mapped peripherals including XIP. In the recent context, Harvard architecture is described for its performance, but this architecture is also known as having the safe space for instructions, i.e., the instruction code can't easily corrupt the code itself by memory overflow, etc. In assembler, Pico is just a von Neumann. However, in pico-sdk with C language, Pico is a Harvard-like. Just in my experience, reading data from the flash memory on using XIP seems to cause the time delay from the cache miss for instructions. Besides, although I don't have evidence that XIP causes, but the malfunction even occurs at the same program. Caution that this trick causes a critical situation because the plotter of an application doesn't recognize that the von Neumann has memory space for XIP which may destroy the premised system of the application. Unintended time delay on execution is like a weak bolt which pretends specifications of a machine. Besides, the coder of an application doesn't recognize that the chip has von Neumann that may destroy instruction code by memory overflow, etc. I have to say that XIP is not an intended tool in a civilization game. The region for XIP is aliased by caching status (see page 25 and 150 of RP2040 Datasheet). However, if you make a static array in the flash memory with C language, the C ignores aliasing because C considers RAM and ROM as a primary storage, and the flash memory is a secondary storage even if it's fast as a secondary which doesn't have any cache. In fact, the modern technology publishes nonvolatile SRAM. However, XIP is like a virtual memory space using a cache which causes the time delay. I remember a third party software for Windows 95 to make "optimized" virtual memory space. The system of virtual memory, allocating a space to a HDD, is implemented in the multi-task OS as a hedge against memory overflow. We need to know whether virtual memory is optimized or not, it's slow in the manner of unplottable. Cortex M33, the new to low energy, seems to improve this issue and this is certified as a Harvard architecture. However, although I haven't ever touched M33, the instruction set to access memory space for data and instruction is the same as opposed to AVR. This simplification is noticeable in terms of the possible corruption of instruction code. Note that Cortex M23, a new suggestion to low energy and low cost, has von Neumann, and M23 has similar performance to Cortex M0+. The difference of the 23 and the 33 is bigger than the number of 10. XIP has been used even in the middle performance line-ups such as Cortex M4. I think the reason of popularity of XIP is probably scalability of the chip. Silicon dies in chips can be small by reducing the size of SRAM. Low-energy chips are aimed to be used in things such as a part of an automotive.
+* I think it's a sort of the zenith of the complexity in developing technologies (note that I like city simulators rather than civilization simulators). In fact, Cortex M0+ has von Neumann architecture which doesn't separate memory space between data and instruction (note that renowned MPUs, Intel 8080 and Z80 have this architecture). However, in the high-level usage such as C language, the chip is used as if it has Harvard architecture which separates memory space because modern MPUs, such as AVR, used to have Harvard architecture. This trick came true by XIP (Execute in place) which has instruction cache with an external flash memory. Note that the flash memory is also accessible as a data storage without any restriction because M0+ has only one set of instruction system for SRAM and memory mapped peripherals including XIP. In the recent context, Harvard architecture is described for its performance, but this architecture is also known as having the safe space for instructions, i.e., the instruction code can't easily corrupt the code itself by memory overflow, etc. In assembler, Pico is just a von Neumann. However, in pico-sdk with C language, Pico is a Harvard-like. Just in my experience, reading data from the flash memory on using XIP seems to cause the time delay from the cache miss for instructions. Besides, although I don't have evidence that XIP causes, but the malfunction even occurs at the same program. Caution that this trick causes a critical situation because the plotter of an application doesn't recognize that the von Neumann has memory space for XIP which may destroy the premised system of the application. Unintended time delay on execution is like a weak bolt which pretends specifications of a machine. Besides, the coder of an application doesn't recognize that the chip has von Neumann that may destroy instruction code by memory overflow, etc. I have to say that XIP is not an intended tool in a civilization game. The region for XIP is aliased by caching status (see page 25 and 150 of RP2040 Datasheet). However, if you make a static array in the flash memory with C language, the C ignores aliasing because C considers RAM and ROM as a primary storage, and the flash memory is a secondary storage even if it's fast as a secondary which doesn't have any cache. In fact, the modern technology publishes nonvolatile SRAM. However, XIP is like a virtual memory space using a cache which causes the time delay. I remember a third party software for Windows 95 to make "optimized" virtual memory space. The system of virtual memory, allocating a space to a HDD, is implemented in the multi-task OS as a hedge against memory overflow. We need to know whether virtual memory is optimized or not, it's slow in the manner of unplottable. Cortex M33, the new to low energy, seems to improve this issue and this is certified as a Harvard architecture. However, although I haven't ever touched M33, the instruction set to access memory space for data and instruction is the same as opposed to AVR. This simplification is noticeable in terms of the possible corruption of instruction code. Note that Cortex M23, a new suggestion to low energy and low cost, has von Neumann, and M23 has similar performance to Cortex M0+. The difference of the 23 and the 33 is bigger than the number of 10. XIP has been used even in the middle performance line-ups such as Cortex M4. I think another reason of popularity of XIP is probably scalability of the chip. Silicon dies in chips can be small by reducing the size of SRAM. Low-energy chips are aimed to be used in things such as a part of an automotive.
 
 * You can back to v0.8a and build. Watch how XIP is read in "pedal_phaser.dis":
 
@@ -244,6 +244,49 @@ declare_sine_1 = [
 * I made a new branch, "bugtrack_1" to evaluate this bug. In the debug code for pedal_phaser, I experienced offsetting 0x3000000 to XIP BASE stops the noise. Comparing to my updated one to utilize SRAM for instruction code which runs the process in the IRQ around 7 to 8 micro seconds (the updated code runs with 115.2Mhz), the debug code delays up to 10 micro seconds (the debug code runs with 125Mhz). However, I should notice that the measured time delay is not significantly changed by the difference of the offset on XIP, and the instruction code stays running after making the noise, i.e., XIP unit seems to be functioned correctly. SO, WHY IT MAKES NOISE?
 
 * I used gdb to search the phenomenon in the inner bus by a bus performance counter (see page 17-24 of RP2040 Datasheet). In the debug code, XIP is actually contested with other users, and it would made the delay (I counted up xip_main_contested, 0x10). To know how much XIP accesses the bus, you can also count xip_main, 0x11. In the updated code, although APB access is contested as well, XIP is not used and counted 0. See page 15 to 16 of RP2040 Datasheet to know the bus fabric. The bus fabric is just multilayered buses using a crossbar technique (a bus in the chip is just like the bus on the board with Intel 8080). As long as using a crossbar technique, funneling accesses to a block causes collisions. You can also check SRAM blocks are split by 6 blocks and ports, and this structure aims not to funnel accesses to a block. RP2040 has two cores, i.e., the two accesses to XIP at the same time.
+
+* 10 Seconds Run (by Hand: 10.17) with 0x0000000 XIP Offset:
+
+```
+(gdb) set {int}0x1400000C = 0
+(gdb) set {int}0x14000010 = 0
+(gdb) x/1dw 0x1400000C
+0x1400000c:	0
+(gdb) x/1dw 0x14000010
+0x14000010:	0
+(gdb) c
+Continuing.
+...
+Thread 1 received signal SIGINT, Interrupt.
+...
+(gdb) x/1dw 0x1400000C
+0x1400000c:	195491772
+(gdb) x/1dw 0x14000010
+0x14000010:	196041286
+```
+
+* 10 Seconds Run (by Hand: 10.10) with 0x3000000 XIP Offset:
+
+```
+(gdb) set {int}0x1400000C = 0
+(gdb) set {int}0x14000010 = 0
+(gdb) x/1dw 0x1400000C
+0x1400000c:	0
+(gdb) x/1dw 0x14000010
+0x14000010:	0
+(gdb) c
+Continuing.
+...
+Thread 1 received signal SIGINT, Interrupt.
+...
+(gdb) x/1dw 0x1400000C
+0x1400000c:	181038688
+(gdb) x/1dw 0x14000010
+0x14000010:	181350691
+
+```
+
+* 0x1400000C is XIP: CTR_HIT, and 0x14000010 is XIP: CTR_ACCESS. Amazingly, CTR_ACCESS includes noncacheable accesses (see page 154 to 155 of RP2040 Datasheet), and comparing two values makes the rate of cache hit and overall accesses rather than the rate of cache miss. Although you can also check around 200 millions accesses in 10 seconds (Note that the clock is 125Mhz for two cores, and we assume up to 125 millions instruction in 1 seconds on each core), the rate on offsetting 0x300000 is slightly higher than the rate on offsetting 0x0000000.
 
 * The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world.
 
