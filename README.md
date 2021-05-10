@@ -323,7 +323,7 @@ Thread 1 received signal SIGINT, Interrupt.
 0x14000010:	521934099
 ```
 
-* The difference is 0.0008 and 0.00087. This result shows increasing 0.08 percents of cache miss by accessing cacheable and allocatable. In 30 seconds, 400000 misses are increased and in a PWM cycle (30518Hz), 0.43 misses increased.
+* The difference is 0.0008 and 0.00087. This result shows increasing 0.08 percents of cache miss by accessing cacheable and allocatable. In 30 seconds, 400000 misses are increased and in a PWM wrapping cycle (30518Hz), 0.43 misses increased. This code has 3 data accesses to XIP region in a PWM wrapping cycle. The procedure, how the cache miss can makes the noise, is not revealed. I searched "execute-in-place" keyword in the Patent Search of [The Unites States Patent and Trademark Office](https://uspto.gov), and confirmed that this technology is outstanding. You can check references of these patents to know what this technology is.
 
 * The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world.
 
