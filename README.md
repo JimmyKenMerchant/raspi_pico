@@ -243,9 +243,9 @@ declare_sine_1 = [
 
 * I made a new branch, "bugtrack_1" to evaluate this bug. In the debug code for pedal_phaser, I experienced offsetting 0x3000000 to XIP BASE stops the noise. Comparing to my updated one to utilize SRAM for instruction code which runs the process in the IRQ around 7 to 8 micro seconds (the updated code runs with 115.2Mhz), the debug code delays up to 10 micro seconds (the debug code runs with 125Mhz). However, I should notice that the measured time delay is not significantly changed by the difference of the offset on XIP, and the instruction code stays running after making the noise, i.e., XIP unit seems to be functioned correctly. SO, WHY IT MAKES NOISE?
 
-* I used gdb to search the phenomenon in the inner bus by a bus performance counter (see page 17-24 of RP2040 Datasheet). In the debug code, XIP is actually contested with other users, and it would made the delay (I counted up xip_main_contested, 0x10). To know how much XIP accesses the bus, you can also count xip_main, 0x11. In the updated code, although APB access is contested as well, XIP is not used and counted 0. See page 15 to 16 of RP2040 Datasheet to know the bus fabric. The bus fabric is just multilayered buses using a crossbar technique (a bus in the chip is just like the bus on the board with Intel 8080). As long as using a crossbar technique, funneling accesses to a block causes collisions. You can also check SRAM blocks are split by 6 blocks and ports, and this structure aims not to funnel accesses to a block. RP2040 has two cores, i.e., the two accesses to XIP at the same time.
+* I used gdb-multiarch with pedal_phaser.elf to search the phenomenon in the inner bus by a bus performance counter (see page 17-24 of RP2040 Datasheet). In the debug code, XIP is actually contested with other users, and it would made the delay (I counted up xip_main_contested, 0x10). To know how much XIP accesses the bus, you can also count xip_main, 0x11. In the updated code, although APB access is contested as well, XIP is not used and counted 0. See page 15 to 16 of RP2040 Datasheet to know the bus fabric. The bus fabric is just multilayered buses using a crossbar technique (a bus in the chip is just like the bus on the board with Intel 8080). As long as using a crossbar technique, funneling accesses to a block causes collisions. You can also check SRAM blocks are split by 6 blocks and ports, and this structure aims not to funnel accesses to a block. RP2040 has two cores, i.e., the two accesses to XIP at the same time.
 
-* 10 Seconds Run (by Hand: 10.17) with 0x0000000 XIP Offset:
+* 10 Seconds Run after "load", and "monitor reset init" (by Hand: 10.17) with 0x0000000 XIP Offset (Rate: 0.99720):
 
 ```
 (gdb) set {int}0x1400000C = 0
@@ -265,7 +265,7 @@ Thread 1 received signal SIGINT, Interrupt.
 0x14000010:	196041286
 ```
 
-* 10 Seconds Run (by Hand: 10.10) with 0x3000000 XIP Offset:
+* 10 Seconds Run after "load", and "monitor reset init" (by Hand: 10.10) with 0x3000000 XIP Offset (Rate: 0.99828):
 
 ```
 (gdb) set {int}0x1400000C = 0
@@ -283,10 +283,47 @@ Thread 1 received signal SIGINT, Interrupt.
 0x1400000c:	181038688
 (gdb) x/1dw 0x14000010
 0x14000010:	181350691
-
 ```
 
-* 0x1400000C is XIP: CTR_HIT, and 0x14000010 is XIP: CTR_ACCESS. Amazingly, CTR_ACCESS includes noncacheable accesses (see page 154 to 155 of RP2040 Datasheet), and comparing two values makes the rate of cache hit and overall accesses rather than the rate of cache miss. Although you can also check around 200 millions accesses in 10 seconds (Note that the clock is 125Mhz for two cores, and we assume up to 125 millions instruction in 1 seconds on each core), the rate on offsetting 0x300000 is slightly higher than the rate on offsetting 0x0000000.
+* 0x1400000C is XIP: CTR_HIT, and 0x14000010 is XIP: CTR_ACCESS. Amazingly, CTR_ACCESS includes noncacheable accesses (see page 154 to 155 of RP2040 Datasheet), and comparing two values makes the rate of cache hit and overall accesses rather than the rate of cache miss. Although you can also check around 200 millions accesses in 10 seconds (Note that the clock is 125Mhz for two cores, and we assume up to 125 millions instruction in 1 seconds on each core), the rate on offsetting 0x300000 is slightly higher than the rate on offsetting 0x0000000. The difference is 0.00108. I tested as follows.
+
+* 20.16 with 0x0000000 Offset (Rate: 0.99743) Started Noise in Testing Term:
+
+```
+(gdb) x/1dw 0x1400000C
+0x1400000c:	359630899
+(gdb) x/1dw 0x14000010
+0x14000010:	360556823
+```
+
+* 20.17 with 0x3000000 Offset (Rate: 0.99823):
+
+```
+(gdb) x/1dw 0x1400000C
+0x1400000c:	349198359
+(gdb) x/1dw 0x14000010
+0x14000010:	349817949
+```
+
+* 30.13 with 0x0000000 Offset (Rate: 0.99736) Started Noise in Testing Term:
+
+```
+(gdb) x/1dw 0x1400000C
+0x1400000c:	520329589
+(gdb) x/1dw 0x14000010
+0x14000010:	521707721
+```
+
+* 30.12 with 0x3000000 Offset (Rate: 0.99823):
+
+```
+(gdb) x/1dw 0x1400000C
+0x1400000c:	521011101
+(gdb) x/1dw 0x14000010
+0x14000010:	521934099
+```
+
+* The difference is 0.0008 and 0.00087. This result shows increasing 0.08 percents of cache miss by accessing cacheable and allocatable. In 30 seconds, 400000 misses are increased and in a PWM cycle (30518Hz), 0.43 misses increased.
 
 * The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world.
 
