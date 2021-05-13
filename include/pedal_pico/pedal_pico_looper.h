@@ -36,11 +36,18 @@ extern "C" {
 #define PEDAL_PICO_LOOPER_GAIN 1
 #define PEDAL_PICO_LOOPER_LED_GPIO 12
 #define PEDAL_PICO_LOOPER_LED_GPIO_BITS (0b1 << PEDAL_PICO_LOOPER_LED_GPIO)
+#define PEDAL_PICO_LOOPER_LED_TOGGLE_COUNT_ON_ERASE_MAX 10000
 #define PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE 2 // Half Word
 #define PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX FLASH_SECTOR_SIZE // 4096 Half Words = 8192 Bytes
-#define PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX 100 // PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * 100 = 819200 Bytes
+#define PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX 200 // PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * 200 = 1638400 Bytes
 #define PEDAL_PICO_LOOPER_FLASH_INDEX_MAX PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX
 #define PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD 56250
+
+/**
+ * This library uses 1638400 bytes in Flash Memory. Pico has 2097152 (2M) bytes Flash Memory.
+ * If the samplig rate is 28125Hz, the maximum recording time becomes as follows:
+ * 1638400 bytes divided by (28125Hz * 2 bytes) equals 29.127 seconds.
+ */
 
 volatile util_pedal_pico* pedal_pico_looper;
 volatile uint16 pedal_pico_looper_conversion_1;
@@ -59,6 +66,7 @@ volatile int16* pedal_pico_looper_buffer_out_1;
 volatile int16* pedal_pico_looper_buffer_out_2;
 volatile uchar8 pedal_pico_looper_sw_mode;
 volatile uint32 pedal_pico_looper_sw_count;
+volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
 /**
  * pedal_pico_looper_buffer_status:
  * Bit[0]: Double Buffer Select

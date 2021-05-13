@@ -26,7 +26,7 @@
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
+    //stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
     sleep_us(PEDAL_LOOPER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_LOOPER_LED_GPIO);
     gpio_set_dir(PEDAL_LOOPER_LED_GPIO, GPIO_OUT);
