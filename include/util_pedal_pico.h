@@ -16,6 +16,7 @@
 // Standards
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 // Dependancies
 #include "pico/stdlib.h"
 #include "pico/divider.h"
@@ -26,6 +27,9 @@
 #include "hardware/sync.h"
 #include "hardware/resets.h"
 #include "hardware/clocks.h"
+#include "hardware/flash.h"
+#include "hardware/regs/xip.h"
+#include "hardware/structs/xip_ctrl.h"
 // raspi_pico/include
 #include "macros_pico.h"
 
@@ -79,8 +83,8 @@ volatile uint16 util_pedal_pico_on_adc_conversion_3;
 volatile bool util_pedal_pico_on_adc_is_outstanding;
 volatile uint16 util_pedal_pico_adc_middle_moving_average;
 volatile uint32 util_pedal_pico_adc_middle_moving_average_sum;
-volatile uchar8 util_pedal_pico_sw_1_gpio;
-volatile uchar8 util_pedal_pico_sw_2_gpio;
+volatile uchar8 util_pedal_pico_sw_gpio_1;
+volatile uchar8 util_pedal_pico_sw_gpio_2;
 volatile uchar8 util_pedal_pico_sw_mode;
 volatile uint32 util_pedal_pico_debug_time;
 
@@ -101,6 +105,17 @@ void util_pedal_pico_on_adc_irq_fifo();
 void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
+/**
+ * Caution! These Functions tries to erase and write data to the on-board flash memory.
+ * This program also turns off XIP, thus instruction code have to be stored at SRAM.
+ */
+#if PICO_COPY_TO_RAM
+    void util_pedal_pico_xip_turn_off();
+    void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
+    void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
+#else
+    #warning util_pedal_pico_xip_turn_off and util_pedal_pico_flash_write are not declared because PICO_COPY_TO_RAM is false.
+#endif
 
 #ifdef __cplusplus
 }

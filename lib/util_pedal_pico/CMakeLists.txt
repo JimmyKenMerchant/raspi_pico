@@ -18,6 +18,7 @@ target_link_libraries(${target_name}
     hardware_sync
     hardware_resets
     hardware_clocks
+    hardware_flash
 )
 
 # Extension for Number Table

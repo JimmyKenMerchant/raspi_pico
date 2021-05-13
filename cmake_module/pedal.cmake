@@ -15,6 +15,7 @@ target_link_libraries(${target_name}
     pedal_pico_phaser
     pedal_pico_planets
     pedal_pico_distortion
+    pedal_pico_looper
 )
 
 target_compile_definitions(${target_name}

@@ -31,6 +31,10 @@ void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config) {
 }
 
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
+    /* Turn Off XIP */
+    #if PICO_COPY_TO_RAM
+        void util_pedal_pico_xip_turn_off();
+    #endif
     /* PWM Settings */
     gpio_set_function(gpio_1, GPIO_FUNC_PWM);
     gpio_set_function(gpio_2, GPIO_FUNC_PWM);
@@ -91,7 +95,7 @@ void util_pedal_pico_start() {
     __dsb();
     __isb();
     adc_run(true);
-    util_pedal_pico_sw_loop(util_pedal_pico_sw_1_gpio, util_pedal_pico_sw_2_gpio);
+    util_pedal_pico_sw_loop(util_pedal_pico_sw_gpio_1, util_pedal_pico_sw_gpio_2);
 }
 
 irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single() {
@@ -187,16 +191,16 @@ void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2) {
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_1);
     gpio_pull_up(gpio_2);
-    util_pedal_pico_sw_1_gpio = gpio_1;
-    util_pedal_pico_sw_2_gpio = gpio_2;
+    util_pedal_pico_sw_gpio_1 = gpio_1;
+    util_pedal_pico_sw_gpio_2 = gpio_2;
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
 }
 
 void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2) {
     gpio_disable_pulls(gpio_1);
     gpio_disable_pulls(gpio_2);
-    util_pedal_pico_sw_1_gpio = 0;
-    util_pedal_pico_sw_2_gpio = 0;
+    util_pedal_pico_sw_gpio_1 = 0;
+    util_pedal_pico_sw_gpio_2 = 0;
 }
 
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) { // Considered Reducing to Access SRAM
@@ -245,4 +249,24 @@ void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) { // Considered Reduc
         sleep_us(UTIL_PEDAL_PICO_SW_SLEEP_TIME);
         __dsb();
     }
+}
+
+void util_pedal_pico_xip_turn_off() {
+    hw_clear_bits(&xip_ctrl_hw->ctrl, XIP_CTRL_ERR_BADWRITE_BITS|XIP_CTRL_EN_BITS);
+    hw_set_bits(&xip_ctrl_hw->ctrl, XIP_CTRL_POWER_DOWN_BITS);
+    __dsb();
+}
+
+void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 size_in_byte) {
+    __dsb();
+    flash_range_erase(flash_offset, size_in_byte);
+    __dsb();
+    flash_range_program(flash_offset, buffer, size_in_byte);
+    __dsb();
+}
+
+void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte) {
+    __dsb();
+    flash_range_erase(flash_offset, size_in_byte);
+    __dsb();
 }
