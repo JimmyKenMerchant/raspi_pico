@@ -54,10 +54,11 @@ volatile uint16 pedal_pico_looper_conversion_1;
 volatile uint16 pedal_pico_looper_conversion_2;
 volatile uint16 pedal_pico_looper_conversion_3;
 volatile uint16 pedal_pico_looper_loss;
-volatile int16* pedal_pico_looper_flash;
+volatile uchar8* pedal_pico_looper_flash;
 volatile uint32 pedal_pico_looper_flash_index;
 volatile uint32 pedal_pico_looper_flash_upto;
 volatile uint32 pedal_pico_looper_flash_offset;
+volatile uint32 pedal_pico_looper_flash_reserve_offset;
 volatile uint16 pedal_pico_looper_flash_offset_index;
 volatile uint16 pedal_pico_looper_flash_offset_upto;
 volatile int16* pedal_pico_looper_buffer_in_1;
@@ -73,15 +74,19 @@ volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
  * Bit[1]: Back Buffer is Outstanding to Write
  * Bit[2]: Recording on Set, Playing on Clear
  * Bit[3]: Outstanding to Rewind
- * Bit[4]: Outstanding to Erase
- * Bit[5]: Pending after Erase
+ * Bit[4]: Outstanding to Reset
+ * Bit[5]: Outstanding to Erase
+ * Bit[6]: Pending
+ * Bit[7]: Order of Rewind
  */
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS 0b00000001
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS 0b00000010
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS 0b00000100
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS 0b00001000
-#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS 0b00010000
-#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS 0b00100000
+#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS 0b00010000
+#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS 0b00100000
+#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS 0b01000000
+#define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS 0b10000000
 volatile uchar8 pedal_pico_looper_buffer_status;
 volatile int32* pedal_pico_looper_table_pdf_1;
 
@@ -95,9 +100,12 @@ volatile int32* pedal_pico_looper_table_pdf_1;
     #else
         #error PICO_NO_BI_BINARY_SIZE is defined.
     #endif
+    extern char __pedal_pico_looper_flash; // From Additional Linker Script, "pedal_pico_looper_append.ld"
 #else
     #error PICO_NO_FLASH is true.
 #endif
+
+static uchar8 pedal_pico_looper_flash_reserve[1] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {0x88};
 
 void pedal_pico_looper_set();
 void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

@@ -1,0 +1,1 @@
+This library appends a linker script to make an orphan section which will be appended at the end of the sections of the default script. Check out "man ld" to know be behavior in the additional linker options. Note that the default linker script is replaced with the unique script of pico-sdk by "--script" (the same as -T) option in advance.

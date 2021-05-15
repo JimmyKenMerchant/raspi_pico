@@ -18,12 +18,13 @@ void pedal_pico_looper_set() {
     pedal_pico_looper_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> 7); // Make 5-bit Value (1-32)
-    uchar8* binary_end = (uchar8*)&__flash_binary_end;
-    if ((uint32)binary_end % FLASH_SECTOR_SIZE) binary_end = (uchar8*)((uint32)(binary_end + FLASH_SECTOR_SIZE) & ~(0xFFFFFFFF & (FLASH_SECTOR_SIZE - 1))); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
-    pedal_pico_looper_flash = (int16*)binary_end;
+    //uchar8* binary_end = (uchar8*)&__flash_binary_end;
+    pedal_pico_looper_flash = (uchar8*)(&__pedal_pico_looper_flash + FLASH_SECTOR_SIZE); // Offset for Reserve
+    if ((uint32)pedal_pico_looper_flash % FLASH_SECTOR_SIZE) pedal_pico_looper_flash = (uchar8*)(((uint32)pedal_pico_looper_flash + FLASH_SECTOR_SIZE) & ~(0xFFFFFFFF & (FLASH_SECTOR_SIZE - 1))); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
     pedal_pico_looper_flash_index = 0;
     pedal_pico_looper_flash_upto = PEDAL_PICO_LOOPER_FLASH_INDEX_MAX;
     pedal_pico_looper_flash_offset = (uint32)pedal_pico_looper_flash - XIP_BASE;
+    pedal_pico_looper_flash_reserve_offset = (uint32)pedal_pico_looper_flash_reserve - XIP_BASE;
     pedal_pico_looper_flash_offset_index = 0;
     pedal_pico_looper_flash_offset_upto = PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX;
     pedal_pico_looper_buffer_in_1 = (uint16*)calloc(PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX, sizeof(uint16));
@@ -33,7 +34,14 @@ void pedal_pico_looper_set() {
     pedal_pico_looper_sw_mode = 0;
     pedal_pico_looper_sw_count = 0;
     pedal_pico_looper_led_toggle_count_on_erase = 0;
-    pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS;
+    //printf("@pedal_pico_looper_set 1 - pedal_pico_looper_flash_reserve %0x\n", pedal_pico_looper_flash_reserve);
+    //printf("@pedal_pico_looper_set 2 - pedal_pico_looper_flash_reserve[0] %0x\n", pedal_pico_looper_flash_reserve[0]);
+    //printf("@pedal_pico_looper_set 3 - pedal_pico_looper_flash %0x\n", pedal_pico_looper_flash);
+    if (pedal_pico_looper_flash_reserve[0] == 0x88) { // Check whether flash memory is initialized or not.
+        pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // First Set
+    } else {
+        pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // First Set
+    }
     gpio_init(PEDAL_PICO_LOOPER_LED_GPIO);
     gpio_set_dir(PEDAL_PICO_LOOPER_LED_GPIO, GPIO_OUT);
     gpio_put(PEDAL_PICO_LOOPER_LED_GPIO, 0);
@@ -64,16 +72,14 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
                 pedal_pico_looper_sw_mode = sw_mode;
                 if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS) { // After Reset
                     pedal_pico_looper_buffer_status &= ~(PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS);
-                    pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS; // Set Recording Status
-                    gpio_put(PEDAL_PICO_LOOPER_LED_GPIO, 1);
                 } else {
                     if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS) { // Amid Recording
                         pedal_pico_looper_flash_upto = pedal_pico_looper_flash_index;
                         pedal_pico_looper_flash_offset_upto = (pedal_pico_looper_flash_upto % PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX) ? ((pedal_pico_looper_flash_upto / PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX) + 1) : (pedal_pico_looper_flash_upto / PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX);
-                        pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS;
-                        pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS;
+                        pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS;
                         gpio_put(PEDAL_PICO_LOOPER_LED_GPIO, 0);
-                    } else { // Not Recording, but Playing
+                    } else { // At Not Recording, but Playing
+                        pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS;
                         gpio_put(PEDAL_PICO_LOOPER_LED_GPIO, 1);
                     }
                     pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS; // Toggle Recording Status
@@ -82,7 +88,7 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
             pedal_pico_looper_sw_count++;
             if (pedal_pico_looper_sw_count >= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD) {
                 pedal_pico_looper_sw_count -= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD;
-                pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // Exclusively
+                pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // Exclusively, Also Remove Status of Double Buffer, etc.
                 gpio_put(PEDAL_PICO_LOOPER_LED_GPIO, 0);
             }
         }
@@ -102,7 +108,7 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
     normalized_1 = normalized_1 / pedal_pico_looper_loss;
     int32 recorded_1;
     int32 mixed_1;
-    if (! (pedal_pico_looper_buffer_status & (PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS))) {
+    if (! (pedal_pico_looper_buffer_status & (PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS))) {
        /**
         * Flash memory becomes all-set after erasing. This means -1 in a signed integer.
         * On casting 16-bit signed to 32-bit signed, the all-set value is expanded to save the minus value.
@@ -127,8 +133,7 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
         }
         pedal_pico_looper_flash_index++;
         if (pedal_pico_looper_flash_index >= pedal_pico_looper_flash_upto) {
-            pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS;
-            pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS;
+            pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS; // Clear Except Order to Rewind
         } else if (pedal_pico_looper_flash_index >= (PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * (pedal_pico_looper_flash_offset_index + 1))) {
             if (! (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS)) {
                 pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS;
@@ -136,6 +141,13 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
             }
         }
     } else {
+        if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS) {
+            if (! (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS)) {
+                pedal_pico_looper_buffer_status &= ~(PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS);
+                pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS;
+                pedal_pico_looper_buffer_status |= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS;
+            }
+        }
         mixed_1 = normalized_1;
     }
     mixed_1 *= PEDAL_PICO_LOOPER_GAIN;
@@ -145,8 +157,12 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
 
 void pedal_pico_looper_flash_handler() {
     uint32 flash_offset;
-    if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS) {
-        util_pedal_pico_flash_erase(pedal_pico_looper_flash_offset, PEDAL_PICO_LOOPER_FLASH_INDEX_MAX * PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE);
+    if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS) {
+        if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS) {
+            util_pedal_pico_flash_erase(pedal_pico_looper_flash_offset, PEDAL_PICO_LOOPER_FLASH_INDEX_MAX * PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE); // All-set
+            util_pedal_pico_flash_erase(pedal_pico_looper_flash_reserve_offset, FLASH_SECTOR_SIZE); // All-set
+            pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS;
+        }
         flash_offset = pedal_pico_looper_flash_offset;
         memcpy((uchar8*)pedal_pico_looper_buffer_in_1, (uchar8*)(flash_offset + XIP_BASE), PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE);
         flash_offset += PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE;
@@ -156,7 +172,7 @@ void pedal_pico_looper_flash_handler() {
         pedal_pico_looper_flash_upto = PEDAL_PICO_LOOPER_FLASH_INDEX_MAX;
         pedal_pico_looper_flash_offset_index = 0;
         pedal_pico_looper_flash_offset_upto = PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX;
-        pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS;
+        pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS;
         __dsb();
     } else if (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS) {
         uint32 flash_offset = pedal_pico_looper_flash_offset + ((PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE) * pedal_pico_looper_flash_offset_index);

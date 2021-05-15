@@ -1,23 +1,5 @@
 # CMake Module for pedal/pedal_.*
 
-add_executable(${target_name}
-    ${target_name}.c
-)
-
-# Add libraries by target names on "add_library" of themselves.
-target_link_libraries(${target_name}
-    util_pedal_pico
-    pedal_pico_buffer
-    pedal_pico_chorus
-    pedal_pico_sideband
-    pedal_pico_reverb
-    pedal_pico_tape
-    pedal_pico_phaser
-    pedal_pico_planets
-    pedal_pico_distortion
-    pedal_pico_looper
-)
-
 target_compile_definitions(${target_name}
     PRIVATE PICO_MALLOC_PANIC=1
     PRIVATE PICO_DEBUG_MALLOC=0

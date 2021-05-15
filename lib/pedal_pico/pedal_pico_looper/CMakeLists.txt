@@ -8,3 +8,8 @@ include(${CMAKE_SOURCE_DIR}/cmake_module/pedal_pico.cmake)
 
 # With Setting CMAKE_MODULE_PATH
 #include(pedal_pico)
+
+target_link_options(${target_name}
+    PUBLIC "-T${CMAKE_CURRENT_SOURCE_DIR}/${target_name}_append.ld"
+    #PUBLIC "-v"
+)
