@@ -54,30 +54,30 @@ int main(void) {
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(QPSI_FLASH_SW_1_GPIO);
     // Binary End
-    printf("@main 1 - &__flash_binary_end %0x\n", (intptr_t)&__flash_binary_end);
-    printf("@main 2 - xip_ctrl_hw->ctrl %0x\n", xip_ctrl_hw->ctrl);
+    printf("@main 1 - &__flash_binary_end %08x\n", (intptr_t)&__flash_binary_end);
+    printf("@main 2 - xip_ctrl_hw->ctrl %08x\n", xip_ctrl_hw->ctrl);
     util_pedal_pico_xip_turn_off();
     __dsb();
-    printf("@main 3 - xip_ctrl_hw->ctrl %0x\n", xip_ctrl_hw->ctrl);
+    printf("@main 3 - xip_ctrl_hw->ctrl %08x\n", xip_ctrl_hw->ctrl);
     uchar8* binary_end = (uchar8*)&__flash_binary_end;
-    printf("@main 4 - binary_end %0x\n", binary_end);
-    printf("@main 4 - *binary_end %0x\n", *binary_end);
+    printf("@main 4 - binary_end %08x\n", binary_end);
+    printf("@main 4 - *binary_end %08x\n", *binary_end);
     binary_end -= 1;
-    printf("@main 4 - binary_end %0x\n", binary_end);
-    printf("@main 4 - *binary_end %0x\n", *binary_end);
+    printf("@main 4 - binary_end %08x\n", binary_end);
+    printf("@main 4 - *binary_end %08x\n", *binary_end);
     binary_end += 1;
     if ((uint32)binary_end % FLASH_SECTOR_SIZE) binary_end = (uchar8*)((uint32)(binary_end + FLASH_SECTOR_SIZE) & ~(0xFFFFFFFF & (FLASH_SECTOR_SIZE - 1))); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
     uint16* free_start = (uint16*)binary_end;
-    printf("@main 6 - free_start %0x\n", free_start);
-    printf("@main 7 - *free_start %0x\n", *free_start);
+    printf("@main 6 - free_start %08x\n", free_start);
+    printf("@main 7 - *free_start %08x\n", *free_start);
     int32 free_start_offset = (uint32)free_start - XIP_BASE; // XIP_BASE = 0x10000000
-    printf("@main 8 - free_start_offset %0x\n", free_start_offset);
+    printf("@main 8 - free_start_offset %08x\n", free_start_offset);
     uint16 array_int[FLASH_SECTOR_SIZE >> 1];
     qspi_flash_debug_time = 0;
     uint16 increment = 1;
     while (true) {
         uint32 status_sw = gpio_get_all() & (0b1 << QPSI_FLASH_SW_1_GPIO);
-        printf("@main 9 - xip_ctrl_hw->ctrl %0x\n", xip_ctrl_hw->ctrl);
+        printf("@main 9 - xip_ctrl_hw->ctrl %08x\n", xip_ctrl_hw->ctrl);
         for (uint32 i = 0; i < FLASH_SECTOR_SIZE >> 1; i++) {
           //array_int[i] = rand();
           array_int[i] = increment;
@@ -89,7 +89,7 @@ int main(void) {
         qspi_flash_debug_time = time_us_32() - from_time;
         printf("@main 10 - qspi_flash_debug_time %d\n", qspi_flash_debug_time);
         for (uint32 i = 0; i < FLASH_PAGE_SIZE / 4; i++) { // 256-byte Aligned Page
-          printf("free_start %d %0x\n", i, free_start[i]);
+          printf("free_start %d %08x\n", i, free_start[i]);
         }
         increment++;
         sleep_ms(1000);

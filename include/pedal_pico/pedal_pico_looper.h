@@ -105,7 +105,9 @@ volatile int32* pedal_pico_looper_table_pdf_1;
     #error PICO_NO_FLASH is true.
 #endif
 
-static uchar8 pedal_pico_looper_flash_reserve[1] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {0x88};
+static uchar8 pedal_pico_looper_flash_reserve[4096] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {
+    _4_BIG(_1000(0x88)) _2_BIG(_47(0x88)) 0x88, 0x88
+};
 
 void pedal_pico_looper_set();
 void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

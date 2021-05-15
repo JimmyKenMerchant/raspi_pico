@@ -30,7 +30,7 @@ int main(void) {
     sleep_us(PEDAL_PLANETS_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_PLANETS_LED_GPIO);
     gpio_set_dir(PEDAL_PLANETS_LED_GPIO, GPIO_OUT);
-    gpio_put(PEDAL_PLANETS_LED_GPIO, true);
+    gpio_put(PEDAL_PLANETS_LED_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_planets = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     /* Initialize ADC */
@@ -51,9 +51,9 @@ int main(void) {
     uint32* stack_pointer = (int32*)malloc(PEDAL_PLANETS_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_PLANETS_CORE_1_STACK_SIZE);
     while (true) {
-        //printf("@main 1 - pedal_pico_planets_conversion_1 %0x\n", pedal_pico_planets_conversion_1);
-        //printf("@main 2 - pedal_pico_planets_conversion_2 %0x\n", pedal_pico_planets_conversion_2);
-        //printf("@main 3 - pedal_pico_planets_conversion_3 %0x\n", pedal_pico_planets_conversion_3);
+        //printf("@main 1 - pedal_pico_planets_conversion_1 %08x\n", pedal_pico_planets_conversion_1);
+        //printf("@main 2 - pedal_pico_planets_conversion_2 %08x\n", pedal_pico_planets_conversion_2);
+        //printf("@main 3 - pedal_pico_planets_conversion_3 %08x\n", pedal_pico_planets_conversion_3);
         //printf("@main 4 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         //printf("@main 5 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
         //sleep_ms(500);

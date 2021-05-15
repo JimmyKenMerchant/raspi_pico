@@ -35,9 +35,9 @@ void pedal_pico_looper_set() {
     pedal_pico_looper_sw_count = 0;
     pedal_pico_looper_led_toggle_count_on_erase = 0;
     //printf("@pedal_pico_looper_set 1 - pedal_pico_looper_flash_reserve %0x\n", pedal_pico_looper_flash_reserve);
-    //printf("@pedal_pico_looper_set 2 - pedal_pico_looper_flash_reserve[0] %0x\n", pedal_pico_looper_flash_reserve[0]);
+    //printf("@pedal_pico_looper_set 2 - pedal_pico_looper_flash_reserve[4095] %0x\n", pedal_pico_looper_flash_reserve[4095]);
     //printf("@pedal_pico_looper_set 3 - pedal_pico_looper_flash %0x\n", pedal_pico_looper_flash);
-    if (pedal_pico_looper_flash_reserve[0] == 0x88) { // Check whether flash memory is initialized or not.
+    if (pedal_pico_looper_flash_reserve[4095] == 0x88) { // Check the last to know whether flash memory is initialized or not.
         pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // First Set
     } else {
         pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // First Set
