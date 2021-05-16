@@ -44,7 +44,7 @@ int main(void) {
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
-    pedal_pico_looper_set();
+    pedal_pico_looper_set(PEDAL_PICO_LOOPER_INDICATOR_LED_GPIO);
     util_pedal_pico_on_pwm_irq_wrap_handler = (void*)util_pedal_pico_on_pwm_irq_wrap_handler_single;
     util_pedal_pico_process = pedal_pico_looper_process;
     /* Launch Core 1 */

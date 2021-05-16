@@ -34,9 +34,8 @@ extern "C" {
 #endif
 
 #define PEDAL_PICO_LOOPER_GAIN 1
-#define PEDAL_PICO_LOOPER_LED_GPIO 12
-#define PEDAL_PICO_LOOPER_LED_GPIO_BITS (0b1 << PEDAL_PICO_LOOPER_LED_GPIO)
-#define PEDAL_PICO_LOOPER_LED_TOGGLE_COUNT_ON_ERASE_MAX 10000
+#define PEDAL_PICO_LOOPER_INDICATOR_LED_GPIO 12
+#define PEDAL_PICO_LOOPER_INDICATOR_LED_TOGGLE_COUNT_ON_ERASE_MAX 10000
 #define PEDAL_PICO_LOOPER_BUFFER_BLOCK_SIZE 2 // Half Word
 #define PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX FLASH_SECTOR_SIZE // 4096 Half Words = 8192 Bytes
 #define PEDAL_PICO_LOOPER_FLASH_OFFSET_INDEX_MAX 200 // PEDAL_PICO_LOOPER_BUFFER_INDEX_MAX * 200 = 1638400 Bytes
@@ -50,6 +49,8 @@ extern "C" {
  */
 
 volatile util_pedal_pico* pedal_pico_looper;
+volatile uchar8 pedal_pico_looper_indicator_led;
+volatile uint32 pedal_pico_looper_indicator_led_bit;
 volatile uint16 pedal_pico_looper_conversion_1;
 volatile uint16 pedal_pico_looper_conversion_2;
 volatile uint16 pedal_pico_looper_conversion_3;
@@ -77,7 +78,7 @@ volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
  * Bit[4]: Outstanding to Reset
  * Bit[5]: Outstanding to Erase
  * Bit[6]: Pending
- * Bit[7]: Order of Rewind
+ * Bit[7]: Order to Rewind
  */
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_DOUBLE_BUFFER_BITS 0b00000001
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_WRITE_BITS 0b00000010
@@ -105,11 +106,11 @@ volatile int32* pedal_pico_looper_table_pdf_1;
     #error PICO_NO_FLASH is true.
 #endif
 
-static uchar8 pedal_pico_looper_flash_reserve[4096] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {
+static uchar8 pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {
     _4_BIG(_1000(0x88)) _2_BIG(_47(0x88)) 0x88, 0x88
-};
+}; // One Sector = 4096 Bytes, Fill by 0x88
 
-void pedal_pico_looper_set();
+void pedal_pico_looper_set(uchar8 indicator_led_gpio);
 void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_looper_flash_handler();
 void pedal_pico_looper_free();
