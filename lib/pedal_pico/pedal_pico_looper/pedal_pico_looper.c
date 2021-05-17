@@ -69,6 +69,19 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
         gpio_put(pedal_pico_looper_indicator_led, 0);
     }
     if (sw_mode == 1) {
+        if (! (pedal_pico_looper_buffer_status & (PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_REWIND_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS))) {
+            if (pedal_pico_looper_sw_mode != sw_mode) {
+                pedal_pico_looper_sw_mode = sw_mode;
+                pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // Exclusively, Also Remove Status of Double Buffer, etc.
+            }
+            pedal_pico_looper_sw_count++;
+            if (pedal_pico_looper_sw_count >= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD) {
+                pedal_pico_looper_sw_count -= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD;
+                pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // Exclusively, Also Remove Status of Double Buffer, etc.
+                gpio_put(pedal_pico_looper_indicator_led, 0);
+            }
+        }
+    } else if (sw_mode == 2) {
         if (! (pedal_pico_looper_buffer_status & PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS)) {
             if (pedal_pico_looper_sw_mode != sw_mode) {
                 pedal_pico_looper_sw_mode = sw_mode;
@@ -86,12 +99,6 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
                     }
                     pedal_pico_looper_buffer_status ^= PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_RECORDING_BITS; // Toggle Recording Status
                 }
-            }
-            pedal_pico_looper_sw_count++;
-            if (pedal_pico_looper_sw_count >= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD) {
-                pedal_pico_looper_sw_count -= PEDAL_PICO_LOOPER_FOOT_SW_RESET_THRESHOLD;
-                pedal_pico_looper_buffer_status = PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_RESET_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS|PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS; // Exclusively, Also Remove Status of Double Buffer, etc.
-                gpio_put(pedal_pico_looper_indicator_led, 0);
             }
         }
     } else {
