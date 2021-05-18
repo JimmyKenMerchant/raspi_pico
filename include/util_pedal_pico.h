@@ -39,6 +39,10 @@ extern "C" {
 
 /* Definitions */
 
+#ifndef UTIL_PEDAL_PICO_DEBUG
+#define UTIL_PEDAL_PICO_DEBUG 0
+#endif
+
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
 #define UTIL_PEDAL_PICO_SW_1_GPIO 14
 #define UTIL_PEDAL_PICO_SW_2_GPIO 15
@@ -105,6 +109,7 @@ void util_pedal_pico_on_adc_irq_fifo();
 void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
+void util_pedal_pico_wait_loop();
 /**
  * Caution! These Functions tries to erase and write data to the on-board flash memory.
  * This program also turns off XIP, thus instruction code have to be stored at SRAM.

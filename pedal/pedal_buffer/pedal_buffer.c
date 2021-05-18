@@ -26,7 +26,6 @@
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    //stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
     sleep_us(PEDAL_BUFFER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_BUFFER_LED_GPIO);
     gpio_set_dir(PEDAL_BUFFER_LED_GPIO, GPIO_OUT);
@@ -51,13 +50,7 @@ int main(void) {
     uint32* stack_pointer = (int32*)malloc(PEDAL_BUFFER_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_BUFFER_CORE_1_STACK_SIZE);
     while (true) {
-        //printf("@main 1 - pedal_pico_buffer_conversion_1 %08x\n", pedal_pico_buffer_conversion_1);
-        //printf("@main 2 - pedal_pico_buffer_conversion_2 %08x\n", pedal_pico_buffer_conversion_2);
-        //printf("@main 3 - pedal_pico_buffer_conversion_3 %08x\n", pedal_pico_buffer_conversion_3);
-        //printf("@main 4 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //printf("@main 5 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
-        //sleep_ms(500);
-        __wfi();
+        util_pedal_pico_wait_loop();
     }
     return 0;
 }

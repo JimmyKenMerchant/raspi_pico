@@ -36,3 +36,8 @@ add_dependencies(${target_name}
 target_include_directories(${target_name}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
+
+# Unique Definition for Debugging
+target_compile_definitions(${target_name}
+    PUBLIC UTIL_PEDAL_PICO_DEBUG=0
+)

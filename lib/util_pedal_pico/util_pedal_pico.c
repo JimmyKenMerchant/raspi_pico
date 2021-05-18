@@ -31,6 +31,9 @@ void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config) {
 }
 
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
+    #if UTIL_PEDAL_PICO_DEBUG
+        stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
+    #endif
     /* Turn Off XIP */
     #if PICO_COPY_TO_RAM
         void util_pedal_pico_xip_turn_off();
@@ -100,7 +103,9 @@ void util_pedal_pico_start() {
 
 irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single() {
     pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
-    //uint32 from_time = time_us_32();
+    #if UTIL_PEDAL_PICO_DEBUG
+        uint32 from_time = time_us_32();
+    #endif
     uint16 conversion_1 = util_pedal_pico_on_adc_conversion_1;
     uint16 conversion_2 = util_pedal_pico_on_adc_conversion_2;
     uint16 conversion_3 = util_pedal_pico_on_adc_conversion_3;
@@ -116,8 +121,10 @@ irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single() {
     /* Output */
     pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
     pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted);
-    //util_pedal_pico_debug_time = time_us_32() - from_time;
-    //multicore_fifo_push_blocking(util_pedal_pico_debug_time); // To send a made pointer, sync flag, etc.
+    #if UTIL_PEDAL_PICO_DEBUG
+        util_pedal_pico_debug_time = time_us_32() - from_time;
+        //multicore_fifo_push_blocking(util_pedal_pico_debug_time); // To send a made pointer, sync flag, etc.
+    #endif
     __dsb();
 }
 
@@ -269,4 +276,17 @@ void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte) {
     __dsb();
     flash_range_erase(flash_offset, size_in_byte);
     __dsb();
+}
+
+void util_pedal_pico_wait_loop() {
+    #if UTIL_PEDAL_PICO_DEBUG
+        printf("@util_pedal_pico_wait_loop 1 - util_pedal_pico_on_adc_conversion_1 %08x\n", util_pedal_pico_on_adc_conversion_1);
+        printf("@util_pedal_pico_wait_loop 2 - util_pedal_pico_on_adc_conversion_2 %08x\n", util_pedal_pico_on_adc_conversion_2);
+        printf("@util_pedal_pico_wait_loop 3 - util_pedal_pico_on_adc_conversion_3 %08x\n", util_pedal_pico_on_adc_conversion_3);
+        printf("@util_pedal_pico_wait_loop 4 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
+        //printf("@util_pedal_pico_wait_loop 5 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
+        sleep_ms(500);
+    #else
+        __wfi();
+    #endif
 }

@@ -24,9 +24,10 @@
 #define PEDAL_LOOPER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
 #define PEDAL_LOOPER_LED_GPIO 25
 
+volatile uint32 pedal_looper_debug_time;
+
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    //stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
     sleep_us(PEDAL_LOOPER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
     gpio_init(PEDAL_LOOPER_LED_GPIO);
     gpio_set_dir(PEDAL_LOOPER_LED_GPIO, GPIO_OUT);
@@ -50,22 +51,19 @@ int main(void) {
     /* Launch Core 1 */
     uint32* stack_pointer = (int32*)malloc(PEDAL_LOOPER_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_LOOPER_CORE_1_STACK_SIZE);
+    #if UTIL_PEDAL_PICO_DEBUG
+        pedal_looper_debug_time = 0;
+    #endif
     while (true) {
-        //printf("@main 1 - pedal_pico_looper_conversion_1 %08x\n", pedal_pico_looper_conversion_1);
-        //printf("@main 2 - pedal_pico_looper_conversion_2 %08x\n", pedal_pico_looper_conversion_2);
-        //printf("@main 3 - pedal_pico_looper_conversion_3 %08x\n", pedal_pico_looper_conversion_3);
-        //printf("@main 4 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
-        //uint32 from_time = time_us_32();
+        #if UTIL_PEDAL_PICO_DEBUG
+            uint32 from_time = time_us_32();
+        #endif
         pedal_pico_looper_flash_handler();
-        //util_pedal_pico_debug_time = time_us_32() - from_time;
-        //printf("@main 5 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
-        //printf("@main 6 - pedal_pico_looper_flash_index %d\n", pedal_pico_looper_flash_index);
-        //printf("@main 7 - pedal_pico_looper_flash_upto %d\n", pedal_pico_looper_flash_upto);
-        //printf("@main 8 - pedal_pico_looper_flash_offset_index %d\n", pedal_pico_looper_flash_offset_index);
-        //printf("@main 9 - pedal_pico_looper_flash_offset_upto %d\n", pedal_pico_looper_flash_offset_upto);
-        //printf("@main 10 - pedal_pico_looper_sw_count %d\n", pedal_pico_looper_sw_count);
-        //printf("@main 11 - pedal_pico_looper_buffer_status %08x\n", pedal_pico_looper_buffer_status);
-        //sleep_ms(500);
+        #if UTIL_PEDAL_PICO_DEBUG
+            pedal_looper_debug_time = time_us_32() - from_time;
+            printf("@main 1 - pedal_looper_debug_time %d\n", pedal_looper_debug_time);
+            //util_pedal_pico_wait_loop(); // Causes Delay on Recording
+        #endif
     }
     return 0;
 }
