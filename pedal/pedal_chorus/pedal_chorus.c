@@ -38,12 +38,12 @@ int main(void) {
     #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
         pedal_pico_chorus_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
     #else
-        #error Failure on Assigning Actual Array to pedal_pico_chorus_table_pdf_1
+        #error "Failure on Assigning Actual Array to pedal_pico_chorus_table_pdf_1"
     #endif
     #if UTIL_PEDAL_PICO_EX_OSC_TIME_MAX == PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MAX
         pedal_pico_chorus_table_sine_1 = util_pedal_pico_ex_table_sine_1;
     #else
-        #error Failure on Assigning Actual Array to pedal_pico_chorus_table_sine_1
+        #error "Failure on Assigning Actual Array to pedal_pico_chorus_table_sine_1"
     #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
@@ -55,7 +55,7 @@ int main(void) {
     uint32* stack_pointer = (int32*)malloc(PEDAL_CHORUS_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_CHORUS_CORE_1_STACK_SIZE);
     while (true) {
-        util_pedal_pico_wait_loop();
+        util_pedal_pico_wait();
     }
     return 0;
 }

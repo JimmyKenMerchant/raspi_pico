@@ -2,9 +2,27 @@
 
 ### Information of this README and comments in this project may be incorrect. This project is not an official document of Raspberry Pi (Trading) Ltd., and other holders of any Intellectual Property (IP).
 
+**Table of Contents**
+
+* [Purpose](#purpose)
+
+* [Installation](#installation)
+
+* [Notes on Projects](#notes-on-projects)
+
+* [Technical Notes](#technical-notes)
+
+* [Tricky XIP](#tricky-xip)
+
+* [Version History](#version-history)
+
+* [Links of References](#links-of-references)
+
 ## Purpose
 
 * To Develop Applications of Raspberry Pi Pico Using C Language and Assembler Language
+
+* In view of managing versions, this repository is mainly developing projects in "pedal (guitar pedals)".
 
 **About Raspberry Pi Pico**
 
@@ -190,7 +208,35 @@ func_debug_time = time_us_32() - from_time;
 
 * RP2040 has 5 ADC inputs (ADC0-4), and ADC4 is dedicated for a implemented temperature sensor. Pico can be freely used 3 ADC inputs, and ADC3 is connected to the VSYS/3 measurement (see page 7 and page 24 of Raspberry Pi Pico Datasheet). Third-party RP2040 hardware may be able to use 4 ADC inputs. You also see page 579 of RP2040 Datasheet to check the note which describes existence of diodes on ADC inputs. However, for safety, you need a zener diode to GND on the audio input. The input impedance is 100K ohms at minimum (see page 634 of RP2040 Datasheet). This impedance is small as an input from a coil pick up of an electric guitar, and the direct connection apparently reduces the harmonics in my experience.
 
-* Pico executes commands from the external flash memory in default (see page 273 of Raspberry Pi Pico C/C++ SDK). This means the external flash memory is always busy, and it seems to be difficult to access as a data storage like SRAM. For example, data arrays with "static" modifiers don't occupy the space of SRAM. However, in my experience, the modifier seems to cause the malfunction because Pico accesses to the flash memory for both instructions and data on a bus at the same time. The solution is use immediate values embedded in instructions.
+* Pico executes commands from the external flash memory in default (see page 273 of Raspberry Pi Pico C/C++ SDK). This means the external flash memory is always busy, and it seems to be difficult to access as a data storage like SRAM. For example, data arrays with "static" modifiers don't occupy the space of SRAM. However, in my experience, the modifier seems to cause the malfunction because Pico accesses to the flash memory for both instructions and data on a bus at the same time. The solution is use immediate values embedded in instructions. [For more detail, see Tricky XIP](#tricky-xip).
+
+**C Language**
+
+* C language needs strict declarations of variable types. Unlike Python, which converts the variable type by functions explicitly, the declaration is implicitly kept through the life of the variable. To change the variables types in C language, we need to make a type casting. For example:
+
+```C
+/**
+ * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+ * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+ * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+ */
+delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
+int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
+int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
+```
+
+* The variable, "delay_1", is a 32-bit signed integer. However, in a multiplication of the fixed point decimal, we need to cast the variable to 64-bit signed integer. Otherwise, the two's compliment expression for 64-bit is broken. Besides, the next example is dangerous:
+
+```C
+uint16* example_array = (uint16*)calloc(5, sizeof(uint16)); // stdlib.h
+int16 example = -10;
+example_array[1] = example;
+if (example_array[1] < 0) printf("It's Negative!");
+printf("Value: %d", example_array[1]);
+free(example_array); // Don't forget to Release Memory Space
+```
+
+* This code doesn't printed out the message because the array points variables with 16-bit unsigned integer. The values is printed as 65526.
 
 **Tricky XIP**
 
@@ -331,33 +377,17 @@ Thread 1 received signal SIGINT, Interrupt.
 
 * The main issue of XIP is caused from its speculative handling against a time delay. In real-time processing, a time delay triggers a malfunction of the system you made. I should say speculativeness in a risk management process is not allowed at all. XIP is a significant selection by the concurrent semiconductor industry, and this selection tells how the industry considers a risk, i.e., just an avoidable matter. We know a risk is an inevitable matter in this real world. I also notice that I reviewed one product, and commonization of this issue is a wild argument. The combination of von Neumann and XIP flash memory is a solution for tough scalability that is customers' order. Customers want the painting of the future comes true, and the semiconductor industry just accepts the order, but it's limited to technologies on our hands. The trickster in this time is a designer which made the painting get close to things in the real world. 
 
-**C Language**
+## Version History
 
-* C language needs strict declarations of variable types. Unlike Python, which converts the variable type by functions explicitly, the declaration is implicitly kept through the life of the variable. To change the variables types in C language, we need to make a type casting. For example:
+* 0.9 Beta (v0.8b) - 05/21/2021
+  * pico-sdk 1.1.2
+  * Evalute Minor Bugs on Software
+  * Test with Developing Hardware
 
-```C
-/**
- * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
- * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
- * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
- */
-delay_1 = (int32)(int64)(((int64)(delay_1 << 16) * (int64)pedal_chorus_delay_amplitude) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication
-int32 delay_1_l = (int32)(int64)(((int64)(delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
-int32 delay_1_r = (int32)(int64)(((int64)(delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
-```
-
-* The variable, "delay_1", is a 32-bit signed integer. However, in a multiplication of the fixed point decimal, we need to cast the variable to 64-bit signed integer. Otherwise, the two's compliment expression for 64-bit is broken. Besides, the next example is dangerous:
-
-```C
-uint16* example_array = (uint16*)calloc(5, sizeof(uint16)); // stdlib.h
-int16 example = -10;
-example_array[1] = example;
-if (example_array[1] < 0) printf("It's Negative!");
-printf("Value: %d", example_array[1]);
-free(example_array); // Don't forget to Release Memory Space
-```
-
-* This code doesn't printed out the message because the array points variables with 16-bit unsigned integer. The values is printed as 65526.
+* 0.8 Alpha (v0.8a) - 04/20/2021
+  * pico-sdk 1.1.2
+  * Evaluate Major Bugs on Software
+  * Evaluate Performances of Chip and Board
 
 ## Links of References
 

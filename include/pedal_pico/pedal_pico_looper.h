@@ -99,11 +99,11 @@ volatile int32* pedal_pico_looper_table_pdf_1;
     #ifndef PICO_NO_BI_BINARY_SIZE
         extern char __flash_binary_end;
     #else
-        #error PICO_NO_BI_BINARY_SIZE is defined.
+        #error "PICO_NO_BI_BINARY_SIZE is defined."
     #endif
     extern char __pedal_pico_looper_flash; // From Additional Linker Script, "pedal_pico_looper_append.ld"
 #else
-    #error PICO_NO_FLASH is true.
+    #error "PICO_NO_FLASH is true."
 #endif
 
 static uchar8 pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {

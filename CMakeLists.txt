@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.13)
 set(PICO_SDK_PATH ${CMAKE_SOURCE_DIR}/../pico-sdk)
 set(PICO_COPY_TO_RAM 1)
 
+# Board Type
+set(PICO_BOARD "pico")
+
 include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
 include_directories(
     ${CMAKE_SOURCE_DIR}/include

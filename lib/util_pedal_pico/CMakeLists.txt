@@ -41,3 +41,15 @@ target_include_directories(${target_name}
 target_compile_definitions(${target_name}
     PUBLIC UTIL_PEDAL_PICO_DEBUG=0
 )
+
+# GPIO Assignment
+if("${PICO_BOARD}" STREQUAL "pico")
+    target_compile_definitions(${target_name}
+        PUBLIC UTIL_PEDAL_PICO_SW_1_GPIO=14
+        PUBLIC UTIL_PEDAL_PICO_SW_2_GPIO=15
+        PUBLIC UTIL_PEDAL_PICO_PWM_1_GPIO=16
+        PUBLIC UTIL_PEDAL_PICO_PWM_2_GPIO=17
+    )
+endif()
+
+message("Target, ${target_name}, assigns GPIO pins for ${PICO_BOARD}.")

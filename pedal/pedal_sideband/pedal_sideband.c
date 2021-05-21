@@ -40,14 +40,14 @@ int main(void) {
         pedal_pico_sideband_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
         pedal_pico_sideband_table_pdf_3 = util_pedal_pico_ex_table_pdf_3;
     #else
-        #error Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_1
-        #error Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_2
-        #error Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_3
+        #error "Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_1"
+        #error "Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_2"
+        #error "Failure on Assigning Actual Array to pedal_pico_sideband_table_pdf_3"
     #endif
     #if UTIL_PEDAL_PICO_EX_OSC_TIME_MAX == PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MAX
         pedal_pico_sideband_table_sine_1 = util_pedal_pico_ex_table_sine_1;
     #else
-        #error Failure on Assigning Actual Array to pedal_pico_sideband_table_sine_1
+        #error "Failure on Assigning Actual Array to pedal_pico_sideband_table_sine_1"
     #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
@@ -59,7 +59,7 @@ int main(void) {
     uint32* stack_pointer = (int32*)malloc(PEDAL_SIDEBAND_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_SIDEBAND_CORE_1_STACK_SIZE);
     while (true) {
-        util_pedal_pico_wait_loop();
+        util_pedal_pico_wait();
     }
     return 0;
 }

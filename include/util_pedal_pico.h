@@ -41,16 +41,28 @@ extern "C" {
 
 #ifndef UTIL_PEDAL_PICO_DEBUG
 #define UTIL_PEDAL_PICO_DEBUG 0
+#warning "UTIL_PEDAL_PICO_DEBUG is defined with the default value 0."
 #endif
-
-#define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
+#ifndef UTIL_PEDAL_PICO_SW_1_GPIO
 #define UTIL_PEDAL_PICO_SW_1_GPIO 14
+#warning "UTIL_PEDAL_PICO_SW_1_GPIO is defined with the default value 14."
+#endif
+#ifndef UTIL_PEDAL_PICO_SW_2_GPIO
 #define UTIL_PEDAL_PICO_SW_2_GPIO 15
+#warning "UTIL_PEDAL_PICO_SW_2_GPIO is defined with the default value 15."
+#endif
+#ifndef UTIL_PEDAL_PICO_PWM_1_GPIO
+#define UTIL_PEDAL_PICO_PWM_1_GPIO 16
+#warning "UTIL_PEDAL_PICO_PWM_1_GPIO is defined with the default value 16."
+#endif
+#ifndef UTIL_PEDAL_PICO_PWM_2_GPIO
+#define UTIL_PEDAL_PICO_PWM_2_GPIO 17
+#warning "UTIL_PEDAL_PICO_PWM_2_GPIO is defined with the default value 17."
+#endif
+#define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
 #define UTIL_PEDAL_PICO_SW_THRESHOLD 30
 #define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
 #define UTIL_PEDAL_PICO_PWM_IRQ_WRAP_PRIORITY 0xF0
-#define UTIL_PEDAL_PICO_PWM_1_GPIO 16 // Should Be Channel A of PWM (Same as Second)
-#define UTIL_PEDAL_PICO_PWM_2_GPIO 17 // Should Be Channel B of PWM (Same as First)
 #define UTIL_PEDAL_PICO_PWM_OFFSET 2048 // Ideal Middle Point
 #define UTIL_PEDAL_PICO_PWM_PEAK 2047
 #define UTIL_PEDAL_PICO_ADC_IRQ_FIFO_PRIORITY 0xFF
@@ -109,7 +121,7 @@ void util_pedal_pico_on_adc_irq_fifo();
 void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
-void util_pedal_pico_wait_loop();
+void util_pedal_pico_wait();
 /**
  * Caution! These Functions tries to erase and write data to the on-board flash memory.
  * This program also turns off XIP, thus instruction code have to be stored at SRAM.
@@ -119,7 +131,7 @@ void util_pedal_pico_wait_loop();
     void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
     void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
 #else
-    #warning util_pedal_pico_xip_turn_off and util_pedal_pico_flash_write are not declared because PICO_COPY_TO_RAM is false.
+    #warning "util_pedal_pico_xip_turn_off and util_pedal_pico_flash_write are not declared because PICO_COPY_TO_RAM is false."
 #endif
 
 #ifdef __cplusplus

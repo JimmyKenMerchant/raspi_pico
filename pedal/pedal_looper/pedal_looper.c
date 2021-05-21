@@ -22,7 +22,10 @@
 
 #define PEDAL_LOOPER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
 #define PEDAL_LOOPER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
+#ifndef PEDAL_LOOPER_LED_GPIO
 #define PEDAL_LOOPER_LED_GPIO 25
+#warning "PEDAL_LOOPER_LED_GPIO is defined with the default value 25."
+#endif
 
 volatile uint32 pedal_looper_debug_time;
 
@@ -40,7 +43,7 @@ int main(void) {
     #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
         pedal_pico_looper_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
     #else
-        #error Failure on Assigning Actual Array to pedal_pico_looper_table_pdf_1
+        #error "Failure on Assigning Actual Array to pedal_pico_looper_table_pdf_1"
     #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
@@ -62,7 +65,7 @@ int main(void) {
         #if UTIL_PEDAL_PICO_DEBUG
             pedal_looper_debug_time = time_us_32() - from_time;
             printf("@main 1 - pedal_looper_debug_time %d\n", pedal_looper_debug_time);
-            //util_pedal_pico_wait_loop(); // Causes Delay on Recording
+            //util_pedal_pico_wait(); // Causes Delay on Recording
         #endif
     }
     return 0;

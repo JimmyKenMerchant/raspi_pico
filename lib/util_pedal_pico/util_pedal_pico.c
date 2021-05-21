@@ -278,13 +278,13 @@ void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte) {
     __dsb();
 }
 
-void util_pedal_pico_wait_loop() {
+void util_pedal_pico_wait() {
     #if UTIL_PEDAL_PICO_DEBUG
-        printf("@util_pedal_pico_wait_loop 1 - util_pedal_pico_on_adc_conversion_1 %08x\n", util_pedal_pico_on_adc_conversion_1);
-        printf("@util_pedal_pico_wait_loop 2 - util_pedal_pico_on_adc_conversion_2 %08x\n", util_pedal_pico_on_adc_conversion_2);
-        printf("@util_pedal_pico_wait_loop 3 - util_pedal_pico_on_adc_conversion_3 %08x\n", util_pedal_pico_on_adc_conversion_3);
-        printf("@util_pedal_pico_wait_loop 4 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
-        //printf("@util_pedal_pico_wait_loop 5 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
+        printf("@util_pedal_pico_wait 1 - util_pedal_pico_on_adc_conversion_1 %08x\n", util_pedal_pico_on_adc_conversion_1);
+        printf("@util_pedal_pico_wait 2 - util_pedal_pico_on_adc_conversion_2 %08x\n", util_pedal_pico_on_adc_conversion_2);
+        printf("@util_pedal_pico_wait 3 - util_pedal_pico_on_adc_conversion_3 %08x\n", util_pedal_pico_on_adc_conversion_3);
+        printf("@util_pedal_pico_wait 4 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
+        //printf("@util_pedal_pico_wait 5 - multicore_fifo_pop_blocking() %d\n", multicore_fifo_pop_blocking());
         sleep_ms(500);
     #else
         __wfi();
