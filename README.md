@@ -238,7 +238,7 @@ free(example_array); // Don't forget to Release Memory Space
 
 * This code doesn't printed out the message because the array points variables with 16-bit unsigned integer. The values is printed as 65526.
 
-**Tricky XIP**
+## Tricky XIP
 
 * In religious studies, trickster is a tool to cultivate religion among believers. The matter is not on the study, but not on people who used to abandon philosophy and forget the study. Philosophy is a critical thought.
 
