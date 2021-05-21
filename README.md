@@ -379,9 +379,9 @@ Thread 1 received signal SIGINT, Interrupt.
 
 ## Version History
 
-* 0.9 Beta (v0.8b) - 05/21/2021
+* 0.9 Beta (v0.9b) - 05/21/2021
   * pico-sdk 1.1.2
-  * Evalute Minor Bugs on Software
+  * Evaluate Minor Bugs on Software
   * Test with Developing Hardware
 
 * 0.8 Alpha (v0.8a) - 04/20/2021
