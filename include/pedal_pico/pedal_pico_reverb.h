@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_REVERB_GAIN 1
 #define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_PEAK (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT 11
 #define PEDAL_PICO_REVERB_DELAY_TIME_MAX 7937

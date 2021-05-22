@@ -66,8 +66,8 @@ void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_chorus_lr_distance_index++;
     if (pedal_pico_chorus_lr_distance_index >= PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX) pedal_pico_chorus_lr_distance_index -= PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX;
     /* Output */
-    pedal_pico_chorus->output_1 = util_pedal_pico_cutoff_biased(((normalized_1 + delay_1_l) >> 1) * PEDAL_PICO_CHORUS_GAIN + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
-    pedal_pico_chorus->output_1_inverted = util_pedal_pico_cutoff_biased(-lr_distance_1 * PEDAL_PICO_CHORUS_GAIN + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+    pedal_pico_chorus->output_1 = util_pedal_pico_cutoff_biased(((normalized_1 + delay_1_l) >> 1) + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+    pedal_pico_chorus->output_1_inverted = util_pedal_pico_cutoff_biased(-lr_distance_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
 }
 
 void pedal_pico_chorus_free() { // Free Except Object, pedal_pico_chorus

@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_CHORUS_GAIN 1
 #define PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_CHORUS_DELAY_TIME_MAX 1527
 #define PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1 PEDAL_PICO_CHORUS_DELAY_TIME_MAX - 1 // 1526 Divided by 28125 (0.054 Seconds)

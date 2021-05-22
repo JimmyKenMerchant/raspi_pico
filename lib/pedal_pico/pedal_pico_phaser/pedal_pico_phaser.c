@@ -41,6 +41,13 @@ void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 
         pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> 7) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     int32 normalized_1 = (int32)pedal_pico_phaser_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
+    if (sw_mode == 1) {
+        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1;
+    } else if (sw_mode == 2) {
+        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_3;
+    } else {
+        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2;
+    }
     /**
      * pedal_pico_phaser_osc_start_count:
      *
@@ -121,14 +128,6 @@ void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_phaser_delay_index++;
     if (pedal_pico_phaser_delay_index >= PEDAL_PICO_PHASER_DELAY_TIME_MAX) pedal_pico_phaser_delay_index -= PEDAL_PICO_PHASER_DELAY_TIME_MAX;
     int32 mixed_1 = (canceled_1 - phase_shift_2) >> 1;
-    if (sw_mode == 1) {
-        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1;
-    } else if (sw_mode == 2) {
-        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_3;
-    } else {
-        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2;
-    }
-    mixed_1 *= PEDAL_PICO_PHASER_GAIN;
     pedal_pico_phaser->output_1 = util_pedal_pico_cutoff_biased(mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
     pedal_pico_phaser->output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
 }

@@ -99,7 +99,6 @@ void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_buffer_delay_array[pedal_pico_buffer_delay_index] = (int16)mixed_1;
     pedal_pico_buffer_delay_index++;
     if (pedal_pico_buffer_delay_index >= PEDAL_PICO_BUFFER_DELAY_TIME_MAX) pedal_pico_buffer_delay_index -= PEDAL_PICO_BUFFER_DELAY_TIME_MAX;
-    mixed_1 *= PEDAL_PICO_BUFFER_GAIN;
     pedal_pico_buffer->output_1 = util_pedal_pico_cutoff_biased(mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
     pedal_pico_buffer->output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
 }

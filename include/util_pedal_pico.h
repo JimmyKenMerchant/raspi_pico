@@ -106,14 +106,13 @@ volatile uint32 util_pedal_pico_debug_time;
 
 /* Functions */
 
-void (*util_pedal_pico_on_pwm_irq_wrap_handler)(); // Pointer Needed to Be Assigned
 void (*util_pedal_pico_process)(uint16, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_init_adc();
 void util_pedal_pico_start();
-irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single();
+irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler();
 void util_pedal_pico_stop();
 void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core();
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);

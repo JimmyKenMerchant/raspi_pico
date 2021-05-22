@@ -101,7 +101,7 @@ void util_pedal_pico_start() {
     util_pedal_pico_sw_loop(util_pedal_pico_sw_gpio_1, util_pedal_pico_sw_gpio_2);
 }
 
-irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler_single() {
+irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler() {
     pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
     #if UTIL_PEDAL_PICO_DEBUG
         uint32 from_time = time_us_32();

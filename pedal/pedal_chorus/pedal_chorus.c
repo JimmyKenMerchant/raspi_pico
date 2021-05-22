@@ -49,7 +49,6 @@ int main(void) {
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
     pedal_pico_chorus_set();
-    util_pedal_pico_on_pwm_irq_wrap_handler = (void*)util_pedal_pico_on_pwm_irq_wrap_handler_single;
     util_pedal_pico_process = pedal_pico_chorus_process;
     /* Launch Core 1 */
     uint32* stack_pointer = (int32*)malloc(PEDAL_CHORUS_CORE_1_STACK_SIZE);

@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_PHASER_GAIN 1
 #define PEDAL_PICO_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_PHASER_DELAY_TIME_MAX 2049 // Don't Use Delay Time = 0
 #define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 2048 // 28125 Divided by 2024 (13.90Hz, Folding Frequency is 6.95Hz)

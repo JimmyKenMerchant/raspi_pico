@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_TAPE_GAIN 1
 #define PEDAL_PICO_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1 (int32)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_TAPE_DELAY_TIME_MAX 3969
 #define PEDAL_PICO_TAPE_DELAY_TIME_FIXED_1 1984 // 1920 Divided by 28125 (0.068 Seconds)

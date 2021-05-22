@@ -57,7 +57,6 @@ void pedal_pico_distortion_process(uint16 conversion_1, uint16 conversion_2, uin
         }
     }
     normalized_1 /= pedal_pico_distortion_loss;
-    normalized_1 *= PEDAL_PICO_DISTORTION_GAIN;
     /* Output */
     pedal_pico_distortion->output_1 = util_pedal_pico_cutoff_biased(normalized_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
     pedal_pico_distortion->output_1_inverted = util_pedal_pico_cutoff_biased(-normalized_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);

@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_DISTORTION_GAIN 1
 #define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0xC0
 
 volatile util_pedal_pico* pedal_pico_distortion;
