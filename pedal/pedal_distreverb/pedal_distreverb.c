@@ -40,7 +40,6 @@ int main(void) {
     /* Initialize ADC */
     util_pedal_pico_init_adc();
     /* Assign Actual Array */
-    /* Assign Actual Array */
     #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
         pedal_pico_distortion_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
         pedal_pico_distortion_table_log_1 = util_pedal_pico_ex_table_log_1;
