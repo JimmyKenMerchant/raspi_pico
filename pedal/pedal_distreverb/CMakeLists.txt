@@ -1,7 +1,7 @@
 # Turn on to show actual commands on "make" (only for related commands in this file).
 set(CMAKE_VERBOSE_MAKEFILE off)
 
-set(target_name pedal_looper)
+set(target_name pedal_distreverb)
 
 add_executable(${target_name}
     ${target_name}.c
@@ -10,7 +10,8 @@ add_executable(${target_name}
 # Add libraries by target names on "add_library" of themselves.
 target_link_libraries(${target_name}
     util_pedal_pico
-    pedal_pico_looper
+    pedal_pico_distortion
+    pedal_pico_reverb
 )
 
 # With No Setting CMAKE_MODULE_PATH

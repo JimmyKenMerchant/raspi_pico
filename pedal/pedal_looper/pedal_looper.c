@@ -20,21 +20,14 @@
 #include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
 
-#define PEDAL_LOOPER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
-#define PEDAL_LOOPER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
-#ifndef PEDAL_LOOPER_LED_GPIO
-#define PEDAL_LOOPER_LED_GPIO 25
-#warning "PEDAL_LOOPER_LED_GPIO is defined with the default value 25."
-#endif
-
 volatile uint32 pedal_looper_debug_time;
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    sleep_us(PEDAL_LOOPER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
-    gpio_init(PEDAL_LOOPER_LED_GPIO);
-    gpio_set_dir(PEDAL_LOOPER_LED_GPIO, GPIO_OUT);
-    gpio_put(PEDAL_LOOPER_LED_GPIO, 1);
+    sleep_us(UTIL_PEDAL_PICO_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
+    gpio_init(UTIL_PEDAL_PICO_LED_1_GPIO);
+    gpio_set_dir(UTIL_PEDAL_PICO_LED_1_GPIO, GPIO_OUT);
+    gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_looper = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     /* Initialize ADC */
@@ -48,11 +41,11 @@ int main(void) {
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
-    pedal_pico_looper_set(PEDAL_PICO_LOOPER_INDICATOR_LED_GPIO);
+    pedal_pico_looper_set(UTIL_PEDAL_PICO_LED_2_GPIO);
     util_pedal_pico_process = pedal_pico_looper_process;
     /* Launch Core 1 */
-    uint32* stack_pointer = (int32*)malloc(PEDAL_LOOPER_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_LOOPER_CORE_1_STACK_SIZE);
+    uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     #if UTIL_PEDAL_PICO_DEBUG
         pedal_looper_debug_time = 0;
     #endif

@@ -20,16 +20,12 @@
 #include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
 
-#define PEDAL_PHASER_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
-#define PEDAL_PHASER_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
-#define PEDAL_PHASER_LED_GPIO 25
-
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    sleep_us(PEDAL_PHASER_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
-    gpio_init(PEDAL_PHASER_LED_GPIO);
-    gpio_set_dir(PEDAL_PHASER_LED_GPIO, GPIO_OUT);
-    gpio_put(PEDAL_PHASER_LED_GPIO, 1);
+    sleep_us(UTIL_PEDAL_PICO_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
+    gpio_init(UTIL_PEDAL_PICO_LED_1_GPIO);
+    gpio_set_dir(UTIL_PEDAL_PICO_LED_1_GPIO, GPIO_OUT);
+    gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_phaser = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     /* Initialize ADC */
@@ -51,8 +47,8 @@ int main(void) {
     pedal_pico_phaser_set();
     util_pedal_pico_process = pedal_pico_phaser_process;
     /* Launch Core 1 */
-    uint32* stack_pointer = (int32*)malloc(PEDAL_PHASER_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_PHASER_CORE_1_STACK_SIZE);
+    uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     while (true) {
         util_pedal_pico_wait();
     }

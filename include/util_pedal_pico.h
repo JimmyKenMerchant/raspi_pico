@@ -43,6 +43,14 @@ extern "C" {
 #define UTIL_PEDAL_PICO_DEBUG 0
 #warning "UTIL_PEDAL_PICO_DEBUG is defined with the default value 0."
 #endif
+#ifndef UTIL_PEDAL_PICO_LED_1_GPIO
+#define UTIL_PEDAL_PICO_LED_1_GPIO 25
+#warning "UTIL_PEDAL_PICO_LED_1_GPIO is defined with the default value 25."
+#endif
+#ifndef UTIL_PEDAL_PICO_LED_2_GPIO
+#define UTIL_PEDAL_PICO_LED_2_GPIO 12
+#warning "UTIL_PEDAL_PICO_LED_2_GPIO is defined with the default value 12."
+#endif
 #ifndef UTIL_PEDAL_PICO_SW_1_GPIO
 #define UTIL_PEDAL_PICO_SW_1_GPIO 14
 #warning "UTIL_PEDAL_PICO_SW_1_GPIO is defined with the default value 14."
@@ -60,6 +68,8 @@ extern "C" {
 #warning "UTIL_PEDAL_PICO_PWM_2_GPIO is defined with the default value 17."
 #endif
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
+#define UTIL_PEDAL_PICO_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds, Pass through Transient Response of Power
+#define UTIL_PEDAL_PICO_CORE_1_STACK_SIZE (1024 * 4) // 1024 Words, 4096 Bytes
 #define UTIL_PEDAL_PICO_SW_THRESHOLD 30
 #define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
 #define UTIL_PEDAL_PICO_PWM_IRQ_WRAP_PRIORITY 0xF0
@@ -112,7 +122,7 @@ void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_init_adc();
 void util_pedal_pico_start();
-irq_handler_t util_pedal_pico_on_pwm_irq_wrap_handler();
+void util_pedal_pico_on_pwm_irq_wrap_handler();
 void util_pedal_pico_stop();
 void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core();
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);

@@ -17,8 +17,16 @@
 // raspi_pico/include
 #include "macros_pico.h"
 #include "pedal_pico/pedal_pico_distortion.h"
+#include "pedal_pico/pedal_pico_reverb.h"
 #include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
+
+#define PEDAL_DISTREVERB_DISTORTION_CONVERSION_2_FIXED_1 0xFFF
+
+uint16 pedal_distreverb_reverb_conversion_2;
+
+void pedal_distreverb_set();
+void pedal_distreverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
@@ -28,8 +36,10 @@ int main(void) {
     gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_distortion = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
+    pedal_pico_reverb = pedal_pico_distortion;
     /* Initialize ADC */
     util_pedal_pico_init_adc();
+    /* Assign Actual Array */
     /* Assign Actual Array */
     #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
         pedal_pico_distortion_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
@@ -42,11 +52,16 @@ int main(void) {
         #error "Failure on Assigning Actual Array to pedal_pico_distortion_table_log_2"
         #error "Failure on Assigning Actual Array to pedal_pico_distortion_table_power_1"
     #endif
+    #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
+        pedal_pico_reverb_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+    #else
+        #error "Failure on Assigning Actual Array to pedal_pico_reverb_table_pdf_1"
+    #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
-    pedal_pico_distortion_set();
-    util_pedal_pico_process = pedal_pico_distortion_process;
+    pedal_distreverb_set();
+    util_pedal_pico_process = pedal_distreverb_process;
     /* Launch Core 1 */
     uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
@@ -54,4 +69,15 @@ int main(void) {
         util_pedal_pico_wait();
     }
     return 0;
+}
+
+void pedal_distreverb_set() {
+    pedal_pico_distortion_set();
+    pedal_pico_reverb_set();
+}
+
+void pedal_distreverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+    /* Objective entities, util_pedal_pico_obj, pedal_pico_distortion, and pedal_pico_reverb points the same struct and memory space */
+    pedal_pico_distortion_process(conversion_1, PEDAL_DISTREVERB_DISTORTION_CONVERSION_2_FIXED_1, 0, sw_mode);
+    pedal_pico_reverb_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, 0);
 }

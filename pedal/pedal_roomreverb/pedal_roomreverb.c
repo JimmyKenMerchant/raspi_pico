@@ -16,20 +16,17 @@
 #include <math.h>
 // raspi_pico/include
 #include "macros_pico.h"
-#include "pedal_pico/pedal_pico_chorus.h"
 #include "pedal_pico/pedal_pico_reverb.h"
+#include "pedal_pico/pedal_pico_chorus.h"
 #include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
 
-#define PEDAL_ROOMRVERB_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds
-#define PEDAL_ROOMRVERB_CORE_1_STACK_SIZE 1024 * 4 // 1024 Words, 4096 Bytes
-#define PEDAL_ROOMRVERB_LED_GPIO 25
-#define PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_1 0
-#define PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_2 0x3FF
-#define PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_3 0x7FF
-#define PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_1 0
-#define PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_2 0x7FF
-#define PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_3 0xFFF
+#define PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_1 0
+#define PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_2 0x3FF
+#define PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_3 0x7FF
+#define PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_1 0
+#define PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_2 0x7FF
+#define PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_3 0xFFF
 
 uint16 pedal_roomreverb_reverb_conversion_2;
 uint16 pedal_roomreverb_chorus_conversion_3;
@@ -39,10 +36,10 @@ void pedal_roomreverb_process(uint16 conversion_1, uint16 conversion_2, uint16 c
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
-    sleep_us(PEDAL_ROOMRVERB_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
-    gpio_init(PEDAL_ROOMRVERB_LED_GPIO);
-    gpio_set_dir(PEDAL_ROOMRVERB_LED_GPIO, GPIO_OUT);
-    gpio_put(PEDAL_ROOMRVERB_LED_GPIO, 1);
+    sleep_us(UTIL_PEDAL_PICO_TRANSIENT_RESPONSE); // Pass through Transient Response of Power
+    gpio_init(UTIL_PEDAL_PICO_LED_1_GPIO);
+    gpio_set_dir(UTIL_PEDAL_PICO_LED_1_GPIO, GPIO_OUT);
+    gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_reverb = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     pedal_pico_chorus = pedal_pico_reverb;
@@ -70,8 +67,8 @@ int main(void) {
     pedal_roomreverb_set();
     util_pedal_pico_process = pedal_roomreverb_process;
     /* Launch Core 1 */
-    uint32* stack_pointer = (int32*)malloc(PEDAL_ROOMRVERB_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, PEDAL_ROOMRVERB_CORE_1_STACK_SIZE);
+    uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     while (true) {
         util_pedal_pico_wait();
     }
@@ -85,16 +82,16 @@ void pedal_roomreverb_set() {
 
 void pedal_roomreverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     if (sw_mode == 1) {
-        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_1;
-        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_1;
+        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_1;
+        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_1;
     } else if (sw_mode == 2) {
-        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_3;
-        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_3;
+        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_3;
+        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_3;
     } else {
-        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMRVERB_REVERB_CONVERSION_2_FIXED_2;
-        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMRVERB_CHORUS_CONVERSION_3_FIXED_2;
+        pedal_roomreverb_reverb_conversion_2 = PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_2;
+        pedal_roomreverb_chorus_conversion_3 = PEDAL_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_2;
     }
-    /* Objective entities, util_pedal_pico, pedal_pico_reverb, and pedal_pico_chorus points the same struct and memory space */
+    /* Objective entities, util_pedal_pico_obj, pedal_pico_reverb, and pedal_pico_chorus points the same struct and memory space */
     pedal_pico_reverb_process(conversion_1, pedal_roomreverb_reverb_conversion_2, conversion_2, 0);
     pedal_pico_chorus_process(util_pedal_pico_obj->output_1, conversion_3, pedal_roomreverb_chorus_conversion_3, 0);
 }
