@@ -47,16 +47,16 @@ void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_chorus_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /* Push and Pop Delay */
     pedal_pico_chorus_delay_array[pedal_pico_chorus_delay_index] = (int16)normalized_1; // Push Current Value in Advance for 0
     int32 delay_1 = (int32)pedal_pico_chorus_delay_array[((pedal_pico_chorus_delay_index + PEDAL_PICO_CHORUS_DELAY_TIME_MAX) - pedal_pico_chorus_delay_time) % PEDAL_PICO_CHORUS_DELAY_TIME_MAX];
     pedal_pico_chorus_delay_index++;
     if (pedal_pico_chorus_delay_index >= PEDAL_PICO_CHORUS_DELAY_TIME_MAX) pedal_pico_chorus_delay_index -= PEDAL_PICO_CHORUS_DELAY_TIME_MAX;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_pico_chorus_table_sine_1[pedal_pico_chorus_osc_sine_1_index / PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_chorus_osc_sine_1_index / PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_pico_chorus_osc_sine_1_index += pedal_pico_chorus_osc_speed;
-    if (pedal_pico_chorus_osc_sine_1_index >= PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_chorus_osc_sine_1_index -= PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
+    if (pedal_pico_chorus_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_chorus_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_pico_chorus_delay_amplitude) >> 32);
     int32 delay_1_l = (int32)(int64)((((int64)delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
     int32 delay_1_r = (int32)(int64)((((int64)delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);

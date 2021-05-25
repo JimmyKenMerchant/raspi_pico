@@ -42,24 +42,29 @@ int main(void) {
     gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM and Switch */
     pedal_pico_reverb = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
-    pedal_pico_chorus = pedal_pico_reverb;
+    pedal_pico_chorus = util_pedal_pico_obj;
     /* Initialize ADC */
     util_pedal_pico_init_adc();
     /* Assign Actual Array */
-    #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
-        pedal_pico_chorus_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+    #if UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX == UTIL_PEDAL_PICO_EX_OSC_TIME_MAX
+        util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
     #else
-        #error "Failure on Assigning Actual Array to pedal_pico_chorus_table_pdf_1"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_sine_1"
     #endif
-    #if UTIL_PEDAL_PICO_EX_OSC_TIME_MAX == PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MAX
-        pedal_pico_chorus_table_sine_1 = util_pedal_pico_ex_table_sine_1;
+    #if UTIL_PEDAL_PICO_PWM_PEAK == UTIL_PEDAL_PICO_EX_PEAK
+        util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+        util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
+        util_pedal_pico_table_pdf_3 = util_pedal_pico_ex_table_pdf_3;
+        util_pedal_pico_table_log_1 = util_pedal_pico_ex_table_log_1;
+        util_pedal_pico_table_log_2 = util_pedal_pico_ex_table_log_2;
+        util_pedal_pico_table_power_1 = util_pedal_pico_ex_table_power_1;
     #else
-        #error "Failure on Assigning Actual Array to pedal_pico_chorus_table_sine_1"
-    #endif
-    #if UTIL_PEDAL_PICO_EX_PEAK == UTIL_PEDAL_PICO_PWM_PEAK
-        pedal_pico_reverb_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
-    #else
-        #error "Failure on Assigning Actual Array to pedal_pico_reverb_table_pdf_1"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_1"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_2"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_3"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_log_1"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_log_2"
+        #error "Failure on Assigning Actual Array to util_pedal_pico_table_power_1"
     #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);

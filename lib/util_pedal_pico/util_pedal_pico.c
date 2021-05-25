@@ -117,35 +117,17 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
-    util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
-    /* Output */
-    pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
-    pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted);
+    if (util_pedal_pico_process != null) {
+        util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
+        /* Output */
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted);
+    }
     #if UTIL_PEDAL_PICO_DEBUG
         util_pedal_pico_debug_time = time_us_32() - from_time;
         //multicore_fifo_push_blocking(util_pedal_pico_debug_time); // To send a made pointer, sync flag, etc.
     #endif
     __dsb();
-}
-
-void util_pedal_pico_stop() {
-    if (! util_pedal_pico_obj) panic("util_pedal_pico_obj is not initialized.");
-    adc_run(false);
-    __dsb();
-    irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, false);
-    pwm_set_mask_enabled(0);
-    adc_fifo_drain(); // Clean FIFO
-    do {
-        tight_loop_contents();
-    } while (! adc_fifo_is_empty);
-    __dsb();
-}
-
-void util_pedal_pico_remove_pwm_irq_exclusive_handler_on_core() {
-    // "irq_get_exclusive_handler" returns null not only for no handler, but also existance of shared handler.
-    irq_handler_t handler = irq_get_exclusive_handler(PWM_IRQ_WRAP);
-    if (handler) irq_remove_handler(PWM_IRQ_WRAP, handler);
-    multicore_fifo_push_blocking((uint32)handler); // To send a made pointer, sync flag, etc.
 }
 
 void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion) {
@@ -289,4 +271,52 @@ void util_pedal_pico_wait() {
     #else
         __wfi();
     #endif
+}
+
+void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2) {
+    util_pedal_pico_multi_set = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
+    util_pedal_pico_multi_process = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
+    util_pedal_pico_multi_free = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
+    /* Selector Configuration */
+    uint32 gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2;
+    gpio_init_mask(gpio_mask);
+    gpio_set_dir_masked(gpio_mask, 0x00000000);
+    gpio_pull_up(gpio_bit_0);
+    gpio_pull_up(gpio_bit_1);
+    gpio_pull_up(gpio_bit_2);
+    util_pedal_pico_multi_gpio_bit_0 = gpio_bit_0;
+    util_pedal_pico_multi_gpio_bit_1 = gpio_bit_1;
+    util_pedal_pico_multi_gpio_bit_2 = gpio_bit_2;
+    util_pedal_pico_multi_mode = 0xFF; // To Detect util_pedal_pico_multi_mode Including 0 at Initialization
+    #if UTIL_PEDAL_PICO_DEBUG
+        printf("@util_pedal_pico_init_multi 1 - util_pedal_pico_multi_set %08x\n", util_pedal_pico_multi_set);
+        printf("@util_pedal_pico_init_multi 2 - util_pedal_pico_multi_process %08x\n", util_pedal_pico_multi_process);
+        printf("@util_pedal_pico_init_multi 3 - util_pedal_pico_multi_free %08x\n", util_pedal_pico_multi_free);
+    #endif
+}
+
+void util_pedal_pico_select_multi() {
+    uint32 status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2);
+    uchar8 status_bit = 0;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b001;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b010;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b100;
+    if (util_pedal_pico_multi_mode != status_bit) {
+        util_pedal_pico_process = null;
+        __dsb();
+        if (util_pedal_pico_multi_mode != 0xFF) util_pedal_pico_multi_free[util_pedal_pico_multi_mode]();
+        util_pedal_pico_multi_set[status_bit]();
+        __dsb();
+        util_pedal_pico_process = util_pedal_pico_multi_process[status_bit];
+        util_pedal_pico_multi_mode = status_bit;
+    }
+    #if UTIL_PEDAL_PICO_DEBUG
+        printf("@util_pedal_pico_select_multi 1 - util_pedal_pico_on_adc_conversion_1 %08x\n", util_pedal_pico_on_adc_conversion_1);
+        printf("@util_pedal_pico_select_multi 2 - util_pedal_pico_on_adc_conversion_2 %08x\n", util_pedal_pico_on_adc_conversion_2);
+        printf("@util_pedal_pico_select_multi 3 - util_pedal_pico_on_adc_conversion_3 %08x\n", util_pedal_pico_on_adc_conversion_3);
+        printf("@util_pedal_pico_select_multi 4 - util_pedal_pico_debug_time %d\n", util_pedal_pico_debug_time);
+        printf("@util_pedal_pico_select_multi 5 - util_pedal_pico_process %08x\n", util_pedal_pico_process);
+        printf("@util_pedal_pico_select_multi 6 - util_pedal_pico_multi_mode %08x\n", util_pedal_pico_multi_mode);
+    #endif
+    __dsb();
 }

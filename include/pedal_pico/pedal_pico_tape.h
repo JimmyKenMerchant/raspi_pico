@@ -38,7 +38,6 @@ extern "C" {
 #define PEDAL_PICO_TAPE_DELAY_TIME_FIXED_1 1984 // 1920 Divided by 28125 (0.068 Seconds)
 #define PEDAL_PICO_TAPE_DELAY_TIME_SWING_PEAK_1 1984
 #define PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT 6 // Multiply By 64 (0-1984)
-#define PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MAX 9375
 #define PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER 6
 
 volatile util_pedal_pico* pedal_pico_tape;

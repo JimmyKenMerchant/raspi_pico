@@ -77,15 +77,15 @@ void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 
         pedal_pico_phaser_osc_sine_1_index = 0;
     }
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = pedal_pico_phaser_table_sine_1[pedal_pico_phaser_osc_sine_1_index / PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER];
+    int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_phaser_osc_sine_1_index / PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_pico_phaser_osc_sine_1_index += pedal_pico_phaser_osc_speed;
-    if (pedal_pico_phaser_osc_sine_1_index >= PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_phaser_osc_sine_1_index -= (PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER);
+    if (pedal_pico_phaser_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_phaser_osc_sine_1_index -= (UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_SINE_1_TIME_MULTIPLIER);
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_phaser_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     /**
      * Phaser is the synthesis of the concurrent wave and the phase shifted concurrent wave.
      * The phase shifted concurrent wave is made by an all-pass filter.

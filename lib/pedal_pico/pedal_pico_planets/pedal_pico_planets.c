@@ -46,12 +46,12 @@ void pedal_pico_planets_process(uint16 conversion_1, uint16 conversion_2, uint16
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int16 delay_x = pedal_pico_planets_delay_x[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_pico_planets_delay_time_interpolation)) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
     int16 delay_y = pedal_pico_planets_delay_y[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - (uint16)((int16)pedal_pico_planets_delay_time_interpolation)) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
     /* First Stage: High Pass Filter and Correction */
     int32 high_pass_1 = (int32)((int64)((((int64)delay_x << 16) * -(int64)pedal_pico_planets_coefficient_interpolation) + (((int64)normalized_1 << 16) * (int64)(0x00010000 - pedal_pico_planets_coefficient_interpolation))) >> 32);
-    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)pedal_pico_planets_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+    high_pass_1 = (int32)(int64)((((int64)high_pass_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(high_pass_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
     /* Second Stage: Low Pass Filter to Sound from First Stage */
     if (util_pedal_pico_sw_mode == 1) high_pass_1 = normalized_1; // Bypass High Pass Filter
     int32 low_pass_1 = (int32)((int64)((((int64)delay_y << 16) * (int64)pedal_pico_planets_coefficient_interpolation) + (((int64)high_pass_1 << 16) * (int64)(0x00010000 - pedal_pico_planets_coefficient_interpolation))) >> 32);
