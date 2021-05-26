@@ -18,7 +18,6 @@
 #include "macros_pico.h"
 #include "pedal_pico/pedal_pico_reverb.h"
 #include "pedal_pico/pedal_pico_chorus.h"
-#include "util_pedal_pico.h"
 #include "util_pedal_pico_ex.h"
 
 #define PEDAL_ROOMREVERB_REVERB_CONVERSION_2_FIXED_1 0
@@ -40,32 +39,17 @@ int main(void) {
     gpio_init(UTIL_PEDAL_PICO_LED_1_GPIO);
     gpio_set_dir(UTIL_PEDAL_PICO_LED_1_GPIO, GPIO_OUT);
     gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
-    /* Initialize PWM and Switch */
+    /* Initialize PWM */
+    #if UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX != UTIL_PEDAL_PICO_EX_OSC_TIME_MAX
+        #error "UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX isn't eqaul to UTIL_PEDAL_PICO_EX_OSC_TIME_MAX. Include util_pedal_pico_ex.h?"
+    #endif
+    #if UTIL_PEDAL_PICO_PWM_PEAK != UTIL_PEDAL_PICO_EX_PEAK
+        #error "UTIL_PEDAL_PICO_PWM_PEAK isn't eqaul to UTIL_PEDAL_PICO_EX_PEAK. Include util_pedal_pico_ex.h?"
+    #endif
     pedal_pico_reverb = util_pedal_pico_init(UTIL_PEDAL_PICO_PWM_1_GPIO, UTIL_PEDAL_PICO_PWM_2_GPIO);
     pedal_pico_chorus = util_pedal_pico_obj;
     /* Initialize ADC */
     util_pedal_pico_init_adc();
-    /* Assign Actual Array */
-    #if UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX == UTIL_PEDAL_PICO_EX_OSC_TIME_MAX
-        util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
-    #else
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_sine_1"
-    #endif
-    #if UTIL_PEDAL_PICO_PWM_PEAK == UTIL_PEDAL_PICO_EX_PEAK
-        util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
-        util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
-        util_pedal_pico_table_pdf_3 = util_pedal_pico_ex_table_pdf_3;
-        util_pedal_pico_table_log_1 = util_pedal_pico_ex_table_log_1;
-        util_pedal_pico_table_log_2 = util_pedal_pico_ex_table_log_2;
-        util_pedal_pico_table_power_1 = util_pedal_pico_ex_table_power_1;
-    #else
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_1"
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_2"
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_pdf_3"
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_log_1"
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_log_2"
-        #error "Failure on Assigning Actual Array to util_pedal_pico_table_power_1"
-    #endif
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */

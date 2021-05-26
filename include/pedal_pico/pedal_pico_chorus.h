@@ -55,8 +55,6 @@ volatile int16* pedal_pico_chorus_lr_distance_array;
 volatile uint16 pedal_pico_chorus_lr_distance_time;
 volatile uint16 pedal_pico_chorus_lr_distance_time_interpolation;
 volatile uint16 pedal_pico_chorus_lr_distance_index;
-volatile int32* pedal_pico_chorus_table_pdf_1;
-volatile int32* pedal_pico_chorus_table_sine_1;
 
 void pedal_pico_chorus_set();
 void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

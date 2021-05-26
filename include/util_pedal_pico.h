@@ -38,7 +38,6 @@ extern "C" {
 #endif
 
 /* Definitions */
-
 #ifndef UTIL_PEDAL_PICO_DEBUG
 #define UTIL_PEDAL_PICO_DEBUG 0
 #warning "UTIL_PEDAL_PICO_DEBUG is defined with the default value 0."
@@ -104,7 +103,6 @@ extern "C" {
 #define util_pedal_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
 
 /* Structs */
-
 typedef struct {
     uchar8 pwm_1_slice;
     uchar8 pwm_1_channel;
@@ -115,7 +113,6 @@ typedef struct {
 } util_pedal_pico;
 
 /* Global Variables */
-
 volatile util_pedal_pico* util_pedal_pico_obj; // Pointer Needed to Be Initialized
 volatile uint16 util_pedal_pico_on_adc_conversion_1;
 volatile uint16 util_pedal_pico_on_adc_conversion_2;
@@ -139,8 +136,16 @@ volatile int32* util_pedal_pico_table_log_1;
 volatile int32* util_pedal_pico_table_log_2;
 volatile int32* util_pedal_pico_table_power_1;
 
-/* Functions */
+/* Hide Duplicate Declaration */
+extern int32 util_pedal_pico_ex_table_sine_1[];
+extern int32 util_pedal_pico_ex_table_pdf_1[];
+extern int32 util_pedal_pico_ex_table_pdf_2[];
+extern int32 util_pedal_pico_ex_table_pdf_3[];
+extern int32 util_pedal_pico_ex_table_log_1[];
+extern int32 util_pedal_pico_ex_table_log_2[];
+extern int32 util_pedal_pico_ex_table_power_1[];
 
+/* Functions */
 void (*util_pedal_pico_process)(uint16, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);

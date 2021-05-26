@@ -57,8 +57,6 @@ volatile uint32 pedal_pico_phaser_osc_sine_1_index;
 volatile uint16 pedal_pico_phaser_osc_speed;
 volatile char8 pedal_pico_phaser_osc_start_threshold;
 volatile uint16 pedal_pico_phaser_osc_start_count;
-volatile int32* pedal_pico_phaser_table_pdf_1;
-volatile int32* pedal_pico_phaser_table_sine_1;
 
 void pedal_pico_phaser_set();
 void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

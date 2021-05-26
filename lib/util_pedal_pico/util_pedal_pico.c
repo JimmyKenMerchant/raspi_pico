@@ -38,6 +38,18 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
     #if PICO_COPY_TO_RAM
         void util_pedal_pico_xip_turn_off();
     #endif
+    /* Assign Actual Array */
+    if (util_pedal_pico_ex_table_sine_1 != null) {
+        util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
+        util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
+        util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
+        util_pedal_pico_table_pdf_3 = util_pedal_pico_ex_table_pdf_3;
+        util_pedal_pico_table_log_1 = util_pedal_pico_ex_table_log_1;
+        util_pedal_pico_table_log_2 = util_pedal_pico_ex_table_log_2;
+        util_pedal_pico_table_power_1 = util_pedal_pico_ex_table_power_1;
+    } else {
+        panic("Failure on Assigning Actual Arrays Named with util_pedal_pico_ex_table_ to Arrays Named with util_pedal_pico_table_");
+    }
     /* PWM Settings */
     gpio_set_function(gpio_1, GPIO_FUNC_PWM);
     gpio_set_function(gpio_2, GPIO_FUNC_PWM);

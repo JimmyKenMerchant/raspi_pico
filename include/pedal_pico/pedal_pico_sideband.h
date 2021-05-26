@@ -50,10 +50,6 @@ volatile uint16 pedal_pico_sideband_osc_amplitude;
 volatile uint16 pedal_pico_sideband_osc_speed;
 volatile char8 pedal_pico_sideband_osc_start_threshold;
 volatile uint16 pedal_pico_sideband_osc_start_count;
-volatile int32* pedal_pico_sideband_table_pdf_1;
-volatile int32* pedal_pico_sideband_table_pdf_2;
-volatile int32* pedal_pico_sideband_table_pdf_3;
-volatile int32* pedal_pico_sideband_table_sine_1;
 
 void pedal_pico_sideband_set();
 void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

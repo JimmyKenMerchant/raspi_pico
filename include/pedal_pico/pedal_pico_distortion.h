@@ -40,10 +40,6 @@ volatile uint16 pedal_pico_distortion_conversion_1;
 volatile uint16 pedal_pico_distortion_conversion_2;
 volatile uint16 pedal_pico_distortion_conversion_3;
 volatile uint16 pedal_pico_distortion_loss;
-volatile int32* pedal_pico_distortion_table_pdf_1;
-volatile int32* pedal_pico_distortion_table_log_1;
-volatile int32* pedal_pico_distortion_table_log_2;
-volatile int32* pedal_pico_distortion_table_power_1;
 
 void pedal_pico_distortion_set();
 void pedal_pico_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

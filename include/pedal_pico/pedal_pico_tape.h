@@ -52,8 +52,6 @@ volatile int32 pedal_pico_tape_delay_amplitude; // Using 32-bit Signed (Two's Co
 volatile uint16 pedal_pico_tape_delay_time;
 volatile uint16 pedal_pico_tape_delay_index;
 volatile uint16 pedal_pico_tape_delay_time_swing;
-volatile int32* pedal_pico_tape_table_pdf_1;
-volatile int32* pedal_pico_tape_table_sine_1;
 
 void pedal_pico_tape_set();
 void pedal_pico_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

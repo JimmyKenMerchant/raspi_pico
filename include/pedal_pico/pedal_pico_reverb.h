@@ -48,7 +48,6 @@ volatile int32 pedal_pico_reverb_delay_amplitude; // Using 32-bit Signed (Two's 
 volatile uint16 pedal_pico_reverb_delay_time;
 volatile uint16 pedal_pico_reverb_delay_time_interpolation;
 volatile uint16 pedal_pico_reverb_delay_index;
-volatile int32* pedal_pico_reverb_table_pdf_1;
 
 void pedal_pico_reverb_set();
 void pedal_pico_reverb_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

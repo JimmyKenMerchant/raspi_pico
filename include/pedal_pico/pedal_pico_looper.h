@@ -87,7 +87,6 @@ volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS 0b01000000
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS 0b10000000
 volatile uchar8 pedal_pico_looper_buffer_status;
-volatile int32* pedal_pico_looper_table_pdf_1;
 
 /**
  * __flash_binary_end can be watched in qspi_flash.elf.map.

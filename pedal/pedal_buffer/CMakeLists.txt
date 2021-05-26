@@ -9,7 +9,6 @@ add_executable(${target_name}
 
 # Add libraries by target names on "add_library" of themselves.
 target_link_libraries(${target_name}
-    util_pedal_pico
     pedal_pico_buffer
 )
 
