@@ -159,6 +159,10 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * About jitter noise, Pico is mainly depending on the crystal oscillator and the PLL. I tried not to change the interval to sample sound. I think the noise is reduced well in the chip.
 
+* The assignment of GPIO pins is configurable with CMakeLists.txt in lib/util_pedal_pico. GPIO numbers in descriptions as below are the default assignation.
+
+* The extension header, "util_pedal_pico_ex.h", has number tables. Not to meet duplicate declaration in compiling, the header is placed in files which include "main" functions, but not libraries. Note that in the primary "util_pedal_pico.h", number tables are referred with the "extern" keyword.
+
 * "pedal_buffer" is a just buffer. This also implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on GPIO14 sets the high attack, and the low state on GPIO15 sets the low attack and the feedback at the sustain.
 
 * "pedal_sideband" is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. Note that I renamed this pedal from "pedal_chorus" to "pedal_sideband", and I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. Outputs are added the pulsating wave. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the threshold to start the oscillator. Frequencies of main pulsating wave and sub pulsating wave are fixed so far. There are output modes. The low state on GPIO14 sets the regular gain, and the low state on GPIO15 sets the high gain.
@@ -180,6 +184,8 @@ gdb-multiarch blinkers/blinkdrs.elf
 * "pedal_roomreverb" is the combination of the reverb (reverberation) and the chorus. ADC0 is for the audio input, ADC1 is for the delay time of the reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the reverb. As a result, "pedal_chorus" is like sound reflections of a room. I thought the combination with the reverb makes natural reverb in a room. The sound of this pedal is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of "pedal_chorus" is like in an open lobby of a hotel.
 
 * "pedal_distreverb" is the combination of the distortion and the reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+
+* "pedal_multi" has multiselection. You can select 8 pedals by GPIO9 (Bit 0), GPIO10 (Bit 1), and GPIO11 (Bit 2). Specifications are the same as each pedal you select.
 
 ## Technical Notes
 
