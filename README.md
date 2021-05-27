@@ -9,6 +9,13 @@
 * [Installation](#installation)
 
 * [Notes on Projects](#notes-on-projects)
+  * [Blinkers](blinkers)
+  * [Twin Dimmers](twin-dimmers)
+  * [Servo](servo)
+  * [Func](func)
+  * [Pedal](pedal)
+    * [pedal_multi](pedalmulti)
+    * [pedal_looper](pedallooper)
 
 * [Technical Notes](#technical-notes)
 
@@ -22,7 +29,7 @@
 
 * To Develop Applications of Raspberry Pi Pico Using C Language and Assembler Language
 
-* In view of managing versions, this repository is mainly developing projects in "pedal (guitar pedals)".
+* In view of managing versions, this repository is mainly developing projects in "[Pedal](pedal) (guitar pedals)".
 
 **About Raspberry Pi Pico**
 
@@ -103,13 +110,13 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Projects may output and input strings through USB. To monitor these, use minicom.
 
-**Blinkers**
+### Blinkers
 
 * Outputs: GPIO14 (PMW7 A), GPIO15, GPIO16, and GPIO25 (Embedded LED)
 
 * I tested an output with a 3.0mm red LED and a 1K ohms resistor in series.
 
-**Twin Dimmers**
+### Twin Dimmers
 
 * This project is using ADC. I connected ADC_VREF to 3V3, and AGND to GND. GPIO26 (ADC0) and GPIO27 (ADC1) are used as ADC inputs. Two ADC inputs are converted to digital values with the round robin mode, and these values are used for controlling brightness of two LED outputs from GPIO14 and GPIO15 using PWM.
 
@@ -119,7 +126,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * On the open state of ADC input, the PWM output shakes. I connected a PWM output to a piezoelectric speaker and a 10K ohms resistor in series. Although we should consider the electric stability on the open state, the shaking of the sound would fit with human factors in view of our awareness because of resembling the sound of a bell.
 
-**Servo**
+### Servo
 
 * I applied FEETECH FS90 Servo Motor. I connected its brown wire to GND, its red wire to VBUS, and its orange wire to GPIO2 (PWM0 A). Double-check the actual wiring layout of your servo motor by an official document. I measured approx. 105-110 degrees rotation with 900-2100us pulses which is assumed 120 degrees rotation, and it seems to be just 10% difference. Note that Pico outputs 3.3V signal, even though I connected this signal to FS90 which is driven by 5V from VBUS. 3.3V (OUT) didn't work for FS90.
 
@@ -129,27 +136,29 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * "servo_console" accepts an input from a console. I only tested this with minicom in Ubuntu via the USB connection.
 
-**Func**
+### Func
 
 * This project outputs a sine wave from GPIO15 (PWM7 B).
 
 * According to the page 147-148 of RP2040 Datasheet, ROM (0x0000_0000) of RP2040 includes utilities for fast floating point as firmware. The actual code is in [mufplib.S written by Mark Owen](https://github.com/raspberrypi/pico-bootrom/blob/master/bootrom/mufplib.S). Note that the binaries seems to be loaded to SRAM, and I can't check these in the disassembling file (func.dis in this case).
 
-**Pedal**
+### Pedal
 
 * This project is making several types of guitar pedals.
 
 * Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels).
 
-* Now on testing the durability and searching situations on happening the malfunction with audio input and output. Ripple voltage on power causes the malfunction (VERY NOISY). The ripple occurs from static electricity and so on. Grounding with 1M ohms and ripple filters seem to be effective for the malfunction so far. Especially, in addition to C2 of Pico, a 47uF 6.3V chip, more bypass capacitors to 3V3 are needed for audio input and output (see [EEVblog](https://www.eevblog.com/2016/03/11/eevblog-859-bypass-capacitor-tutorial/)!). I used a 100uF 25V cap in parallel with C2. The gained output from PWM also tends to cause the malfunction. The 3V3 line directly connected with RP2040, and the instability of this line is critical. Besides, the internal environment of RP2040 must be stabilized. "pedal_phaser" tends to be malfunctioned. The pedal needs a lot of accesses to the internal bus by the core to communicate with SRAM and peripherals in initial settings of peripherals and the running time. RP2040 spends electric power in accessing the bus, and the change of the status in electricity may make the internal environment become wrong, especially in the time of the transient response of the electric power and the electric status of the chip. By adding the sleep time, "PEDAL_PHASER_TRANSIENT_RESPONSE", after booting and before setting peripherals, the pedal seems to be stabilized so far. The chip may need extensive time to be stabilized for SRAM and peripherals in the manner of the electric status. "PEDAL_PHASER_TRANSIENT_RESPONSE" may differ by the time constant of the additional capacitance with C2, e.g., more capacitance needs more time to pass through the transient response.
+* Now on testing the durability and searching situations on happening the malfunction with audio input and output. Ripple voltage on power causes the malfunction (VERY NOISY). The ripple occurs from static electricity and so on. Grounding with 1M ohms and ripple filters seem to be effective for the malfunction so far. Especially, in addition to C2 of Pico, a 47uF 6.3V chip, more bypass capacitors to 3V3 are needed for audio input and output (see [EEVblog](https://www.eevblog.com/2016/03/11/eevblog-859-bypass-capacitor-tutorial/)!). I used a 100uF 25V cap in parallel with C2. The gained output from PWM also tends to cause the malfunction. The 3V3 line directly connected with RP2040, and the instability of this line is critical. Besides, the internal environment of RP2040 must be stabilized. "pedal_phaser (in v0.8a)" tends to be malfunctioned. The pedal needs a lot of accesses to the internal bus by the core to communicate with SRAM and peripherals in initial settings of peripherals and the running time. RP2040 spends electric power in accessing the bus, and the change of the status in electricity may make the internal environment become wrong, especially in the time of the transient response of the electric power and the electric status of the chip. By adding the sleep time, "PEDAL_PHASER_TRANSIENT_RESPONSE", after booting and before setting peripherals, the pedal seems to be stabilized so far. The chip may need extensive time to be stabilized for SRAM and peripherals in the manner of the electric status. "PEDAL_PHASER_TRANSIENT_RESPONSE" may differ by the time constant of the additional capacitance with C2, e.g., more capacitance needs more time to pass through the transient response.
 
-* I used "static" state for arrays on headers which is made by Python 3. "static" state saves SRAM space because binaries of arrays aren't stored in SRAM. However, "static" state needs to access to an external flash memory, and the M0+ bus is only one, i.e., the bus is burdened by both instructions and data, causing the malfunction of RP2040.
+* I used "static" state for arrays on headers which is made by Python 3. "static" state saves SRAM space because binaries of arrays aren't stored in SRAM. However, "static" state needs to access to an external flash memory, and the M0+ bus is only one, i.e., the bus is burdened by both instructions and data, causing the malfunction of RP2040. [For more detail, see Tricky XIP](#tricky-xip).
 
 * Pedals decides the middle point of the wave by the moving average. The number of moving average is fixed. The more number is slow to move the middle point. Whereas, the less number is fast, but is effected by the large peak of the wave.
 
 * I use a number table of a normal distribution for the correction to become the natural sound at each pedal. The normal distribution can be aliased as Gaussian distribution, i.e., this correction is well-known in the world of image processing.
 
 * ADC0 inputs an audio signal. Whereas, ADC1 and ADC2 input values of potentiometers to control effects.
+
+* The assignment of GPIO pins is configurable with CMakeLists.txt in lib/util_pedal_pico. GPIO numbers in descriptions as below are the default assignation.
 
 * GPIO14 and GPIO15 are inputs to make a three-point switch. Caution that GPIO14 and GPIO15 are internally pulled up (with 50K ohms according to page 633 of RP2040 Datasheet). The external resistor, such as 10K ohms resistor, is preferred to grounding each GPIO. Several pedals have output modes using this switch.
 
@@ -159,33 +168,55 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * About jitter noise, Pico is mainly depending on the crystal oscillator and the PLL. I tried not to change the interval to sample sound. I think the noise is reduced well in the chip.
 
-* The assignment of GPIO pins is configurable with CMakeLists.txt in lib/util_pedal_pico. GPIO numbers in descriptions as below are the default assignation.
-
 * The extension header, "util_pedal_pico_ex.h", has number tables. Not to meet duplicate declaration in compiling, the header is placed in files which include "main" functions, but not libraries. Note that in the primary "util_pedal_pico.h", number tables are referred with the "extern" keyword.
 
-* "pedal_buffer" is a just buffer. This also implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on GPIO14 sets the high attack, and the low state on GPIO15 sets the low attack and the feedback at the sustain.
+#### pedal_multi
 
-* "pedal_sideband" is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. Note that I renamed this pedal from "pedal_chorus" to "pedal_sideband", and I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. Outputs are added the pulsating wave. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the threshold to start the oscillator. Frequencies of main pulsating wave and sub pulsating wave are fixed so far. There are output modes. The low state on GPIO14 sets the regular gain, and the low state on GPIO15 sets the high gain.
+* Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO8 (Bit 0), GPIO9 (Bit 1), GPIO10 (Bit 2), and GPIO11 (Bit 3).
+  0. Buffer
+  1. Sideband
+  2. Chorus
+  3. Reverb
+  4. Room Reverb
+  5. Tape
+  6. Phaser
+  7. Planets
+  8. Distortion
+  9. Dist Reverb
+  10. Dist Planets
+  11. Fuzz Planets
+  12. Room Reverb (Reservation)
+  13. Tape (Reservation)
+  14. Phaser (Reservation)
+  15. Planets (Reservation)
 
-* "pedal_chorus" is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
+* Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on GPIO14 sets the high attack, and the low state on GPIO15 sets the low attack and the feedback at the sustain.
 
-* "pedal_reverb" is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
+* Sideband is hinted by a rotating fan which changes your voice. This effect by a rotating fan can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. In my testing, sine waves have harmonics by this pedal. I think this pedal is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this pedal not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. Outputs are added the pulsating wave. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the threshold to start the oscillator. Frequencies of main pulsating wave and sub pulsating wave are fixed so far. There are output modes. The low state on GPIO14 sets the regular gain, and the low state on GPIO15 sets the high gain.
 
-* "pedal_tape" is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator.
+* Chorus is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this pedal is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). This pedal uses a lot of processes and it spends 10us with +-5us and up to 20us per sampling cycle (this measurement uses USB output that would use the inner bus).
 
-* "pedal_phaser" is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes to change the depth of phaser (it's the delay time in fact).
+* Reverb is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
 
-* "pedal_planets" is using a band-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike "pedal_phaser", this pedal doesn't have any oscillator. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets high-pass filter mode. Note that it may be like a Wah-wah pedal. However, this uses a delay and sounds absolute digital.
+* Room Reverb is the combination of the reverb (reverberation) and the chorus. ADC0 is for the audio input, ADC1 is for the delay time of the reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the reverb. As a result, the chorus is like sound reflections of a room. I thought this combination makes natural reverb in a room. The sound of this pedal is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of the chorus is like in an open lobby of a hotel.
 
-* "pedal_distortion" is simulating non-linear amplification. ADC0 is for the audio input, ADC1 is for the level of the output. There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+* Tape is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator.
 
-* "pedal_looper" is a multi-track recording tool for approx. 29 seconds. ADC0 is for the audio input, ADC1 is for the level of the output and recording. GPIO14 acts as the button-1, and GPIO15 acts as the button-2, i.e., push for the low state, and release for the high state. On the first power-on, the pedal erases data in the region of the external flash memory for recording (blinking GPIO12 during erasing data in default). Hold the button-1 for two seconds also erases all data. After erasing data, the status of the pedal goes on pending. After power-on, the pedal also goes on pending. Push the button-2 to release from pending, and play existing sound tracks. Push the button-2 again to record a new track with existing tracks from the start (turning on GPIO 12 during recording in default). To stop recording, push the button-2, then the pedal starts to play tracks that the new track is added. To back to pending, push the button-1 (during recording, the button-1 isn't functioned). By backing to pending, the time to rewind is also reset. Note that the space for 29 seconds in the external flash memory can be allocated by storing the instruction code to SRAM on booting. The space in the flash memory is iteratively rewritten for recording. By attaching a microphone, this pedal would be a multi-track voice memo. Even in 2021, this voice memo can be a local media in a real community.
+* Phaser is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes to change the depth of phaser (it's the delay time in fact).
 
-* "pedal_roomreverb" is the combination of the reverb (reverberation) and the chorus. ADC0 is for the audio input, ADC1 is for the delay time of the reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the reverb. As a result, "pedal_chorus" is like sound reflections of a room. I thought the combination with the reverb makes natural reverb in a room. The sound of this pedal is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of "pedal_chorus" is like in an open lobby of a hotel.
+* Planets is using a band-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the phaser, this pedal doesn't have any oscillator. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets high-pass filter mode. Note that it may be like a Wah-wah pedal. However, this uses a delay and sounds absolute digital.
 
-* "pedal_distreverb" is the combination of the distortion and the reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+* Distortion is simulating non-linear amplification. ADC0 is for the audio input, ADC1 is for the level of the output. There are output modes. The low state on GPIO14 sets the fuzz mode. The low state on GPIO15 sets the high distortion mode.
 
-* "pedal_multi" has multiselection. You can select 8 pedals by GPIO9 (Bit 0), GPIO10 (Bit 1), and GPIO11 (Bit 2). Specifications are the same as each pedal you select.
+* Dist Reverb is the combination of the distortion and the reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+
+* Dist Planets is the combination of the distortion and the planets (band-pass filter). ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets high-pass filter mode. The mode of the distortion is fixed to the high distortion mode.
+
+* Fuzz Planets is almost the same as Dist Planets, but the mode of the distortion is fixed to the fuzz mode.
+
+#### pedal_looper
+
+* Executables, "pedal_looper" is a multi-track recording tool for approx. 29 seconds. ADC0 is for the audio input, ADC1 is for the level of the output and recording. GPIO14 acts as the button-1, and GPIO15 acts as the button-2, i.e., push for the low state, and release for the high state. On the first power-on, the pedal erases data in the region of the external flash memory for recording (blinking GPIO12 during erasing data in default). Hold the button-1 for two seconds also erases all data. After erasing data, the status of the pedal goes on pending. After power-on, the pedal also goes on pending. Push the button-2 to release from pending, and play existing sound tracks. Push the button-2 again to record a new track with existing tracks from the start (turning on GPIO 12 during recording in default). To stop recording, push the button-2, then the pedal starts to play tracks that the new track is added. To back to pending, push the button-1 (during recording, the button-1 isn't functioned). By backing to pending, the time to rewind is also reset. Note that the space for 29 seconds in the external flash memory can be allocated by storing the instruction code to SRAM on booting. The space in the flash memory is iteratively rewritten for recording. By attaching a microphone, this pedal would be a multi-track voice memo. Even in 2021, this voice memo can be a local media in a real community.
 
 ## Technical Notes
 

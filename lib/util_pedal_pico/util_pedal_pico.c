@@ -33,13 +33,14 @@ void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config) {
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
     #if UTIL_PEDAL_PICO_DEBUG
         stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
+        printf("@util_pedal_pico_init 1 - stdio is initialized.\n");
     #endif
     /* Turn Off XIP */
     #if PICO_COPY_TO_RAM
         void util_pedal_pico_xip_turn_off();
     #endif
     /* Assign Actual Array */
-    if (util_pedal_pico_ex_table_sine_1 != null) {
+    if (util_pedal_pico_ex_table_sine_1) { // NULL pointer returns false in ISO C Language
         util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
         util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
         util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
@@ -96,8 +97,8 @@ void util_pedal_pico_init_adc() {
 
 void util_pedal_pico_start() {
     if (! util_pedal_pico_obj) panic("util_pedal_pico_obj is not initialized.");
-    if (! util_pedal_pico_on_pwm_irq_wrap_handler) panic("util_pedal_pico_on_pwm_irq_wrap_handler is null.");
-    if (! util_pedal_pico_process) panic("util_pedal_pico_process is null.");
+    if (! util_pedal_pico_on_pwm_irq_wrap_handler) panic("util_pedal_pico_on_pwm_irq_wrap_handler is NULL.");
+    if (! util_pedal_pico_process) panic("util_pedal_pico_process is NULL.");
     /* PWM Settings */
     irq_set_exclusive_handler(PWM_IRQ_WRAP, util_pedal_pico_on_pwm_irq_wrap_handler);
     pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, UTIL_PEDAL_PICO_PWM_OFFSET);
@@ -129,7 +130,7 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
         adc_run(true); // Stable Starting Point after PWM IRQ
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
-    if (util_pedal_pico_process != null) {
+    if (util_pedal_pico_process != NULL) {
         util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
         /* Output */
         pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
@@ -285,20 +286,22 @@ void util_pedal_pico_wait() {
     #endif
 }
 
-void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2) {
+void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2, uchar8 gpio_bit_3) {
     util_pedal_pico_multi_set = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_process = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_free = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     /* Selector Configuration */
-    uint32 gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2;
+    uint32 gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2|0b1 << gpio_bit_3;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_bit_0);
     gpio_pull_up(gpio_bit_1);
     gpio_pull_up(gpio_bit_2);
+    gpio_pull_up(gpio_bit_3);
     util_pedal_pico_multi_gpio_bit_0 = gpio_bit_0;
     util_pedal_pico_multi_gpio_bit_1 = gpio_bit_1;
     util_pedal_pico_multi_gpio_bit_2 = gpio_bit_2;
+    util_pedal_pico_multi_gpio_bit_3 = gpio_bit_3;
     util_pedal_pico_multi_mode = 0xFF; // To Detect util_pedal_pico_multi_mode Including 0 at Initialization
     #if UTIL_PEDAL_PICO_DEBUG
         printf("@util_pedal_pico_init_multi 1 - util_pedal_pico_multi_set %08x\n", util_pedal_pico_multi_set);
@@ -308,13 +311,14 @@ void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpi
 }
 
 void util_pedal_pico_select_multi() {
-    uint32 status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2);
+    uint32 status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2|0b1 << util_pedal_pico_multi_gpio_bit_3);
     uchar8 status_bit = 0;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b001;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b010;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b100;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b0001;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b0010;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b0100;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_3))) status_bit |= 0b1000;
     if (util_pedal_pico_multi_mode != status_bit) {
-        util_pedal_pico_process = null;
+        util_pedal_pico_process = NULL;
         __dsb();
         if (util_pedal_pico_multi_mode != 0xFF) util_pedal_pico_multi_free[util_pedal_pico_multi_mode]();
         util_pedal_pico_multi_set[status_bit]();

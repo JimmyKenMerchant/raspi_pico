@@ -67,16 +67,20 @@ extern "C" {
 #warning "UTIL_PEDAL_PICO_PWM_2_GPIO is defined with the default value 17."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO 9
+#define UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO 8
 #warning "UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO is defined with the default value 9."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO 10
+#define UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO 9
 #warning "UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO is defined with the default value 10."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO 11
+#define UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO 10
 #warning "UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO is defined with the default value 11."
+#endif
+#ifndef UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO
+#define UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO 11
+#warning "UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO is defined with the default value 11."
 #endif
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
 #define UTIL_PEDAL_PICO_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds, Pass through Transient Response of Power
@@ -95,7 +99,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 #define UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX 9375
-#define UTIL_PEDAL_PICO_MULTI_LENGTH 8 // 3-bit Length
+#define UTIL_PEDAL_PICO_MULTI_LENGTH 16 // 4-bit Length
 
 /* Macros */
 #define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
@@ -127,6 +131,7 @@ volatile uint32 util_pedal_pico_debug_time;
 volatile uchar8 util_pedal_pico_multi_gpio_bit_0;
 volatile uchar8 util_pedal_pico_multi_gpio_bit_1;
 volatile uchar8 util_pedal_pico_multi_gpio_bit_2;
+volatile uchar8 util_pedal_pico_multi_gpio_bit_3;
 volatile uchar8 util_pedal_pico_multi_mode;
 volatile int32* util_pedal_pico_table_sine_1;
 volatile int32* util_pedal_pico_table_pdf_1;
@@ -159,7 +164,7 @@ void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
 void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
 void util_pedal_pico_wait();
-void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2);
+void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2, uchar8 gpio_bit_3);
 void util_pedal_pico_select_multi();
 void (**util_pedal_pico_multi_set)();
 void (**util_pedal_pico_multi_process)(uint16, uint16, uint16, uchar8);
