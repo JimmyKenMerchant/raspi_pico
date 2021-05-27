@@ -9,13 +9,13 @@
 * [Installation](#installation)
 
 * [Notes on Projects](#notes-on-projects)
-  * [Blinkers](blinkers)
-  * [Twin Dimmers](twin-dimmers)
-  * [Servo](servo)
-  * [Func](func)
-  * [Pedal](pedal)
-    * [pedal_multi](pedalmulti)
-    * [pedal_looper](pedallooper)
+  * [Blinkers](#blinkers)
+  * [Twin Dimmers](#twin-dimmers)
+  * [Servo](#servo)
+  * [Func](#func)
+  * [Pedal](#pedal)
+    * [pedal_multi](#pedal_multi)
+    * [pedal_looper](#pedal_looper)
 
 * [Technical Notes](#technical-notes)
 
@@ -173,22 +173,22 @@ gdb-multiarch blinkers/blinkdrs.elf
 #### pedal_multi
 
 * Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO8 (Bit 0), GPIO9 (Bit 1), GPIO10 (Bit 2), and GPIO11 (Bit 3).
-  0. Buffer
-  1. Sideband
-  2. Chorus
-  3. Reverb
-  4. Room Reverb
-  5. Tape
-  6. Phaser
-  7. Planets
-  8. Distortion
-  9. Dist Reverb
-  10. Dist Planets
-  11. Fuzz Planets
-  12. Room Reverb (Reservation)
-  13. Tape (Reservation)
-  14. Phaser (Reservation)
-  15. Planets (Reservation)
+  * 0: Buffer
+  * 1: Sideband
+  * 2: Chorus
+  * 3: Reverb
+  * 4: Room Reverb
+  * 5: Tape
+  * 6: Phaser
+  * 7: Planets
+  * 8: Distortion
+  * 9: Dist Reverb
+  * 10: Dist Planets
+  * 11: Fuzz Planets
+  * 12: Room Reverb (Reservation)
+  * 13: Tape (Reservation)
+  * 14: Phaser (Reservation)
+  * 15: Planets (Reservation)
 
 * Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on GPIO14 sets the high attack, and the low state on GPIO15 sets the low attack and the feedback at the sustain.
 
