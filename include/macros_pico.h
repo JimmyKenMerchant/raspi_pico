@@ -155,32 +155,23 @@ extern "C" {
 #ifndef bool
 #define bool unsigned char
 #endif
-#ifndef true
-#define true ((bool)1)
-#endif
-#ifndef false
-#define false ((bool)0)
-#endif
-#ifndef True
-#define True ((bool)1)
-#endif
-#ifndef False
-#define False ((bool)0)
+#ifndef FALSE
+#define FALSE ((bool)0)
 #endif
 #ifndef TRUE
 #define TRUE ((bool)1)
 #endif
-#ifndef FALSE
-#define FALSE ((bool)0)
+#ifndef false
+#define false FALSE
 #endif
-#ifndef null
-#define null 0
+#ifndef true
+#define true TRUE
 #endif
 #ifndef NULL
-#define NULL 0
+#define NULL ((void*)0) // As Integer Constant (#define NULL 0) or Pointer in Current ISO/IEC 9899
 #endif
-#ifndef Null
-#define Null 0
+#ifndef null
+#define null NULL
 #endif
 
 #define _wordsizeof(x) ((sizeof(x) + 3) / 4)

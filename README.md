@@ -16,6 +16,7 @@
   * [Pedal](#pedal)
     * [pedal_multi](#pedal_multi)
     * [pedal_looper](#pedal_looper)
+  * [QSPI Flash](#qspi_flash)
 
 * [Technical Notes](#technical-notes)
 
@@ -172,7 +173,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 #### pedal_multi
 
-* Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO8 (Bit 0), GPIO9 (Bit 1), GPIO10 (Bit 2), and GPIO11 (Bit 3).
+* Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO8 (Bit 0), GPIO9 (Bit 1), GPIO10 (Bit 2), and GPIO11 (Bit 3). Note that these pins are pulled up, and detect low states as bit-set.
   * 0: Buffer
   * 1: Sideband
   * 2: Chorus
@@ -217,6 +218,10 @@ gdb-multiarch blinkers/blinkdrs.elf
 #### pedal_looper
 
 * Executables, "pedal_looper" is a multi-track recording tool for approx. 29 seconds. ADC0 is for the audio input, ADC1 is for the level of the output and recording. GPIO14 acts as the button-1, and GPIO15 acts as the button-2, i.e., push for the low state, and release for the high state. On the first power-on, the pedal erases data in the region of the external flash memory for recording (blinking GPIO12 during erasing data in default). Hold the button-1 for two seconds also erases all data. After erasing data, the status of the pedal goes on pending. After power-on, the pedal also goes on pending. Push the button-2 to release from pending, and play existing sound tracks. Push the button-2 again to record a new track with existing tracks from the start (turning on GPIO 12 during recording in default). To stop recording, push the button-2, then the pedal starts to play tracks that the new track is added. To back to pending, push the button-1 (during recording, the button-1 isn't functioned). By backing to pending, the time to rewind is also reset. Note that the space for 29 seconds in the external flash memory can be allocated by storing the instruction code to SRAM on booting. The space in the flash memory is iteratively rewritten for recording. By attaching a microphone, this pedal would be a multi-track voice memo. Even in 2021, this voice memo can be a local media in a real community.
+
+### QSPI Flash
+
+* This is a test for reading and writing data from/into the external flash chip. The code of procedures to access the chip is included in the ROM of RP2040. The peripheral to access is SSI in XIP block (see the page 586 to 625 of RP2040 Datasheet). Contributed descriptions in RP2040 Datasheet also helps to know the system of XIP.
 
 ## Technical Notes
 
@@ -412,7 +417,7 @@ Thread 1 received signal SIGINT, Interrupt.
 0x14000010:	521934099
 ```
 
-* The difference is 0.0008 and 0.00087. This result shows increasing 0.08 percents of cache miss by accessing cacheable and allocatable. In 30 seconds, 400000 misses are increased and in a PWM wrapping cycle (30518Hz), 0.43 misses increased. This code has 3 data accesses to XIP region in a PWM wrapping cycle. The procedure, how the cache miss can makes the noise, is not revealed. I searched "execute-in-place" keyword in the Patent Search of [The Unites States Patent and Trademark Office](https://uspto.gov), and confirmed that this technology is outstanding. You can check references of these patents to know what this technology is. I think the technology of XIP is simple, and depending on the clock speed of the bus for the flash memory. In papers online, the technology of XIP tends to be emphasized as cost-efficient comparing to SRAM. I'm a not a board developer who supplies to factories, but to avoid glances from purchasers of factories, I would consider to cut invisible abilities of the chip. I point out that the code in the chip doesn't exhaust the ability of the MPU in the chip. MPU waits interrupts, and even sleeps. Especially, on synchronizing data, MPU has to wait for completion of transactions of data, i.e., MPU can't finish an instruction for a cycle. This is a reason the issue of the time delay isn't risen so far. XIP seems to be save the cost without tradeoff, but in fact, it has a possible time delay.
+* The difference is 0.0008 and 0.00087. This result shows increasing 0.08 percents of cache miss by accessing cacheable and allocatable. In 30 seconds, 400000 misses are increased and in a PWM wrapping cycle (30518Hz), 0.43 misses increased. This code has 3 data accesses to XIP region in a PWM wrapping cycle. The procedure, how the cache miss can makes the noise, is not revealed. I searched "execute-in-place" keyword in the Patent Search of [The Unites States Patent and Trademark Office](https://uspto.gov), and confirmed that this technology is outstanding. You can check references of these patents to know what this technology is. Besides, see the page 613 to 614 of RP2040 Datasheet to know the actual bus (APB) phenomenon in the chip. I think the technology of XIP is simple, and depending on the clock speed of the bus for the flash memory. In papers online, the technology of XIP tends to be emphasized as cost-efficient comparing to SRAM. I'm a not a board developer who supplies to factories, but to avoid glances from purchasers of factories, I would consider to cut invisible abilities of the chip. I point out that the code in the chip doesn't exhaust the ability of the MPU in the chip. MPU waits interrupts, and even sleeps. Especially, on synchronizing data, MPU has to wait for completion of transactions of data, i.e., MPU can't finish an instruction for a cycle. This is a reason the issue of the time delay isn't risen so far. XIP seems to be save the cost without tradeoff, but in fact, it has a possible time delay.
 
 * My hypothesis is that the noise is caused by the XIP unit. The cache miss via data access might make a trouble on the distribution system in the instruction cache of the XIP unit. I monitor Pico which sounds the noise using GDB. However, on the PWM IRQ handler, I haven't find out any register and memory space which tells any significant malfunction. You can see the page 11 and 61 to 62 of RP2040 Datasheet and confirm that the serial wire debug (SWD) is directly connected with cores, i.e., the phenomenon under the bus fabric is difficult to monitor. Reading XIP is fast as well as SRAM, but behind the interface of reading XIP, there is the external bus connected to the flash memory. It's like a bottle-neck which is on a branch of a tree, but the branch is actually big as well as its stem.
 

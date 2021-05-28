@@ -40,7 +40,7 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
         void util_pedal_pico_xip_turn_off();
     #endif
     /* Assign Actual Array */
-    if (util_pedal_pico_ex_table_sine_1) { // NULL pointer returns false in ISO C Language
+    if (util_pedal_pico_ex_table_sine_1) { // NULL pointer returns false in ISO/IEC 9899 C Language as of today.
         util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
         util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
         util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
