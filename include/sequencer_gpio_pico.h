@@ -18,6 +18,7 @@
 #include <stdlib.h>
 // Dependancies
 #include "pico/stdlib.h"
+#include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
 

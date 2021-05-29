@@ -19,6 +19,8 @@ sequencer_pwm_pico* sequencer_pwm_pico_init(uchar8 slice, uint16* sequence) {
     sequencer_pwm->sequence = sequence;
     sequencer_pwm->sequence_length = sequencer_pwm_pico_get_sequence_length(sequencer_pwm->sequence);
     sequencer_pwm->index = 0;
+    sequencer_pwm->sequence_interpolation = 0;
+    sequencer_pwm->sequence_interpolation_accum = 0;
     return sequencer_pwm;
 }
 
@@ -35,8 +37,14 @@ uint32 sequencer_pwm_pico_get_sequence_length(uint16* sequence) {
 bool sequencer_pwm_pico_execute(sequencer_pwm_pico* sequencer_pwm) {
     if (sequencer_pwm == null) return EXIT_FAILURE;
     if (sequencer_pwm->index >= sequencer_pwm->sequence_length) sequencer_pwm->index = 0;
-    pwm_set_chan_level(sequencer_pwm->slice & 0x7F, sequencer_pwm->slice & 0x80, sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF);
-    //printf("@sequencer_pwm_pico_execute 1 - sequencer_pwm->sequence[sequencer_pwm->index]: %d\n", sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF);
-    sequencer_pwm->index++;
+    if (sequencer_pwm->sequence_interpolation_accum) {
+        sequencer_pwm->sequence_interpolation = sequencer_pwm_pico_interpolate(sequencer_pwm->sequence_interpolation, sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF, sequencer_pwm->sequence_interpolation_accum);
+    } else {
+        sequencer_pwm->sequence_interpolation = sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF;
+    }
+    pwm_set_chan_level(sequencer_pwm->slice & 0x7F, sequencer_pwm->slice & 0x80, sequencer_pwm->sequence_interpolation);
+    //printf("@sequencer_pwm_pico_execute 1 - sequencer_pwm->index: %d\n", sequencer_pwm->index);
+    //printf("@sequencer_pwm_pico_execute 2 - sequencer_pwm->sequence[sequencer_pwm->index]: %d\n", sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF);
+    //printf("@sequencer_pwm_pico_execute 3 - sequencer_pwm->sequence_interpolation: %d\n", sequencer_pwm->sequence_interpolation & 0x7FFF);
     return EXIT_SUCCESS;
 }

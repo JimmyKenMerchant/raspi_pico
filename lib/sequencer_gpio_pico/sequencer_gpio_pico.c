@@ -30,8 +30,8 @@ sequencer_gpio_pico* sequencer_gpio_pico_init(uchar8* pinlist, uint32 pinlist_le
     //printf("@sequencer_gpio_pico_init 3 - GPIO-25 Direction: %d\n", gpio_is_dir_out(25));
     sequencer_gpio->sequence_length = sequencer_gpio_pico_get_sequence_length(sequencer_gpio->sequence);
     sequencer_gpio->index = 0;
-    __asm__("dsb");
-    __asm__("isb");
+    __dsb();
+    __isb();
     return sequencer_gpio;
 }
 

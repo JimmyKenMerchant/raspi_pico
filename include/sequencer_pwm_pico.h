@@ -19,6 +19,7 @@
 // Dependancies
 #include "pico/stdlib.h"
 #include "hardware/pwm.h"
+#include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
 
@@ -27,22 +28,24 @@ extern "C" {
 #endif
 
 /* Definitions */
-
 #define SEQUENCER_PWM_PICO_SEQUENCE_LENGTH_MAXIMUM 0xFFFF
 
-/* Structs */
+/* Macros */
+#define sequencer_pwm_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
 
+/* Structs */
 typedef struct {
     uchar8 slice; // Bit[7] Clear for A, Set for B. Bit[6:0] Slice Number
     // Clearing MSB in sequencer_pwm_pico->sequence[] shows the end of the sequence.
     // That is the resolution is 32768.
     uint16* sequence;
-    uint32 sequence_length; // Length of sequences[0][]
+    uint32 sequence_length; // Length of sequences
     uint32 index;
+    uint16 sequence_interpolation; // Accumulated Value in Interpolation
+    uint16 sequence_interpolation_accum; // Unit Value to Accumlate in Interpolation. 0 is no interpolation.
 } sequencer_pwm_pico;
 
 /* Functions */
-
 sequencer_pwm_pico* sequencer_pwm_pico_init(uchar8 slice, uint16* sequence);
 uint32 sequencer_pwm_pico_get_sequence_length(uint16* sequence);
 bool sequencer_pwm_pico_execute(sequencer_pwm_pico* sequencer_pwm);

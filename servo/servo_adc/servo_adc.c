@@ -23,9 +23,43 @@
 
 #define SERVO_PWM_1_GPIO 2
 #define SERVO_ADC_0_GPIO 26
-#define SERVO_PWM_THRESHOLD (255/16) >> 2 // Maximum Value (0xFF = 255) of ADC Divide by Number of Array of servo_sequence (16), Expecting 15
+#define SERVO_PWM_THRESHOLD 0x3 // Range is 0x0-0xFF (0-255) Divided by 0x8 for 0x0-0x1F (0-31), (0x8 >> 1) - 1.
 
-uint16 servo_sequence[] = {0x8000|720,0x8000|720,0x8000|800,0x8000|880,0x8000|960,0x8000|1040,0x8000|1120,0x8000|1200,0x8000|1200,0x8000|1280,0x8000|1360,0x8000|1440,0x8000|1520,0x8000|1600,0x8000|1680,0x8000|1680,0x0000}; // Clear MSB to Show End of Sequence, 900-2100us (120 degrees)
+uint16 servo_sequence[] = {
+    0x8000|720,
+    0x8000|720,
+    0x8000|720,
+    0x8000|760,
+    0x8000|800,
+    0x8000|840,
+    0x8000|880,
+    0x8000|920,
+    0x8000|960,
+    0x8000|1000,
+    0x8000|1040,
+    0x8000|1080,
+    0x8000|1120,
+    0x8000|1160,
+    0x8000|1200,
+    0x8000|1200,
+    0x8000|1200,
+    0x8000|1200,
+    0x8000|1240,
+    0x8000|1280,
+    0x8000|1320,
+    0x8000|1360,
+    0x8000|1400,
+    0x8000|1440,
+    0x8000|1480,
+    0x8000|1520,
+    0x8000|1560,
+    0x8000|1600,
+    0x8000|1640,
+    0x8000|1680,
+    0x8000|1680,
+    0x8000|1680,
+    0x0000
+}; // Clear MSB to Show End of Sequence, 900-2100us (120 degrees)
 
 sequencer_pwm_pico* servo_the_sequencer_1;
 
@@ -55,9 +89,11 @@ int main(void) {
     pwm_config_set_clkdiv(&config, 156.25f); // Set Clock Divider, 125,000,000 Divided by 156.25 for 1.25us Cycle
     pwm_config_set_wrap(&config, 9999); // 0-9999, 10,000 Cycles for 12.5ms
     pwm_init(servo_pwm_slice_num, &config, false); // Push Configufation
-    pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, servo_sequence[7] & 0x7FFF); // Assuming Channel A, 1500us
+    pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, servo_sequence[15] & 0x7FFF); // Assuming Channel A, 1500us
     // PWM Sequence Settings
     servo_the_sequencer_1 = sequencer_pwm_pico_init((SERVO_PWM_1_GPIO % 2) << 7|(SERVO_PWM_1_GPIO / 2), servo_sequence);
+    servo_the_sequencer_1->sequence_interpolation = servo_sequence[15] & 0x7FFF;
+    servo_the_sequencer_1->sequence_interpolation_accum = 0x8;
     printf("@main 1 - servo_the_sequencer_1->sequence_length: %d\n", servo_the_sequencer_1->sequence_length);
     /* ADC Settings */
     adc_init();
@@ -69,7 +105,7 @@ int main(void) {
     irq_set_exclusive_handler(ADC_IRQ_FIFO, servo_on_adc_irq_fifo);
     irq_set_priority(ADC_IRQ_FIFO, 0xFF); // Highest Priority
     adc_irq_set_enabled(true);
-    servo_conversion_1 = 112; // >> 4 Makes 7
+    servo_conversion_1 = 127; // >> 3 Makes 15
     servo_conversion_1_temp = 0;
     /* Start IRQ, PWM and ADC */
     irq_set_mask_enabled(0b1 << PWM_IRQ_WRAP|0b1 << ADC_IRQ_FIFO, true);
@@ -88,11 +124,12 @@ void servo_on_pwm_irq_wrap() {
     pwm_clear_irq(servo_pwm_slice_num);
     if (abs(servo_conversion_1_temp - servo_conversion_1) > SERVO_PWM_THRESHOLD) {
         servo_conversion_1 = servo_conversion_1_temp;
-        servo_the_sequencer_1->index = servo_conversion_1 >> 4;
-        sequencer_pwm_pico_execute(servo_the_sequencer_1);
+        servo_the_sequencer_1->index = servo_conversion_1 >> 3;
     }
+    sequencer_pwm_pico_execute(servo_the_sequencer_1);
     //pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, (servo_conversion_1 >> 4) << 4);
     //printf("@servo_on_pwm_irq_wrap 1 - servo_conversion_1: %d\n", servo_conversion_1);
+    //printf("@servo_on_pwm_irq_wrap 2 - servo_the_sequencer_1->index: %d\n", servo_the_sequencer_1->index);
     if (! servo_is_outstanding_on_adc) {
         servo_is_outstanding_on_adc = true;
         adc_select_input(0); // Ensure to Start from A0
