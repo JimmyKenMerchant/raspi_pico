@@ -91,7 +91,7 @@ int main(void) {
     pwm_init(servo_pwm_slice_num, &config, false); // Push Configufation
     pwm_set_chan_level(servo_pwm_slice_num, servo_pwm_channel, servo_sequence[15] & 0x7FFF); // Assuming Channel A, 1500us
     // PWM Sequence Settings
-    servo_the_sequencer_1 = sequencer_pwm_pico_init((SERVO_PWM_1_GPIO % 2) << 7|(SERVO_PWM_1_GPIO / 2), servo_sequence);
+    servo_the_sequencer_1 = sequencer_pwm_pico_init(servo_pwm_channel << 7|servo_pwm_slice_num, servo_sequence);
     servo_the_sequencer_1->sequence_interpolation = servo_sequence[15] & 0x7FFF;
     servo_the_sequencer_1->sequence_interpolation_accum = 0x8;
     printf("@main 1 - servo_the_sequencer_1->sequence_length: %d\n", servo_the_sequencer_1->sequence_length);

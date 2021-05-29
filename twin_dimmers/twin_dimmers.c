@@ -67,8 +67,8 @@ int main(void) {
     pwm_set_chan_level(twin_dimmers_pwm_slice_num, twin_dimmers_pwm_channel, 0); // Assuming Channel A
     pwm_set_chan_level(twin_dimmers_pwm_slice_num, twin_dimmers_pwm_channel + 1, 0); // Assuming Channel B
     // PWM Sequence Settings
-    twin_dimmers_the_sequencer_1 = sequencer_pwm_pico_init((TWIN_DIMMERS_PWM_1_GPIO % 2) << 7|(TWIN_DIMMERS_PWM_1_GPIO / 2), twin_dimmers_sequence);
-    twin_dimmers_the_sequencer_2 = sequencer_pwm_pico_init((TWIN_DIMMERS_PWM_2_GPIO % 2) << 7|(TWIN_DIMMERS_PWM_2_GPIO / 2), twin_dimmers_sequence);
+    twin_dimmers_the_sequencer_1 = sequencer_pwm_pico_init(twin_dimmers_pwm_channel << 7|twin_dimmers_pwm_slice_num, twin_dimmers_sequence); // Assuming Channel A
+    twin_dimmers_the_sequencer_2 = sequencer_pwm_pico_init((twin_dimmers_pwm_channel + 1) << 7|twin_dimmers_pwm_slice_num, twin_dimmers_sequence); // Assuming Channel B
     printf("@main 1 - twin_dimmers_the_sequencer_1->sequence_length: %d\n", twin_dimmers_the_sequencer_1->sequence_length);
     /* ADC Settings */
     adc_init();

@@ -42,7 +42,7 @@ bool sequencer_pwm_pico_execute(sequencer_pwm_pico* sequencer_pwm) {
     } else {
         sequencer_pwm->sequence_interpolation = sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF;
     }
-    pwm_set_chan_level(sequencer_pwm->slice & 0x7F, sequencer_pwm->slice & 0x80, sequencer_pwm->sequence_interpolation);
+    pwm_set_chan_level(sequencer_pwm->slice & 0x7F, (sequencer_pwm->slice & 0x80) >> 7, sequencer_pwm->sequence_interpolation);
     //printf("@sequencer_pwm_pico_execute 1 - sequencer_pwm->index: %d\n", sequencer_pwm->index);
     //printf("@sequencer_pwm_pico_execute 2 - sequencer_pwm->sequence[sequencer_pwm->index]: %d\n", sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF);
     //printf("@sequencer_pwm_pico_execute 3 - sequencer_pwm->sequence_interpolation: %d\n", sequencer_pwm->sequence_interpolation & 0x7FFF);
