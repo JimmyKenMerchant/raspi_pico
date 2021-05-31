@@ -30,9 +30,6 @@ extern "C" {
 /* Definitions */
 #define SEQUENCER_PWM_PICO_SEQUENCE_LENGTH_MAXIMUM 0xFFFF
 
-/* Macros */
-#define sequencer_pwm_pico_interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
-
 /* Structs */
 typedef struct {
     uchar8 slice; // Bit[7] Clear for A, Set for B. Bit[6:0] Slice Number

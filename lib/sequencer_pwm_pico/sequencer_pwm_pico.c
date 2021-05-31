@@ -38,7 +38,7 @@ bool sequencer_pwm_pico_execute(sequencer_pwm_pico* sequencer_pwm) {
     if (sequencer_pwm == null) return EXIT_FAILURE;
     if (sequencer_pwm->index >= sequencer_pwm->sequence_length) sequencer_pwm->index = 0;
     if (sequencer_pwm->sequence_interpolation_accum) {
-        sequencer_pwm->sequence_interpolation = sequencer_pwm_pico_interpolate(sequencer_pwm->sequence_interpolation, sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF, sequencer_pwm->sequence_interpolation_accum);
+        sequencer_pwm->sequence_interpolation = _interpolate(sequencer_pwm->sequence_interpolation, sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF, sequencer_pwm->sequence_interpolation_accum);
     } else {
         sequencer_pwm->sequence_interpolation = sequencer_pwm->sequence[sequencer_pwm->index] & 0x7FFF;
     }

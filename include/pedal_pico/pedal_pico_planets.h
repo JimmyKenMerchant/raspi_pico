@@ -33,18 +33,17 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_PLANETS_COEFFICIENT_PEAK (int32)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT 10 // Multiply by 2048 (0x00000800-0x00007C00)
+#define PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT 10 // Multiply by 1024 (0x01-0x20 to 0x00000400-0x00008000)
 #define PEDAL_PICO_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 0x80 // Value to Accumulate
-#define PEDAL_PICO_PLANETS_DELAY_TIME_MAX 257 // Don't Use Delay Time = 0
-#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT 3 // Multiply by 8 (8-256)
+#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT 3 // Multiply by 8 (1-32 to 8-256)
+#define PEDAL_PICO_PLANETS_DELAY_TIME_MAX (((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 4 // Value to Accumulate, Small Value Makes Froggy
 
 volatile util_pedal_pico* pedal_pico_planets;
 volatile uint16 pedal_pico_planets_conversion_1;
 volatile uint16 pedal_pico_planets_conversion_2;
 volatile uint16 pedal_pico_planets_conversion_3;
-volatile int32 pedal_pico_planets_coefficient;
+volatile int32 pedal_pico_planets_coefficient; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 volatile int32 pedal_pico_planets_coefficient_interpolation;
 volatile int16* pedal_pico_planets_delay_x;
 volatile int16* pedal_pico_planets_delay_y;

@@ -18,8 +18,8 @@ void pedal_pico_reverb_set() {
     pedal_pico_reverb_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_reverb_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_reverb_delay_array = (int16*)calloc(PEDAL_PICO_REVERB_DELAY_TIME_MAX, sizeof(int16));
-    pedal_pico_reverb_delay_amplitude = (int32)(pedal_pico_reverb_conversion_2 >> 7) << PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
-    uint16 delay_time = (pedal_pico_reverb_conversion_3 >> 7) << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_reverb_delay_amplitude = (int32)(pedal_pico_reverb_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    uint16 delay_time = (pedal_pico_reverb_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply
     pedal_pico_reverb_delay_time = delay_time;
     pedal_pico_reverb_delay_time_interpolation = delay_time;
     pedal_pico_reverb_delay_index = 0;
@@ -29,13 +29,13 @@ void pedal_pico_reverb_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_reverb_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_reverb_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_reverb_conversion_2 = conversion_2;
-        pedal_pico_reverb_delay_amplitude = (int32)(pedal_pico_reverb_conversion_2 >> 7) << PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_pico_reverb_delay_amplitude = (int32)(pedal_pico_reverb_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     if (abs(conversion_3 - pedal_pico_reverb_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_reverb_conversion_3 = conversion_3;
-        pedal_pico_reverb_delay_time = (pedal_pico_reverb_conversion_3 >> 7) << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply Multiply
+        pedal_pico_reverb_delay_time = (pedal_pico_reverb_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Multiply Multiply
     }
-    pedal_pico_reverb_delay_time_interpolation = util_pedal_pico_interpolate(pedal_pico_reverb_delay_time_interpolation, pedal_pico_reverb_delay_time, PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM);
+    pedal_pico_reverb_delay_time_interpolation = _interpolate(pedal_pico_reverb_delay_time_interpolation, pedal_pico_reverb_delay_time, PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM);
     int32 normalized_1 = (int32)pedal_pico_reverb_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:

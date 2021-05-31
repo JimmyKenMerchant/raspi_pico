@@ -20,8 +20,8 @@ void pedal_pico_sideband_set() {
     pedal_pico_sideband_osc_sine_1_index = 0;
     pedal_pico_sideband_osc_sine_2_index = 0;
     pedal_pico_sideband_osc_amplitude = PEDAL_PICO_SIDEBAND_OSC_AMPLITUDE_PEAK;
-    pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
-    pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> 7) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
+    pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_pico_sideband_osc_start_count = 0;
 }
 
@@ -29,11 +29,11 @@ void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint1
     pedal_pico_sideband_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_sideband_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sideband_conversion_2 = conversion_2;
-        pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> 7; // Make 5-bit Value (0-31)
+        pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3 - pedal_pico_sideband_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sideband_conversion_3 = conversion_3;
-        pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> 7) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
     int32 normalized_1 = (int32)pedal_pico_sideband_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**

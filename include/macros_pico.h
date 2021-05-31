@@ -175,10 +175,9 @@ extern "C" {
 #endif
 
 #define _wordsizeof(x) ((sizeof(x) + 3) / 4)
-
 #define _max(x, y) ((x) > (y) ? (x) : (y))
-
 #define _min(x, y) ((x) < (y) ? (x) : (y))
+#define _interpolate(x, y, z) ((x) == (y) ? (x) : ((x) > (y) ? (x - z) : (x + z))) // x: Base, y: Purpose, z: Value to Accumulate
 
 #ifdef __cplusplus
 }

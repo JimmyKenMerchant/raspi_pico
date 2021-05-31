@@ -17,12 +17,12 @@ void pedal_pico_planets_set() {
     pedal_pico_planets_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_planets_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    int32 coefficient = ((pedal_pico_planets_conversion_2 >> 7) + 1) << PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    int32 coefficient = ((pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     pedal_pico_planets_coefficient = coefficient;
     pedal_pico_planets_coefficient_interpolation = coefficient;
     pedal_pico_planets_delay_x = (int16*)calloc(PEDAL_PICO_PLANETS_DELAY_TIME_MAX, sizeof(int16));
     pedal_pico_planets_delay_y = (int16*)calloc(PEDAL_PICO_PLANETS_DELAY_TIME_MAX, sizeof(int16));
-    uint16 delay_time = ((pedal_pico_planets_conversion_3 >> 7) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
+    uint16 delay_time = ((pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
     pedal_pico_planets_delay_time = delay_time;
     pedal_pico_planets_delay_time_interpolation = delay_time;
     pedal_pico_planets_delay_index = 0;
@@ -32,14 +32,14 @@ void pedal_pico_planets_process(uint16 conversion_1, uint16 conversion_2, uint16
     pedal_pico_planets_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_planets_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_planets_conversion_2 = conversion_2;
-        pedal_pico_planets_coefficient = ((pedal_pico_planets_conversion_2 >> 7) + 1) << PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_pico_planets_coefficient = ((pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
     if (abs(conversion_3 - pedal_pico_planets_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_planets_conversion_3 = conversion_3;
-        pedal_pico_planets_delay_time = ((pedal_pico_planets_conversion_3 >> 7) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
+        pedal_pico_planets_delay_time = ((pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
     }
-    pedal_pico_planets_coefficient_interpolation = util_pedal_pico_interpolate(pedal_pico_planets_coefficient_interpolation, pedal_pico_planets_coefficient, PEDAL_PICO_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
-    pedal_pico_planets_delay_time_interpolation = util_pedal_pico_interpolate(pedal_pico_planets_delay_time_interpolation, pedal_pico_planets_delay_time, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);
+    pedal_pico_planets_coefficient_interpolation = _interpolate(pedal_pico_planets_coefficient_interpolation, pedal_pico_planets_coefficient, PEDAL_PICO_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM);
+    pedal_pico_planets_delay_time_interpolation = _interpolate(pedal_pico_planets_delay_time_interpolation, pedal_pico_planets_delay_time, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);
     int32 normalized_1 = (int32)pedal_pico_planets_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
@@ -63,9 +63,9 @@ void pedal_pico_planets_process(uint16 conversion_1, uint16 conversion_2, uint16
     if (sw_mode == 1) {
         mixed_1 = low_pass_1;
     } else if (sw_mode == 2) {
-        mixed_1 = high_pass_1;
-    } else {
         mixed_1 = low_pass_1;
+    } else {
+        mixed_1 = high_pass_1;
     }
     /* Output */
     pedal_pico_planets->output_1 = util_pedal_pico_cutoff_biased(mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);

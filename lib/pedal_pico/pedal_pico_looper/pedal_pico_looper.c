@@ -19,7 +19,7 @@ void pedal_pico_looper_set(uchar8 indicator_led_gpio) {
     pedal_pico_looper_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> 7); // Make 5-bit Value (1-32)
+    pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)
     //uchar8* binary_end = (uchar8*)&__flash_binary_end;
     pedal_pico_looper_flash = (uchar8*)(&__pedal_pico_looper_flash + FLASH_SECTOR_SIZE); // Offset for Reserve
     if ((uint32)pedal_pico_looper_flash % FLASH_SECTOR_SIZE) pedal_pico_looper_flash = (uchar8*)(((uint32)pedal_pico_looper_flash + FLASH_SECTOR_SIZE) & ~(0xFFFFFFFF & (FLASH_SECTOR_SIZE - 1))); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
@@ -53,7 +53,7 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_looper_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_looper_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_looper_conversion_2 = conversion_2;
-        pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> 7); // Make 5-bit Value (1-32)
+        pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)
     }
     if (abs(conversion_3 - pedal_pico_looper_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_looper_conversion_3 = conversion_3;

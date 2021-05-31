@@ -21,10 +21,10 @@ void pedal_pico_chorus_set() {
     pedal_pico_chorus_delay_amplitude = PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1;
     pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1;
     pedal_pico_chorus_delay_index = 0;
-    pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> 7; // Make 5-bit Value (0-31)
+    pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_chorus_osc_sine_1_index = 0;
     pedal_pico_chorus_lr_distance_array =  (int16*)calloc(PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16));
-    uint16 lr_distance_time = (pedal_pico_chorus_conversion_3 >> 7) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    uint16 lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_pico_chorus_lr_distance_time = lr_distance_time;
     pedal_pico_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_pico_chorus_lr_distance_index = 0;
@@ -34,14 +34,21 @@ void pedal_pico_chorus_process(uint16 conversion_1, uint16 conversion_2, uint16 
     pedal_pico_chorus_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_chorus_conversion_2 = conversion_2;
-        pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> 7; // Make 5-bit Value (0-31)
+        pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3 - pedal_pico_chorus_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_chorus_conversion_3 = conversion_3;
-        pedal_pico_chorus_lr_distance_time = (pedal_pico_chorus_conversion_3 >> 7) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+        pedal_pico_chorus_lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
-    pedal_pico_chorus_lr_distance_time_interpolation = util_pedal_pico_interpolate(pedal_pico_chorus_lr_distance_time_interpolation, pedal_pico_chorus_lr_distance_time, PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM);
+    pedal_pico_chorus_lr_distance_time_interpolation = _interpolate(pedal_pico_chorus_lr_distance_time_interpolation, pedal_pico_chorus_lr_distance_time, PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM);
     int32 normalized_1 = (int32)pedal_pico_chorus_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
+    if (sw_mode == 1) {
+        pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1;
+    } else if (sw_mode == 2) {
+        pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_3;
+    } else {
+        pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_2;
+    }
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.

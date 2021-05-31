@@ -20,9 +20,9 @@ void pedal_pico_tape_set() {
     pedal_pico_tape_delay_array = (int16*)calloc(PEDAL_PICO_TAPE_DELAY_TIME_MAX, sizeof(int16));
     pedal_pico_tape_delay_amplitude = PEDAL_PICO_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1;
     pedal_pico_tape_delay_time = PEDAL_PICO_TAPE_DELAY_TIME_FIXED_1;
-    pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> 7) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_pico_tape_delay_index = 0;
-    pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> 7; // Make 5-bit Value (0-31)
+    pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_tape_osc_sine_1_index = 0;
     pedal_pico_tape_osc_is_negative = false;
 }
@@ -31,11 +31,11 @@ void pedal_pico_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 co
     pedal_pico_tape_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_tape_conversion_2 = conversion_2;
-        pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> 7) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     if (abs(conversion_3 - pedal_pico_tape_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_tape_conversion_3 = conversion_3;
-        pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> 7; // Make 5-bit Value (0-31)
+        pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     }
     int32 normalized_1 = (int32)pedal_pico_tape_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**

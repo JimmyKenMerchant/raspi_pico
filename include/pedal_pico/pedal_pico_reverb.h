@@ -33,10 +33,9 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_PEAK (int32)(0x0000F000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT 11
-#define PEDAL_PICO_REVERB_DELAY_TIME_MAX 7937
-#define PEDAL_PICO_REVERB_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-7936), 7936 Divided by 28125 (0.28 Seconds)
+#define PEDAL_PICO_REVERB_DELAY_AMPLITUDE_SHIFT 11 // Multiply by 2048 (0x00000000-0x0000F800)
+#define PEDAL_PICO_REVERB_DELAY_TIME_SHIFT 8 // Multiply by 256 (0-7936), 7936 Divided by 28125 (0.28 Seconds)
+#define PEDAL_PICO_REVERB_DELAY_TIME_MAX ((UTIL_PEDAL_PICO_ADC_RESOLUTION << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM 1
 
 volatile util_pedal_pico* pedal_pico_reverb;
