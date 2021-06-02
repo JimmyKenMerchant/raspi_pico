@@ -46,6 +46,7 @@
 
 ```bash
 # Install Packages to Be Needed
+# Command "c++" is an alias of "gcc" with implicit "libstdc++" (gcc recognizes files with ".cpp" extension).
 sudo apt update
 sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
 sudo apt install libstdc++-arm-none-eabi-newlib
@@ -197,23 +198,23 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Chorus is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this effect is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). There are output modes to change the delay time.
 
-* Reverb is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
+* Reverb (reverberation) is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
 
-* Room Reverb is the combination of the reverb (reverberation) and the chorus. ADC0 is for the audio input, ADC1 is for the delay time of the reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the reverb. As a result, the chorus is like sound reflections of a room. I thought this combination makes natural reverb in a room. The sound of this effect is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of the chorus is like in an open lobby of a hotel.
+* Room Reverb is the combination of the Reverb and the Chorus. ADC0 is for the audio input, ADC1 is for the delay time of the Reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the room size. As a result, the Chorus is like sound reflections of a room. I thought this combination makes natural reverberation in a room. The sound of this effect is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of the Chorus is like in an open lobby of a hotel.
 
 * Tape is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator.
 
-* Phaser is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes to change the depth of phaser (it's the delay time in fact).
+* Phaser is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes to change the depth of the Phaser (it's the delay time in fact).
 
-* Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the phaser, this effect doesn't have any oscillator. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. Caution that this effect easily makes resonance by high level input on the high value of the coefficient.
+* Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. Caution that this effect easily makes resonance by high level input on the high value of the coefficient.
 
 * Distortion is simulating non-linear amplification. ADC0 is for the audio input, ADC1 is for the level of the output. There are output modes. The low state on GPIO14 sets the fuzz mode. The low state on GPIO15 sets the high distortion mode.
 
-* Dist Reverb is the combination of the distortion and the reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
+* Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on GPIO14 sets fuzz mode. The low state on GPIO15 sets high distortion mode.
 
-* Dist Planets is the combination of the distortion and the planets (band-pass filter). ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes. The low state on GPIO14 sets low-pass filter mode. The low state on GPIO15 sets high-pass filter mode. The mode of the distortion is fixed to the high distortion mode.
+* Dist Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the high distortion mode.
 
-* Fuzz Planets is almost the same as Dist Planets, but the mode of the distortion is fixed to the fuzz mode.
+* Fuzz Planets is almost the same as Dist Planets, but the mode of the Distortion is fixed to the fuzz mode.
 
 #### pedal_looper
 
@@ -255,6 +256,10 @@ func_debug_time = time_us_32() - from_time;
 * RP2040 has 5 ADC inputs (ADC0-4), and ADC4 is dedicated for a implemented temperature sensor. Pico can be freely used 3 ADC inputs, and ADC3 is connected to the VSYS/3 measurement (see page 7 and page 24 of Raspberry Pi Pico Datasheet). Third-party RP2040 hardware may be able to use 4 ADC inputs. You also see page 579 of RP2040 Datasheet to check the note which describes existence of diodes on ADC inputs. However, for safety, you need a zener diode to GND on the audio input. The input impedance is 100K ohms at minimum (see page 634 of RP2040 Datasheet). This impedance is small as an input from a coil pick up of an electric guitar, and the direct connection apparently reduces the harmonics in my experience.
 
 * Pico executes commands from the external flash memory in default (see page 273 of Raspberry Pi Pico C/C++ SDK). This means the external flash memory is always busy, and it seems to be difficult to access as a data storage like SRAM. For example, data arrays with "static" modifiers don't occupy the space of SRAM. However, in my experience, the modifier seems to cause the malfunction because Pico accesses to the flash memory for both instructions and data on a bus at the same time. The solution is use immediate values embedded in instructions. [For more detail, see Tricky XIP](#tricky-xip).
+
+* See the Atomic Register Access in the page 18 of RP2040 Datasheet, and offsets of addresses for peripherals make atomic accesses, XOR, SET, and CLEAR.
+
+* In making code, I'm approaching with object-oriented thought even in C language. In my view of object-oriented equals standardization, i.e., the unique code in executables should be minimum, and the common code in libraries should be maximum. Watch out the change between v.0.8a and v.0.9b, and codes of executables in pedal are standardized into libraries. As a result, I integrated pedals into [pedal_multi](#pedal_multi).
 
 **C Language**
 
@@ -426,12 +431,28 @@ Thread 1 received signal SIGINT, Interrupt.
 ## Version History
 
 * 0.9 Beta (v0.9b) - 05/21/2021
-  * pico-sdk 1.1.2
+  * Tools and Versions:
+    * pico-sdk 1.1.2
+    * gcc version 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907] (15:7-2018-q2-6)
+    * libstdc++-arm-none-eabi-newlib 15:7-2018-q2-5+12
+    * GNU assembler version 2.31.1 (arm-none-eabi) using BFD version (2.31.1-11+rpi1+11) 2.31.1
+    * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
+    * cmake version 3.16.3
+    * GNU Make 4.2.1
+    * Raspbian GNU/Linux 10 (buster)
   * Evaluate Minor Bugs on Software
   * Test with Developing Hardware
 
 * 0.8 Alpha (v0.8a) - 04/20/2021
-  * pico-sdk 1.1.2
+  * Tools and Versions:
+    * pico-sdk 1.1.2
+    * gcc version 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907] (15:7-2018-q2-6)
+    * libstdc++-arm-none-eabi-newlib 15:7-2018-q2-5+12
+    * GNU assembler version 2.31.1 (arm-none-eabi) using BFD version (2.31.1-11+rpi1+11) 2.31.1
+    * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
+    * cmake version 3.16.3
+    * GNU Make 4.2.1
+    * Raspbian GNU/Linux 10 (buster)
   * Evaluate Major Bugs on Software
   * Evaluate Performances of Chip and Board
 

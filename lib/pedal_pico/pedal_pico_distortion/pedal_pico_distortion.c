@@ -17,14 +17,14 @@ void pedal_pico_distortion_set() {
     pedal_pico_distortion_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_distortion_loss = 32 - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)
+    pedal_pico_distortion_loss = (UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (32-1)
 }
 
 void pedal_pico_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     pedal_pico_distortion_conversion_1 = conversion_1;
     if (abs(conversion_2 - pedal_pico_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_distortion_conversion_2 = conversion_2;
-        pedal_pico_distortion_loss = 32 - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)
+        pedal_pico_distortion_loss = (UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (32-1)
     }
     if (abs(conversion_3 - pedal_pico_distortion_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_distortion_conversion_3 = conversion_3;
