@@ -148,7 +148,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * This project is making several types of guitar pedals.
 
-* Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels).
+* Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels). For reference, [I uploaded a schematic](assets/schematics/pedal_pico.pdf). This schematic applies a difference amplifier referencing [A Deeper Look into Difference Amplifiers by Harry Holt](https://www.analog.com/en/analog-dialogue/articles/deeper-look-into-difference-amplifiers.html). The pins layout of Pico is derived from [RP_Silicon_KiCad](https://github.com/HeadBoffin/RP_Silicon_KiCad). Note that the 3D image for KiCad is [https://github.com/ncarandini/KiCad-RP-Pico](https://github.com/ncarandini/KiCad-RP-Pico). As long as an OpAmp can sink electric current, the output voltage can be negative even if the power source is only positive.
 
 * Now on testing the durability and searching situations on happening the malfunction with audio input and output. Ripple voltage on power causes the malfunction (VERY NOISY). The ripple occurs from static electricity and so on. Grounding with 1M ohms and ripple filters seem to be effective for the malfunction so far. Especially, in addition to C2 of Pico, a 47uF 6.3V chip, more bypass capacitors to 3V3 are needed for audio input and output (see [EEVblog](https://www.eevblog.com/2016/03/11/eevblog-859-bypass-capacitor-tutorial/)!). I used a 100uF 25V cap in parallel with C2. The gained output from PWM also tends to cause the malfunction. The 3V3 line directly connected with RP2040, and the instability of this line is critical. Besides, the internal environment of RP2040 must be stabilized. "pedal_phaser (in v0.8a)" tends to be malfunctioned. The pedal needs a lot of accesses to the internal bus by the core to communicate with SRAM and peripherals in initial settings of peripherals and the running time. RP2040 spends electric power in accessing the bus, and the change of the status in electricity may make the internal environment become wrong, especially in the time of the transient response of the electric power and the electric status of the chip. By adding the sleep time, "PEDAL_PHASER_TRANSIENT_RESPONSE", after booting and before setting peripherals, the pedal seems to be stabilized so far. The chip may need extensive time to be stabilized for SRAM and peripherals in the manner of the electric status. "PEDAL_PHASER_TRANSIENT_RESPONSE" may differ by the time constant of the additional capacitance with C2, e.g., more capacitance needs more time to pass through the transient response.
 
@@ -259,7 +259,7 @@ func_debug_time = time_us_32() - from_time;
 
 * See the Atomic Register Access in the page 18 of RP2040 Datasheet, and offsets of addresses for peripherals make atomic accesses, XOR, SET, and CLEAR.
 
-* In making code, I'm approaching with object-oriented thought even in C language. In my view of object-oriented equals standardization, i.e., the unique code in executables should be minimum, and the common code in libraries should be maximum. Watch out the change between v.0.8a and v.0.9b, and codes of executables in pedal are standardized into libraries. As a result, I integrated pedals into [pedal_multi](#pedal_multi).
+* In making code, I'm approaching with object-oriented thought even in C language. In my view of object-oriented equals standardization, i.e., the unique code in executables should be minimum, and the common code in libraries should be maximum. Watch out the change between v0.8a and v0.9b, and codes of executables in pedal are standardized into libraries. As a result, I integrated pedals into [pedal_multi](#pedal_multi).
 
 **C Language**
 
@@ -439,6 +439,7 @@ Thread 1 received signal SIGINT, Interrupt.
     * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
     * cmake version 3.16.3
     * GNU Make 4.2.1
+    * Python 3.7.3
     * Raspbian GNU/Linux 10 (buster)
   * Evaluate Minor Bugs on Software
   * Test with Developing Hardware
@@ -452,6 +453,7 @@ Thread 1 received signal SIGINT, Interrupt.
     * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
     * cmake version 3.16.3
     * GNU Make 4.2.1
+    * Python 3.7.3
     * Raspbian GNU/Linux 10 (buster)
   * Evaluate Major Bugs on Software
   * Evaluate Performances of Chip and Board
