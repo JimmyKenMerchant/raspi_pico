@@ -47,16 +47,16 @@ extern "C" {
 #warning "UTIL_PEDAL_PICO_LED_1_GPIO is defined with the default value 25."
 #endif
 #ifndef UTIL_PEDAL_PICO_LED_2_GPIO
-#define UTIL_PEDAL_PICO_LED_2_GPIO 12
-#warning "UTIL_PEDAL_PICO_LED_2_GPIO is defined with the default value 12."
+#define UTIL_PEDAL_PICO_LED_2_GPIO 8
+#warning "UTIL_PEDAL_PICO_LED_2_GPIO is defined with the default value 8."
 #endif
 #ifndef UTIL_PEDAL_PICO_SW_1_GPIO
-#define UTIL_PEDAL_PICO_SW_1_GPIO 14
-#warning "UTIL_PEDAL_PICO_SW_1_GPIO is defined with the default value 14."
+#define UTIL_PEDAL_PICO_SW_1_GPIO 10
+#warning "UTIL_PEDAL_PICO_SW_1_GPIO is defined with the default value 10."
 #endif
 #ifndef UTIL_PEDAL_PICO_SW_2_GPIO
-#define UTIL_PEDAL_PICO_SW_2_GPIO 15
-#warning "UTIL_PEDAL_PICO_SW_2_GPIO is defined with the default value 15."
+#define UTIL_PEDAL_PICO_SW_2_GPIO 9
+#warning "UTIL_PEDAL_PICO_SW_2_GPIO is defined with the default value 9."
 #endif
 #ifndef UTIL_PEDAL_PICO_PWM_1_GPIO
 #define UTIL_PEDAL_PICO_PWM_1_GPIO 16
@@ -67,20 +67,20 @@ extern "C" {
 #warning "UTIL_PEDAL_PICO_PWM_2_GPIO is defined with the default value 17."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO 8
-#warning "UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO is defined with the default value 9."
+#define UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO 11
+#warning "UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO is defined with the default value 11."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO 9
-#warning "UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO is defined with the default value 10."
+#define UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO 15
+#warning "UTIL_PEDAL_PICO_MULTI_BIT_1_GPIO is defined with the default value 15."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO 10
-#warning "UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO is defined with the default value 11."
+#define UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO 12
+#warning "UTIL_PEDAL_PICO_MULTI_BIT_2_GPIO is defined with the default value 12."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO
-#define UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO 11
-#warning "UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO is defined with the default value 11."
+#define UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO 14
+#warning "UTIL_PEDAL_PICO_MULTI_BIT_3_GPIO is defined with the default value 14."
 #endif
 #define UTIL_PEDAL_PICO_XOSC 12000000 // Assuming Crystal Clock Speed
 #define UTIL_PEDAL_PICO_TRANSIENT_RESPONSE 100000 // 100000 Micro Seconds, Pass through Transient Response of Power
