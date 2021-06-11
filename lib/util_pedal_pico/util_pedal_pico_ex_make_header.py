@@ -9,7 +9,7 @@ import number_table as nt
 
 headername = "util_pedal_pico_ex.h"
 osc_length = 9375
-peak_length = 2047
+peak_length = 1023
 
 prefix = [
 "/**\n",

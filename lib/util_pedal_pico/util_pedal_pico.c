@@ -133,8 +133,8 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
     if (util_pedal_pico_process != NULL) {
         util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
         /* Output */
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1);
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted);
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));
     }
     #if UTIL_PEDAL_PICO_DEBUG
         util_pedal_pico_debug_time = time_us_32() - from_time;

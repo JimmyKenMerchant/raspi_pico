@@ -60,11 +60,11 @@ extern "C" {
 #endif
 #ifndef UTIL_PEDAL_PICO_PWM_1_GPIO
 #define UTIL_PEDAL_PICO_PWM_1_GPIO 16
-#warning "UTIL_PEDAL_PICO_PWM_1_GPIO is defined with the default value 16."
+#warning "UTIL_PEDAL_PICO_PWM_1_GPIO for Positve Terminal of Difference Amplifier is defined with the default value 16."
 #endif
 #ifndef UTIL_PEDAL_PICO_PWM_2_GPIO
 #define UTIL_PEDAL_PICO_PWM_2_GPIO 17
-#warning "UTIL_PEDAL_PICO_PWM_2_GPIO is defined with the default value 17."
+#warning "UTIL_PEDAL_PICO_PWM_2_GPIO for Negative Terminal of Difference Amplifier is defined with the default value 17."
 #endif
 #ifndef UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO
 #define UTIL_PEDAL_PICO_MULTI_BIT_0_GPIO 11
@@ -89,7 +89,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_SW_SLEEP_TIME 1000
 #define UTIL_PEDAL_PICO_PWM_IRQ_WRAP_PRIORITY 0xF0
 #define UTIL_PEDAL_PICO_PWM_OFFSET 2048 // Ideal Middle Point
-#define UTIL_PEDAL_PICO_PWM_PEAK 2047
+#define UTIL_PEDAL_PICO_PWM_PEAK 1023 // On the balanced monaural with a single power Op Amp, the offset of the positive is risen to OFFSET + (OFFSET / 2), and the offset of the negative is fallen to OFFSET - (OFFSET / 2).
 #define UTIL_PEDAL_PICO_ADC_IRQ_FIFO_PRIORITY 0xFF
 #define UTIL_PEDAL_PICO_ADC_0_GPIO 26
 #define UTIL_PEDAL_PICO_ADC_1_GPIO 27
