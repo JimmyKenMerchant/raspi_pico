@@ -39,7 +39,6 @@ extern "C" {
 #define PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM 1
 
 volatile util_pedal_pico* pedal_pico_reverb;
-volatile uint16 pedal_pico_reverb_conversion_1;
 volatile uint16 pedal_pico_reverb_conversion_2;
 volatile uint16 pedal_pico_reverb_conversion_3;
 volatile int16* pedal_pico_reverb_delay_array;

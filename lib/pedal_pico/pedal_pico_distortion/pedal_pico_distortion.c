@@ -14,16 +14,13 @@
 
 void pedal_pico_distortion_set() {
     if (! pedal_pico_distortion) panic("pedal_pico_distortion is not initialized.");
-    pedal_pico_distortion_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_distortion_loss = (UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (32-1)
 }
 
 void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     if (abs(conversion_2 - pedal_pico_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_distortion_conversion_2 = conversion_2;
-        pedal_pico_distortion_loss = (UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_distortion_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (32-1)
     }
     if (abs(conversion_3 - pedal_pico_distortion_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_distortion_conversion_3 = conversion_3;
@@ -53,7 +50,6 @@ void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint
             normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         }
     }
-    normalized_1 /= pedal_pico_distortion_loss;
     /* Output */
     pedal_pico_distortion->output_1 = normalized_1;
     pedal_pico_distortion->output_1_inverted = -normalized_1;

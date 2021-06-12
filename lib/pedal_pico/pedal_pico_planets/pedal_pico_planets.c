@@ -14,7 +14,6 @@
 
 void pedal_pico_planets_set() {
     if (! pedal_pico_planets) panic("pedal_pico_planets is not initialized.");
-    pedal_pico_planets_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_planets_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     int32 coefficient = ((pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_COEFFICIENT_SHIFT; // Make 5-bit Value (1-32) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal

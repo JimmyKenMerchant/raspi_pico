@@ -49,7 +49,6 @@ extern "C" {
 volatile util_pedal_pico* pedal_pico_looper;
 volatile uchar8 pedal_pico_looper_indicator_led;
 volatile uint32 pedal_pico_looper_indicator_led_bit;
-volatile uint16 pedal_pico_looper_conversion_1;
 volatile uint16 pedal_pico_looper_conversion_2;
 volatile uint16 pedal_pico_looper_conversion_3;
 volatile uint16 pedal_pico_looper_loss;

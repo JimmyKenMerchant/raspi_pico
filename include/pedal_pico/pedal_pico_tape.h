@@ -41,7 +41,6 @@ extern "C" {
 #define PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER 6
 
 volatile util_pedal_pico* pedal_pico_tape;
-volatile uint16 pedal_pico_tape_conversion_1;
 volatile uint16 pedal_pico_tape_conversion_2;
 volatile uint16 pedal_pico_tape_conversion_3;
 volatile uint32 pedal_pico_tape_osc_sine_1_index;

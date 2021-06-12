@@ -168,7 +168,7 @@ void util_pedal_pico_wait();
 void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2, uchar8 gpio_bit_3);
 void util_pedal_pico_select_multi();
 void (**util_pedal_pico_multi_set)();
-void (**util_pedal_pico_multi_process)(uint16, uint16, uint16, uchar8);
+void (**util_pedal_pico_multi_process)(int32, uint16, uint16, uchar8);
 void (**util_pedal_pico_multi_free)();
 /**
  * Caution! These Functions tries to erase and write data to the on-board flash memory.

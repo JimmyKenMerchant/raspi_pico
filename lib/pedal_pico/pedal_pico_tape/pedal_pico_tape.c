@@ -14,7 +14,6 @@
 
 void pedal_pico_tape_set() {
     if (! pedal_pico_tape) panic("pedal_pico_tape is not initialized.");
-    pedal_pico_tape_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_tape_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_tape_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_tape_delay_array = (int16*)calloc(PEDAL_PICO_TAPE_DELAY_TIME_MAX, sizeof(int16));

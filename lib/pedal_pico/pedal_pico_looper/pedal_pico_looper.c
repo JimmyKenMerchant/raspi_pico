@@ -16,7 +16,6 @@ void pedal_pico_looper_set(uchar8 indicator_led_gpio) {
     if (! pedal_pico_looper) panic("pedal_pico_looper is not initialized.");
     pedal_pico_looper_indicator_led = indicator_led_gpio;
     pedal_pico_looper_indicator_led_bit = 0b1 << indicator_led_gpio;
-    pedal_pico_looper_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)

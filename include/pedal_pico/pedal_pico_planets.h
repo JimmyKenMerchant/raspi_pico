@@ -40,7 +40,6 @@ extern "C" {
 #define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 4 // Value to Accumulate, Small Value Makes Froggy
 
 volatile util_pedal_pico* pedal_pico_planets;
-volatile uint16 pedal_pico_planets_conversion_1;
 volatile uint16 pedal_pico_planets_conversion_2;
 volatile uint16 pedal_pico_planets_conversion_3;
 volatile int32 pedal_pico_planets_coefficient; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part

@@ -47,7 +47,6 @@ extern "C" {
 #define PEDAL_PICO_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 
 volatile util_pedal_pico* pedal_pico_buffer;
-volatile uint16 pedal_pico_buffer_conversion_1;
 volatile uint16 pedal_pico_buffer_conversion_2;
 volatile uint16 pedal_pico_buffer_conversion_3;
 volatile int16* pedal_pico_buffer_delay_array;

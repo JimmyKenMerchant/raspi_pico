@@ -14,7 +14,6 @@
 
 void pedal_pico_phaser_set() {
     if (! pedal_pico_phaser) panic("pedal_pico_phaser is not initialized.");
-    pedal_pico_phaser_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_phaser_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_phaser_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_phaser_coefficient_swing = PEDAL_PICO_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1;

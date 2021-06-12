@@ -41,7 +41,6 @@ extern "C" {
 #define PEDAL_PICO_SIDEBAND_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 
 volatile util_pedal_pico* pedal_pico_sideband;
-volatile uint16 pedal_pico_sideband_conversion_1;
 volatile uint16 pedal_pico_sideband_conversion_2;
 volatile uint16 pedal_pico_sideband_conversion_3;
 volatile uint32 pedal_pico_sideband_osc_sine_1_index;

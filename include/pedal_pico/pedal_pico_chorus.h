@@ -44,7 +44,6 @@ extern "C" {
 #define PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM 1 // Value to Accumulate
 
 volatile util_pedal_pico* pedal_pico_chorus;
-volatile uint16 pedal_pico_chorus_conversion_1;
 volatile uint16 pedal_pico_chorus_conversion_2;
 volatile uint16 pedal_pico_chorus_conversion_3;
 volatile uint32 pedal_pico_chorus_osc_sine_1_index;

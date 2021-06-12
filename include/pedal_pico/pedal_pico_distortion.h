@@ -36,10 +36,8 @@ extern "C" {
 #define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0xC0
 
 volatile util_pedal_pico* pedal_pico_distortion;
-volatile uint16 pedal_pico_distortion_conversion_1;
 volatile uint16 pedal_pico_distortion_conversion_2;
 volatile uint16 pedal_pico_distortion_conversion_3;
-volatile uint16 pedal_pico_distortion_loss;
 
 void pedal_pico_distortion_set();
 void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);

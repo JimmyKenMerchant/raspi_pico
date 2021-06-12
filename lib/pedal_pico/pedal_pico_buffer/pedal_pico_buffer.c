@@ -14,7 +14,6 @@
 
 void pedal_pico_buffer_set() {
     if (! pedal_pico_buffer) panic("pedal_pico_buffer is not initialized.");
-    pedal_pico_buffer_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_buffer_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_buffer_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_buffer_delay_array = (int16*)calloc(PEDAL_PICO_BUFFER_DELAY_TIME_MAX, sizeof(int16));

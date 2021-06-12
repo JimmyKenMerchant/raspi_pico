@@ -14,7 +14,6 @@
 
 void pedal_pico_chorus_set() {
     if (! pedal_pico_chorus) panic("pedal_pico_chorus is not initialized.");
-    pedal_pico_chorus_conversion_1 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_delay_array = (int16*)calloc(PEDAL_PICO_CHORUS_DELAY_TIME_MAX, sizeof(int16));
