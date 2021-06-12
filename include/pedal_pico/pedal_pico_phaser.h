@@ -59,7 +59,7 @@ volatile char8 pedal_pico_phaser_osc_start_threshold;
 volatile uint16 pedal_pico_phaser_osc_start_count;
 
 void pedal_pico_phaser_set();
-void pedal_pico_phaser_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_phaser_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_phaser_free();
 
 #ifdef __cplusplus

@@ -53,7 +53,7 @@ volatile uint16 pedal_pico_planets_delay_time_interpolation_accum;
 volatile uint16 pedal_pico_planets_delay_index;
 
 void pedal_pico_planets_set();
-void pedal_pico_planets_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_planets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_planets_free();
 
 #ifdef __cplusplus

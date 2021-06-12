@@ -108,7 +108,7 @@ static uchar8 pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE] __attribute__((
 }; // One Sector = 4096 Bytes, Fill by 0x88
 
 void pedal_pico_looper_set(uchar8 indicator_led_gpio);
-void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_looper_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_looper_flash_handler();
 void pedal_pico_looper_free();
 

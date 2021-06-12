@@ -25,8 +25,7 @@ void pedal_pico_sideband_set() {
     pedal_pico_sideband_osc_start_count = 0;
 }
 
-void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
-    pedal_pico_sideband_conversion_1 = conversion_1;
+void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     if (abs(conversion_2 - pedal_pico_sideband_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sideband_conversion_2 = conversion_2;
         pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
@@ -35,7 +34,6 @@ void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint1
         pedal_pico_sideband_conversion_3 = conversion_3;
         pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     }
-    int32 normalized_1 = (int32)pedal_pico_sideband_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * pedal_pico_sideband_osc_start_count:
      *
@@ -65,19 +63,26 @@ void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint1
         pedal_pico_sideband_osc_sine_1_index = 0;
         pedal_pico_sideband_osc_sine_2_index = 0;
     }
-    if (sw_mode == 1) {
-        /**
-         * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
-         * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-         * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
-         */
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    } else if (sw_mode == 2) {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_3[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
-    } else {
-        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
-    }
     normalized_1 = util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PICO_SIDEBAND_CUTOFF_FIXED_1);
+    if (sw_mode == 1) {
+        if (normalized_1 > 0) {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        } else {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_power_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        }
+    } else if (sw_mode == 2) {
+        if (normalized_1 > 0) {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        } else {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        }
+    } else {
+        if (normalized_1 > 0) {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        } else {
+            normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+        }
+    }
     int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_1_index / PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER];
     int32 fixed_point_value_sine_2 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_2_index / PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER] >> 1; // Divide By 2
     pedal_pico_sideband_osc_sine_1_index += pedal_pico_sideband_osc_speed;
@@ -87,8 +92,8 @@ void pedal_pico_sideband_process(uint16 conversion_1, uint16 conversion_2, uint1
     int32 osc_value = (int32)(int64)((((int64)pedal_pico_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 16); // Remain Decimal Part
     osc_value = (int32)(int64)(((int64)osc_value * ((int64)abs(normalized_1) << 3)) >> 32); // Absolute normalized_1 to Multiply Frequency
     /* Output */
-    pedal_pico_sideband->output_1 = util_pedal_pico_cutoff_biased(osc_value + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
-    pedal_pico_sideband->output_1_inverted = util_pedal_pico_cutoff_biased(-osc_value + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+    pedal_pico_sideband->output_1 = osc_value;
+    pedal_pico_sideband->output_1_inverted = -osc_value;
 }
 
 void pedal_pico_sideband_free() { // Free Except Object, pedal_pico_sideband

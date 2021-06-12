@@ -61,7 +61,7 @@ volatile char8 pedal_pico_buffer_noise_gate_threshold;
 volatile uint16 pedal_pico_buffer_noise_gate_count;
 
 void pedal_pico_buffer_set();
-void pedal_pico_buffer_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_buffer_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_buffer_free();
 
 #ifdef __cplusplus

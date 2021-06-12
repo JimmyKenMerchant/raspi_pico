@@ -131,7 +131,16 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
     if (util_pedal_pico_process != NULL) {
-        util_pedal_pico_process(conversion_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
+        int32 normalized_1 = (int32)conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
+        /**
+         * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+         * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+         * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+         */
+        normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+        util_pedal_pico_process(normalized_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
+        util_pedal_pico_obj->output_1 = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+        util_pedal_pico_obj->output_1_inverted = util_pedal_pico_cutoff_biased(-util_pedal_pico_obj->output_1_inverted + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
         /* Output */
         pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));
         pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));

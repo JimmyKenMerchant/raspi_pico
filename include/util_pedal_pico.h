@@ -152,7 +152,7 @@ extern int32 util_pedal_pico_ex_table_log_2[];
 extern int32 util_pedal_pico_ex_table_power_1[];
 
 /* Functions */
-void (*util_pedal_pico_process)(uint16, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
+void (*util_pedal_pico_process)(int32, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
 util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);

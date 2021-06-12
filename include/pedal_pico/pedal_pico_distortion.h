@@ -42,7 +42,7 @@ volatile uint16 pedal_pico_distortion_conversion_3;
 volatile uint16 pedal_pico_distortion_loss;
 
 void pedal_pico_distortion_set();
-void pedal_pico_distortion_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_distortion_free();
 
 #ifdef __cplusplus

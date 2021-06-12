@@ -54,7 +54,7 @@ volatile uint16 pedal_pico_tape_delay_index;
 volatile uint16 pedal_pico_tape_delay_time_swing;
 
 void pedal_pico_tape_set();
-void pedal_pico_tape_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_tape_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
 void pedal_pico_tape_free();
 
 #ifdef __cplusplus

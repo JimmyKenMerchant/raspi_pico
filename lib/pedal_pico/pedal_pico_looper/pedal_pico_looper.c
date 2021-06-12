@@ -49,8 +49,7 @@ void pedal_pico_looper_set(uchar8 indicator_led_gpio) {
     gpio_put(pedal_pico_looper_indicator_led, 0);
 }
 
-void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
-    pedal_pico_looper_conversion_1 = conversion_1;
+void pedal_pico_looper_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
     if (abs(conversion_2 - pedal_pico_looper_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_looper_conversion_2 = conversion_2;
         pedal_pico_looper_loss = 32 - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT); // Make 5-bit Value (1-32)
@@ -107,13 +106,11 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
         }
         pedal_pico_looper_sw_count = 0;
     }
-    int32 normalized_1 = (int32)pedal_pico_looper_conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     normalized_1 = normalized_1 / pedal_pico_looper_loss;
     int32 recorded_1;
     int32 mixed_1;
@@ -159,8 +156,8 @@ void pedal_pico_looper_process(uint16 conversion_1, uint16 conversion_2, uint16 
         }
         mixed_1 = normalized_1;
     }
-    pedal_pico_looper->output_1 = util_pedal_pico_cutoff_biased(mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
-    pedal_pico_looper->output_1_inverted = util_pedal_pico_cutoff_biased(-mixed_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+    pedal_pico_looper->output_1 = mixed_1;
+    pedal_pico_looper->output_1_inverted = -mixed_1;
 }
 
 void pedal_pico_looper_flash_handler() {
