@@ -42,9 +42,8 @@ util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
     /* Assign Actual Array */
     if (util_pedal_pico_ex_table_sine_1) { // NULL pointer returns false in ISO/IEC 9899 C Language as of today.
         util_pedal_pico_table_sine_1 = util_pedal_pico_ex_table_sine_1;
+        util_pedal_pico_table_triangle_1 = util_pedal_pico_ex_table_triangle_1;
         util_pedal_pico_table_pdf_1 = util_pedal_pico_ex_table_pdf_1;
-        util_pedal_pico_table_pdf_2 = util_pedal_pico_ex_table_pdf_2;
-        util_pedal_pico_table_pdf_3 = util_pedal_pico_ex_table_pdf_3;
         util_pedal_pico_table_log_1 = util_pedal_pico_ex_table_log_1;
         util_pedal_pico_table_log_2 = util_pedal_pico_ex_table_log_2;
         util_pedal_pico_table_power_1 = util_pedal_pico_ex_table_power_1;
@@ -139,11 +138,11 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
          */
         normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
         util_pedal_pico_process(normalized_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
-        util_pedal_pico_obj->output_1 = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1 + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
-        util_pedal_pico_obj->output_1_inverted = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1_inverted + (int32)util_pedal_pico_adc_middle_moving_average, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+        util_pedal_pico_obj->output_1 = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1 + (int32)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+        util_pedal_pico_obj->output_1_inverted = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1_inverted + (int32)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
         /* Output */
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1));
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Positive
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Negative
     }
     #if UTIL_PEDAL_PICO_DEBUG
         util_pedal_pico_debug_time = time_us_32() - from_time;

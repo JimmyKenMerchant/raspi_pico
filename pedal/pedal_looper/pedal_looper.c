@@ -28,8 +28,11 @@ int main(void) {
     gpio_set_dir(UTIL_PEDAL_PICO_LED_1_GPIO, GPIO_OUT);
     gpio_put(UTIL_PEDAL_PICO_LED_1_GPIO, 1);
     /* Initialize PWM */
-    #if UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX != UTIL_PEDAL_PICO_EX_OSC_TIME_MAX
-        #error "UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX isn't eqaul to UTIL_PEDAL_PICO_EX_OSC_TIME_MAX. Include util_pedal_pico_ex.h?"
+    #if UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX != UTIL_PEDAL_PICO_EX_OSC_SINE_TIME_MAX
+        #error "UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX isn't eqaul to UTIL_PEDAL_PICO_EX_OSC_SINE_TIME_MAX. Include util_pedal_pico_ex.h?"
+    #endif
+    #if UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX != UTIL_PEDAL_PICO_EX_OSC_TRIANGLE_TIME_MAX
+        #error "UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX isn't eqaul to UTIL_PEDAL_PICO_EX_OSC_TRIANGLE_TIME_MAX. Include util_pedal_pico_ex.h?"
     #endif
     #if UTIL_PEDAL_PICO_PWM_PEAK != UTIL_PEDAL_PICO_EX_PEAK
         #error "UTIL_PEDAL_PICO_PWM_PEAK isn't eqaul to UTIL_PEDAL_PICO_EX_PEAK. Include util_pedal_pico_ex.h?"

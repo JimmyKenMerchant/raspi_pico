@@ -62,6 +62,19 @@ def makeTableLog(header, length, reach, number_log, height): # Make Logarithm
 
 # header: Object to Be Written
 # length: Number of Array
+# height: Multiplier
+def makeTableRightTriangle(header, length, height): # Make Right Triangle
+    list_power = numpy.linspace(0, height, length)
+    for i in range(length):
+        floating_point_value = list_power[i] # Floating Point Decimal
+        writeFixedDecimal(header, floating_point_value)
+        if i != length - 1:
+            header.write(",")
+        header.write("\n")
+    header.write("};\n\n")
+
+# header: Object to Be Written
+# length: Number of Array
 # reach: Number to Reach from 0
 # height: Multiplier
 def makeTablePower(header, length, reach, height): # Make Power

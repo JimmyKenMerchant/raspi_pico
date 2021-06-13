@@ -8,7 +8,8 @@ sys.path.append("../../lib_python3")
 import number_table as nt
 
 headername = "util_pedal_pico_ex.h"
-osc_length = 9375
+osc_sine_length = 9375
+osc_triangle_length = int(osc_sine_length / 3)
 peak_length = 1023
 
 prefix = [
@@ -32,7 +33,8 @@ prefix = [
 "extern \"C\" {\n",
 "#endif\n",
 "\n",
-"#define UTIL_PEDAL_PICO_EX_OSC_TIME_MAX " + str(osc_length) + "\n",
+"#define UTIL_PEDAL_PICO_EX_OSC_SINE_TIME_MAX " + str(osc_sine_length) + "\n",
+"#define UTIL_PEDAL_PICO_EX_OSC_TRIANGLE_TIME_MAX " + str(osc_triangle_length) + "\n",
 "#define UTIL_PEDAL_PICO_EX_PEAK " + str(peak_length) + "\n",
 "\n"
 ]
@@ -42,7 +44,15 @@ declare_sine_1 = [
 "int32 util_pedal_pico_ex_table_sine_1[] = {\n"
 ]
 
-sine_length_1 = osc_length
+sine_length_1 = osc_sine_length
+
+declare_triangle_1 = [
+"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
+"int32 util_pedal_pico_ex_table_triangle_1[] = {\n"
+]
+
+triangle_length_1 = osc_triangle_length
+triangle_height_1 = 1.0 # Maximum Height
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -53,26 +63,6 @@ pdf_length_1 = peak_length # Number of Array
 pdf_halfwidth_1 = 1.0 # Center to Side
 pdf_scale_1 = 1.0 # Variance
 pdf_height_1 = 2.0 # Maximum Height
-
-declare_pdf_2 = [
-"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_pdf_2[] = {\n"
-]
-
-pdf_length_2 = peak_length # Number of Array
-pdf_halfwidth_2 = 1.0 # Center to Side
-pdf_scale_2 = 1.5 # Variance
-pdf_height_2 = 1.2 # Maximum Height
-
-declare_pdf_3 = [
-"// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_pdf_3[] = {\n"
-]
-
-pdf_length_3 = peak_length # Number of Array
-pdf_halfwidth_3 = 1.0 # Center to Side
-pdf_scale_3 = 1.75 # Variance
-pdf_height_3 = 1.4 # Maximum Height
 
 declare_log_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -119,17 +109,13 @@ header.writelines(prefix)
 header.writelines(declare_sine_1)
 nt.makeTableSineHalf(header, sine_length_1)
 
+# Table Triangle 1
+header.writelines(declare_triangle_1)
+nt.makeTableRightTriangle(header, triangle_length_1, triangle_height_1)
+
 # Table PDF 1
 header.writelines(declare_pdf_1)
 nt.makeTablePdf(header, pdf_length_1, pdf_halfwidth_1, pdf_scale_1, pdf_height_1)
-
-# Table PDF 2
-header.writelines(declare_pdf_2)
-nt.makeTablePdf(header, pdf_length_2, pdf_halfwidth_2, pdf_scale_2, pdf_height_2)
-
-# Table PDF 3
-header.writelines(declare_pdf_3)
-nt.makeTablePdf(header, pdf_length_3, pdf_halfwidth_3, pdf_scale_3, pdf_height_3)
 
 # Table Logarithm 1
 header.writelines(declare_log_1)

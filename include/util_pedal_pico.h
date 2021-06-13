@@ -101,6 +101,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_RESOLUTION 0x1F
 #define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 #define UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX 9375
+#define UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX (UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX / 3)
 #define UTIL_PEDAL_PICO_MULTI_LENGTH 16 // 4-bit Length
 
 /* Macros */
@@ -134,19 +135,17 @@ volatile uchar8 util_pedal_pico_multi_gpio_bit_1;
 volatile uchar8 util_pedal_pico_multi_gpio_bit_2;
 volatile uchar8 util_pedal_pico_multi_gpio_bit_3;
 volatile uchar8 util_pedal_pico_multi_mode;
-volatile int32* util_pedal_pico_table_sine_1;
+volatile int32* util_pedal_pico_table_sine_1; // Assuming 0-1 Pi (0-180 Degrees)
+volatile int32* util_pedal_pico_table_triangle_1; // Assuming Right Triangle
 volatile int32* util_pedal_pico_table_pdf_1;
-volatile int32* util_pedal_pico_table_pdf_2;
-volatile int32* util_pedal_pico_table_pdf_3;
 volatile int32* util_pedal_pico_table_log_1;
 volatile int32* util_pedal_pico_table_log_2;
 volatile int32* util_pedal_pico_table_power_1;
 
 /* Hide Duplicate Declaration */
 extern int32 util_pedal_pico_ex_table_sine_1[];
+extern int32 util_pedal_pico_ex_table_triangle_1[];
 extern int32 util_pedal_pico_ex_table_pdf_1[];
-extern int32 util_pedal_pico_ex_table_pdf_2[];
-extern int32 util_pedal_pico_ex_table_pdf_3[];
 extern int32 util_pedal_pico_ex_table_log_1[];
 extern int32 util_pedal_pico_ex_table_log_2[];
 extern int32 util_pedal_pico_ex_table_power_1[];
