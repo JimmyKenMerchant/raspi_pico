@@ -146,7 +146,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 ### Pedal
 
-* This project is making several types of guitar pedals.
+* This project is making several types of guitar pedals. These guitar pedals is not only for guitars, but also for other instruments like keyboards and samplers.
 
 * Caution that this project needs an analogue circuit to receive and output the audio signal, i.e., a DC bias on receiving, low-pass filters on outputting (in case of stereo outputting, this project outputs audio signals from two PWM channels). For reference, [I uploaded a schematic](assets/schematics/pedal_pico.pdf). This schematic applies a difference amplifier referencing [A Deeper Look into Difference Amplifiers by Harry Holt](https://www.analog.com/en/analog-dialogue/articles/deeper-look-into-difference-amplifiers.html). The pins layout of Pico is derived from [RP_Silicon_KiCad](https://github.com/HeadBoffin/RP_Silicon_KiCad). Note that the 3D image for KiCad is [https://github.com/ncarandini/KiCad-RP-Pico](https://github.com/ncarandini/KiCad-RP-Pico). As long as an Op Amp can sink electric current, the output voltage can be negative even if the power source is only positive. However, the single power LM358 makes a sink on 0V (logically) at minimum. On the balanced monaural with a single power Op Amp, the offset of the positive is risen to OFFSET + (OFFSET / 2), and the offset of the negative is fallen to OFFSET - (OFFSET / 2). In my experience on developing, the current consumption with a 9V battery (actual approx. 8.6V) is approx. 35mA.
 
@@ -187,7 +187,7 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 9: Dist Reverb
   * 10: Dist Planets
   * 11: Fuzz Planets
-  * 12: Room Reverb (Reservation)
+  * 12: Dist Chorus
   * 13: Tape (Reservation)
   * 14: Phaser (Reservation)
   * 15: Planets (Reservation)
@@ -204,7 +204,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Tape is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator.
 
-* Phaser is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes to change the depth of the Phaser (it's the delay time in fact).
+* Phaser is using an all-pass filter. This sweeps the coefficient of the function to reduce frequencies over a frequency in the sound by phase shifting. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the swing depth. There are output modes. The low state on Switch-1 sets the shallow depth of the Phaser, and sets the bypass of the first stage (cancellation of noise). The low state on Switch-2 sets the deep depth of the Phaser. In the usage with a guitar, the cancellation of noise is preferred. However, several situations with other instruments, bypassing the cancellation emphasizes its digital sound.
 
 * Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. Caution that this effect easily makes resonance by high level input on the high value of the coefficient.
 
@@ -215,6 +215,8 @@ gdb-multiarch blinkers/blinkdrs.elf
 * Dist Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the high distortion mode.
 
 * Fuzz Planets is almost the same as Dist Planets, but the mode of the Distortion is fixed to the fuzz mode.
+
+* Dist Chorus is the combination of the Distortion and the Chorus. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. The mode of the Chorus is fixed to long delay time. There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
 
 #### pedal_looper
 
