@@ -68,8 +68,8 @@ void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16
     pedal_pico_sideband_osc_sine_2_index += pedal_pico_sideband_osc_speed;
     if (pedal_pico_sideband_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER;
     if (pedal_pico_sideband_osc_sine_2_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_2_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER;
-    int32 osc_value = (int32)(int64)((((int64)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 1) >> 16); // Remain Decimal Part
-    osc_value = (int32)(int64)(((int64)osc_value * ((int64)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
+    int32 osc_value = (int32)((((int64)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2) >> 1)) >> 16); // Remain Decimal Part
+    osc_value = (int32)(((int64)osc_value * ((int64)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
     osc_value -= PEDAL_PICO_SIDEBAND_OSC_PEAK >> 1;
     /* Output */
     pedal_pico_sideband->output_1 = osc_value;
