@@ -33,10 +33,11 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_SIDEBAND_CUTOFF_FIXED_1 0xC0
+#define PEDAL_PICO_SIDEBAND_CUTOFF_FIXED_1 0xFF // 8-bit (Normalized 0-peak)
+#define PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1 7
 #define PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER 6
 #define PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER 4
-#define PEDAL_PICO_SIDEBAND_OSC_AMPLITUDE_PEAK 4095
+#define PEDAL_PICO_SIDEBAND_OSC_PEAK 1023
 #define PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PICO_SIDEBAND_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 
@@ -45,7 +46,6 @@ volatile uint16 pedal_pico_sideband_conversion_2;
 volatile uint16 pedal_pico_sideband_conversion_3;
 volatile uint32 pedal_pico_sideband_osc_sine_1_index;
 volatile uint32 pedal_pico_sideband_osc_sine_2_index;
-volatile uint16 pedal_pico_sideband_osc_amplitude;
 volatile uint16 pedal_pico_sideband_osc_speed;
 volatile char8 pedal_pico_sideband_osc_start_threshold;
 volatile uint16 pedal_pico_sideband_osc_start_count;

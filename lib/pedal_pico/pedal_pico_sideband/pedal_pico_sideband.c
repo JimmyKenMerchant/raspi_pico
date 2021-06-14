@@ -18,7 +18,6 @@ void pedal_pico_sideband_set() {
     pedal_pico_sideband_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_sideband_osc_sine_1_index = 0;
     pedal_pico_sideband_osc_sine_2_index = 0;
-    pedal_pico_sideband_osc_amplitude = PEDAL_PICO_SIDEBAND_OSC_AMPLITUDE_PEAK;
     pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_sideband_osc_start_threshold = (pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
     pedal_pico_sideband_osc_start_count = 0;
@@ -69,8 +68,9 @@ void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16
     pedal_pico_sideband_osc_sine_2_index += pedal_pico_sideband_osc_speed;
     if (pedal_pico_sideband_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER;
     if (pedal_pico_sideband_osc_sine_2_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_2_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER;
-    int32 osc_value = (int32)(int64)((((int64)pedal_pico_sideband_osc_amplitude << 16) * ((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 16); // Remain Decimal Part
-    osc_value = (int32)(int64)(((int64)osc_value * ((int64)abs(normalized_1) << 3)) >> 32); // Absolute normalized_1 to Multiply Frequency
+    int32 osc_value = (int32)(int64)((((int64)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2)) >> 1) >> 16); // Remain Decimal Part
+    osc_value = (int32)(int64)(((int64)osc_value * ((int64)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
+    osc_value -= PEDAL_PICO_SIDEBAND_OSC_PEAK >> 1;
     /* Output */
     pedal_pico_sideband->output_1 = osc_value;
     pedal_pico_sideband->output_1_inverted = -osc_value;
