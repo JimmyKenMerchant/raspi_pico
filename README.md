@@ -188,17 +188,17 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 10: Dist Planets
   * 11: Fuzz Planets
   * 12: Dist Chorus
-  * 13: Tape (Reservation)
+  * 13: Sustain
   * 14: Phaser (Reservation)
   * 15: Planets (Reservation)
 
-* Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on Switch-1 sets the high attack, and the low state on Switch-2 sets the low attack and the feedback at the sustain.
+* Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on Switch-1 sets the high attack, and the low state on Switch-2 sets the low attack and the looping feedback at the sustain.
 
 * Sideband is hinted by a rotating fan which changes your voice. This effect can be described by a Fourier transform, i.e., you add a pulsating wave to produce a sideband like a radio wave. I think this effect is identified as an octave pedal. It's made from the mouse-on-a-wall approach for the chorus effect with my idea. I recommend this effect not just for guitars, but also for basses. Fundamentally, this effect is like the system of synthesizers. To make this function on an analogue circuit, this would be a ring modulator. Outputs are added the pulsating wave. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the threshold to start the oscillator. Frequencies of main pulsating wave and sub pulsating wave are fixed so far.
 
 * Chorus is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this effect is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). There are output modes to change the delay time.
 
-* Reverb (reverberation) is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time).
+* Reverb (reverberation) is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode.
 
 * Room Reverb is the combination of the Reverb and the Chorus. ADC0 is for the audio input, ADC1 is for the delay time of the Reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the room size. As a result, the Chorus is like sound reflections of a room. I thought this combination makes natural reverberation in a room. The sound of this effect is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of the Chorus is like in an open lobby of a hotel.
 
@@ -217,6 +217,8 @@ gdb-multiarch blinkers/blinkdrs.elf
 * Fuzz Planets is almost the same as Dist Planets, but the mode of the Distortion is fixed to the fuzz mode.
 
 * Dist Chorus is the combination of the Distortion and the Chorus. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. The mode of the Chorus is fixed to long delay time. There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
+
+* Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion.
 
 #### pedal_looper
 

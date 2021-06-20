@@ -42,10 +42,14 @@ void pedal_pico_reverb_process(int32 normalized_1, uint16 conversion_2, uint16 c
     int32 delay_1 = (int32)pedal_pico_reverb_delay_array[((pedal_pico_reverb_delay_index + PEDAL_PICO_REVERB_DELAY_TIME_MAX) - pedal_pico_reverb_delay_time_interpolation) % PEDAL_PICO_REVERB_DELAY_TIME_MAX];
     if (pedal_pico_reverb_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
     int32 pedal_pico_reverb_normalized_1_amplitude = 0x00010000 - pedal_pico_reverb_delay_amplitude;
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_reverb_normalized_1_amplitude) >> 32);
+    int32 reduced_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_reverb_normalized_1_amplitude) >> 32);
     delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_pico_reverb_delay_amplitude) >> 32);
-    int32 mixed_1 = normalized_1 + delay_1;
-    pedal_pico_reverb_delay_array[pedal_pico_reverb_delay_index] = (int16)mixed_1;
+    int32 mixed_1 = reduced_1 + delay_1;
+    if (sw_mode == 1) {
+        pedal_pico_reverb_delay_array[pedal_pico_reverb_delay_index] = (int16)normalized_1;
+    } else {
+        pedal_pico_reverb_delay_array[pedal_pico_reverb_delay_index] = (int16)mixed_1;
+    }
     pedal_pico_reverb_delay_index++;
     if (pedal_pico_reverb_delay_index >= PEDAL_PICO_REVERB_DELAY_TIME_MAX) pedal_pico_reverb_delay_index -= PEDAL_PICO_REVERB_DELAY_TIME_MAX;
     /* Output */

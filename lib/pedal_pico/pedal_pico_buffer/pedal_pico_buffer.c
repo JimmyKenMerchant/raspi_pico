@@ -58,7 +58,7 @@ void pedal_pico_buffer_process(int32 normalized_1, uint16 conversion_2, uint16 c
     if (normalized_1 > pedal_pico_buffer_noise_gate_threshold || normalized_1 < -pedal_pico_buffer_noise_gate_threshold) {
         pedal_pico_buffer_noise_gate_count = 1;
         pedal_pico_buffer_delay_amplitude = 0x00000000;
-    } else if (pedal_pico_buffer_noise_gate_count != 0 && (normalized_1 > (pedal_pico_buffer_noise_gate_threshold >> 1) || normalized_1 < -(pedal_pico_buffer_noise_gate_threshold >> 1))) {
+    } else if (pedal_pico_buffer_noise_gate_count != 0 && (normalized_1 > (pedal_pico_buffer_noise_gate_threshold >> PEDAL_PICO_BUFFER_NOISE_GATE_HYSTERESIS_SHIFT) || normalized_1 < -(pedal_pico_buffer_noise_gate_threshold >> PEDAL_PICO_BUFFER_NOISE_GATE_HYSTERESIS_SHIFT))) {
         pedal_pico_buffer_noise_gate_count = 1;
     } else if (pedal_pico_buffer_noise_gate_count != 0) {
         pedal_pico_buffer_noise_gate_count++;

@@ -17,6 +17,7 @@ target_link_libraries(${target_name}
     pedal_pico_phaser
     pedal_pico_planets
     pedal_pico_distortion
+    pedal_pico_sustain
 )
 
 # With No Setting CMAKE_MODULE_PATH
