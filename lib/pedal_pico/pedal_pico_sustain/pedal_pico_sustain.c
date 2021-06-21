@@ -87,11 +87,6 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
     } else {
         pedal_pico_sustain_is_on = false;
     }
-    /**
-     * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
-     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
-     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
-     */
     /* Make Sustain */
     if (pedal_pico_sustain_is_on && (pedal_pico_sustain_noise_gate_count != 0)) {
         pedal_pico_sustain_wave = PEDAL_PICO_SUSTAIN_PEAK_FIXED_1;
@@ -99,6 +94,7 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
     } else {
         pedal_pico_sustain_wave = 0;
     }
+    /* Low-pass Filter */
     pedal_pico_sustain_delay_array[pedal_pico_sustain_delay_index] = pedal_pico_sustain_wave;
     int32 low_pass_1 = 0;
     for (uint16 i = 0; i < pedal_pico_sustain_delay_time; i++) {
@@ -107,6 +103,12 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
     low_pass_1 = low_pass_1 / pedal_pico_sustain_delay_time;
     pedal_pico_sustain_delay_index++;
     if (pedal_pico_sustain_delay_index >= PEDAL_PICO_SUSTAIN_DELAY_TIME_MAX) pedal_pico_sustain_delay_index -= PEDAL_PICO_SUSTAIN_DELAY_TIME_MAX;
+    /* Mix */
+    /**
+     * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
+     * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
+     * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
+     */
     int32 pedal_pico_sustain_normalized_1_amplitude = 0x00010000 - pedal_pico_sustain_delay_amplitude;
     normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_sustain_normalized_1_amplitude) >> 32);
     low_pass_1 = (int32)(int64)((((int64)low_pass_1 << 16) * (int64)pedal_pico_sustain_delay_amplitude) >> 32);

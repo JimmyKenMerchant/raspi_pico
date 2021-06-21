@@ -206,7 +206,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Phaser is using an all-pass filter. In default, this sweeps the depth (delay time) of the all-pass filter. In an output mode, this sweeps the coefficient of the function of the all-pass filter. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. There are output modes. The low state on Switch-1 sets sets the mode to sweep coefficient. The low state on Switch-2 sets the deep depth of the Phaser.
 
-* Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. Caution that this effect easily makes resonance by high level input on the high value of the coefficient.
+* Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. This uses digital filters, and the effectiveness of filters is different from the one of analogue filters. I called this as the galactic Planets because of this difference between digital and analogue (in other words, this effect was hard to be achieved).
 
 * Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
 
@@ -218,7 +218,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Dist Chorus is the combination of the Distortion and the Chorus. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. The mode of the Chorus is fixed to long delay time. There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
 
-* Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion.
+* Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion. I uses moving average as a low-pass filter, and this filter is costly to spend CPU clocks because of accessing SRAM. I thought this effect could be made of a Schmitt trigger such as 74LS14.
 
 #### pedal_looper
 
