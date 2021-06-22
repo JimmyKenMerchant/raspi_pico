@@ -48,6 +48,11 @@ void pedal_pico_tape_process(int32 normalized_1, uint16 conversion_2, uint16 con
         pedal_pico_tape_osc_is_negative ^= true;
     }
     if (pedal_pico_tape_osc_is_negative) fixed_point_value_sine_1 *= -1;
+    if (sw_mode == 1) {
+        fixed_point_value_sine_1 >>= 2;
+    } else {
+        fixed_point_value_sine_1 >>= 1;
+    }
     int16 time_swing = (int16)(int64)((((int64)pedal_pico_tape_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     int32 delay_1 = (int32)pedal_pico_tape_delay_array[((pedal_pico_tape_delay_index + PEDAL_PICO_TAPE_DELAY_TIME_MAX) - ((int16)pedal_pico_tape_delay_time + time_swing)) % PEDAL_PICO_TAPE_DELAY_TIME_MAX];
     if (pedal_pico_tape_delay_time + time_swing == 0) delay_1 = 0; // No Delay, Otherwise Latest

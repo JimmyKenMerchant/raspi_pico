@@ -66,25 +66,23 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
     /**
      * pedal_pico_sustain_is_on:
      *
-     * Over Positive Threshold: = True
+     * Over Positive Threshold: True
      *-----------------------------------------------------------------------------------------------------------
-     * Under Positive Threshold: = True
+     * Under Positive Threshold: No Change
      *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis: = False
+     * Hysteresis: False
      *-----------------------------------------------------------------------------------------------------------
      * 0: = False
      *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis: = False
+     * Hysteresis: False
      *-----------------------------------------------------------------------------------------------------------
-     * Under Negative Threshold: True
+     * Under Negative Threshold: No Change
      *-----------------------------------------------------------------------------------------------------------
      * Over Negative Threshold: True
      */
     if (normalized_1 > pedal_pico_sustain_noise_gate_threshold || normalized_1 < -pedal_pico_sustain_noise_gate_threshold) {
         pedal_pico_sustain_is_on = true;
-    } else if (normalized_1 > (pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT) || normalized_1 < -(pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT)) {
-        pedal_pico_sustain_is_on = true;
-    } else {
+    } else if (normalized_1 < (pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT) && normalized_1 > -(pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT)) {
         pedal_pico_sustain_is_on = false;
     }
     /* Make Sustain */

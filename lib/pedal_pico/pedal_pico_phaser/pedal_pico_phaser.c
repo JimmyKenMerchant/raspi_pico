@@ -24,7 +24,7 @@ void pedal_pico_phaser_set() {
     pedal_pico_phaser_osc_triangle_1_index = (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1;
     pedal_pico_phaser_osc_is_negative = true;
     pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
-    pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_phaser_osc_start_threshold = (char8)((pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_phaser_osc_start_count = 0;
 }
 
@@ -35,7 +35,7 @@ void pedal_pico_phaser_process(int32 normalized_1, uint16 conversion_2, uint16 c
     }
     if (abs(conversion_3 - pedal_pico_phaser_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_phaser_conversion_3 = conversion_3;
-        pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_phaser_osc_start_threshold = (char8)((pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     }
     /**
      * pedal_pico_phaser_osc_start_count:
@@ -54,9 +54,9 @@ void pedal_pico_phaser_process(int32 normalized_1, uint16 conversion_2, uint16 c
      *-----------------------------------------------------------------------------------------------------------
      * Over Negative Threshold             ## Reset to 1
      */
-    if (normalized_1 > pedal_pico_phaser_osc_start_threshold || normalized_1 < -pedal_pico_phaser_osc_start_threshold) {
+    if (normalized_1 > (int32)pedal_pico_phaser_osc_start_threshold || normalized_1 < -((int32)pedal_pico_phaser_osc_start_threshold)) {
         pedal_pico_phaser_osc_start_count = 1;
-    } else if (pedal_pico_phaser_osc_start_count != 0 && (normalized_1 > (pedal_pico_phaser_osc_start_threshold >> 1) || normalized_1 < -(pedal_pico_phaser_osc_start_threshold >> 1))) {
+    } else if (pedal_pico_phaser_osc_start_count != 0 && (normalized_1 > (int32)(pedal_pico_phaser_osc_start_threshold >> PEDAL_PICO_PHASER_OSC_START_HYSTERESIS_SHIFT) || normalized_1 < -((int32)(pedal_pico_phaser_osc_start_threshold >> PEDAL_PICO_PHASER_OSC_START_HYSTERESIS_SHIFT)))) {
         pedal_pico_phaser_osc_start_count = 1;
     } else if (pedal_pico_phaser_osc_start_count != 0) {
         pedal_pico_phaser_osc_start_count++;
