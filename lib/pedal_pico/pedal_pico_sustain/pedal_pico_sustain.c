@@ -21,9 +21,7 @@ void pedal_pico_sustain_set() {
     pedal_pico_sustain_delay_time = PEDAL_PICO_SUSTAIN_DELAY_TIME_FIXED_1;
     pedal_pico_sustain_delay_index = 0;
     pedal_pico_sustain_noise_gate_threshold = (char8)((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT)) * PEDAL_PICO_SUSTAIN_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
-    pedal_pico_sustain_noise_gate_count = 0;
     pedal_pico_sustain_is_on = false;
-    pedal_pico_sustain_wave = 0;
 }
 
 void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
@@ -34,34 +32,6 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
     if (abs(conversion_3 - pedal_pico_sustain_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sustain_conversion_3 = conversion_3;
         pedal_pico_sustain_noise_gate_threshold = (char8)((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT)) * PEDAL_PICO_SUSTAIN_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
-    }
-    /**
-     * pedal_pico_sustain_noise_gate_count:
-     *
-     * Over Positive Threshold       ## 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Positive Threshold     # 0 # 2      ### Reset to 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                  # 0   # 3   # 5   # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PICO_SUSTAIN_NOISE_GATE_COUNT_MAX
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                         # 5 # 3      #### 4
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Negative Threshold           # 6 # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * Over Negative Threshold             ## Reset to 1
-     */
-    if (normalized_1 > (int32)pedal_pico_sustain_noise_gate_threshold || normalized_1 < -((int32)pedal_pico_sustain_noise_gate_threshold)) {
-        pedal_pico_sustain_noise_gate_count = 1;
-    } else if (pedal_pico_sustain_noise_gate_count != 0 && (normalized_1 > (int32)(pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT) || normalized_1 < -((int32)(pedal_pico_sustain_noise_gate_threshold >> PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT)))) {
-        pedal_pico_sustain_noise_gate_count = 1;
-    } else if (pedal_pico_sustain_noise_gate_count != 0) {
-        pedal_pico_sustain_noise_gate_count++;
-    }
-    if (pedal_pico_sustain_noise_gate_count >= PEDAL_PICO_SUSTAIN_NOISE_GATE_COUNT_MAX) pedal_pico_sustain_noise_gate_count = 0;
-    if (pedal_pico_sustain_noise_gate_count == 0) {
-        normalized_1 = 0;
     }
     /**
      * pedal_pico_sustain_is_on:
@@ -86,14 +56,21 @@ void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 
         pedal_pico_sustain_is_on = false;
     }
     /* Make Sustain */
-    if (pedal_pico_sustain_is_on && (pedal_pico_sustain_noise_gate_count != 0)) {
-        pedal_pico_sustain_wave = PEDAL_PICO_SUSTAIN_PEAK_FIXED_1;
-        if (normalized_1 < 0) pedal_pico_sustain_wave = -pedal_pico_sustain_wave;
+    int16 sustain_wave;
+    if (pedal_pico_sustain_is_on) {
+        if (sw_mode == 1) {
+            sustain_wave = PEDAL_PICO_SUSTAIN_PEAK_FIXED_1;
+        } else if (sw_mode == 2) {
+            sustain_wave = PEDAL_PICO_SUSTAIN_PEAK_FIXED_2;
+        } else {
+            sustain_wave = PEDAL_PICO_SUSTAIN_PEAK_FIXED_3;
+        }
+        if (normalized_1 < 0) sustain_wave *= -1;
     } else {
-        pedal_pico_sustain_wave = 0;
+        sustain_wave = 0;
     }
     /* Low-pass Filter */
-    pedal_pico_sustain_delay_array[pedal_pico_sustain_delay_index] = pedal_pico_sustain_wave;
+    pedal_pico_sustain_delay_array[pedal_pico_sustain_delay_index] = sustain_wave;
     int32 low_pass_1 = 0;
     for (uint16 i = 0; i < pedal_pico_sustain_delay_time; i++) {
         low_pass_1 += (int32)pedal_pico_sustain_delay_array[((pedal_pico_sustain_delay_index + PEDAL_PICO_SUSTAIN_DELAY_TIME_MAX) - i) % PEDAL_PICO_SUSTAIN_DELAY_TIME_MAX];

@@ -37,6 +37,8 @@ extern "C" {
 #define PEDAL_PICO_SUSTAIN_DELAY_TIME_FIXED_1 8
 #define PEDAL_PICO_SUSTAIN_DELAY_TIME_MAX (PEDAL_PICO_SUSTAIN_DELAY_TIME_FIXED_1 + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_SUSTAIN_PEAK_FIXED_1 128
+#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_2 192
+#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_3 256
 #define PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT 2 // Divide by 4
 #define PEDAL_PICO_SUSTAIN_NOISE_GATE_THRESHOLD_MULTIPLIER 4
 #define PEDAL_PICO_SUSTAIN_NOISE_GATE_COUNT_MAX 4000 // 28125 Divided by 2000 = Approx. 14Hz
@@ -50,9 +52,7 @@ volatile int32 pedal_pico_sustain_delay_amplitude; // Using 32-bit Signed (Two's
 volatile uint16 pedal_pico_sustain_delay_time;
 volatile uint16 pedal_pico_sustain_delay_index;
 volatile char8 pedal_pico_sustain_noise_gate_threshold;
-volatile uint16 pedal_pico_sustain_noise_gate_count;
 volatile bool pedal_pico_sustain_is_on;
-volatile int16 pedal_pico_sustain_wave;
 
 void pedal_pico_sustain_set();
 void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
