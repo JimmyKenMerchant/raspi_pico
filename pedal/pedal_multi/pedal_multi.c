@@ -41,8 +41,8 @@
 #define PEDAL_MULTI_DISTCHORUS_CHORUS_SW_MODE_FIXED_1 2
 
 /* Global Variables for Combinations */
-uint16 pedal_multi_roomreverb_reverb_conversion_2;
-uint16 pedal_multi_roomreverb_chorus_conversion_3;
+uint16_t pedal_multi_roomreverb_reverb_conversion_2;
+uint16_t pedal_multi_roomreverb_chorus_conversion_3;
 
 /* Functions for Combinations */
 void pedal_multi_roomreverb_set();
@@ -50,11 +50,11 @@ void pedal_multi_distreverb_set();
 void pedal_multi_distplanets_set();
 void pedal_multi_fuzzplanets_set();
 void pedal_multi_distchorus_set();
-void pedal_multi_roomreverb_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
-void pedal_multi_distreverb_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
-void pedal_multi_distplanets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
-void pedal_multi_fuzzplanets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
-void pedal_multi_distchorus_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_multi_roomreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
+void pedal_multi_distreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
+void pedal_multi_distplanets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
+void pedal_multi_fuzzplanets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
+void pedal_multi_distchorus_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_roomreverb_free();
 void pedal_multi_distreverb_free();
 void pedal_multi_distplanets_free();
@@ -144,7 +144,7 @@ int main(void) {
     /* Unique Variables and Functions */
     util_pedal_pico_select_multi();
     /* Launch Core 1 */
-    uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
+    uint32_t* stack_pointer = (int32_t*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     while (true) {
         util_pedal_pico_select_multi();
@@ -178,7 +178,7 @@ void pedal_multi_distchorus_set() {
     pedal_pico_chorus_set();
 }
 
-void pedal_multi_roomreverb_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_multi_roomreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (sw_mode == 1) {
         pedal_multi_roomreverb_reverb_conversion_2 = PEDAL_MULTI_ROOMREVERB_REVERB_CONVERSION_2_FIXED_1;
         pedal_multi_roomreverb_chorus_conversion_3 = PEDAL_MULTI_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_1;
@@ -194,25 +194,25 @@ void pedal_multi_roomreverb_process(int32 normalized_1, uint16 conversion_2, uin
     pedal_pico_chorus_process(util_pedal_pico_obj->output_1, conversion_3, pedal_multi_roomreverb_chorus_conversion_3, 0);
 }
 
-void pedal_multi_distreverb_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_multi_distreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     /* Objective entities, util_pedal_pico_obj, pedal_pico_distortion, and pedal_pico_reverb points the same struct and memory space */
     pedal_pico_distortion_process(normalized_1, 0, 0, sw_mode);
     pedal_pico_reverb_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, 0);
 }
 
-void pedal_multi_distplanets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_multi_distplanets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     /* Objective entities, util_pedal_pico_obj, pedal_pico_distortion, and pedal_pico_planets points the same struct and memory space */
     pedal_pico_distortion_process(normalized_1, 0, 0, PEDAL_MULTI_DISTPLANETS_DISTORTION_SW_MODE_FIXED_1);
     pedal_pico_planets_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, sw_mode);
 }
 
-void pedal_multi_fuzzplanets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_multi_fuzzplanets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     /* Objective entities, util_pedal_pico_obj, pedal_pico_distortion, and pedal_pico_planets points the same struct and memory space */
     pedal_pico_distortion_process(normalized_1, 0, 0, PEDAL_MULTI_FUZZPLANETS_DISTORTION_SW_MODE_FIXED_1);
     pedal_pico_planets_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, sw_mode);
 }
 
-void pedal_multi_distchorus_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_multi_distchorus_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     /* Objective entities, util_pedal_pico_obj, pedal_pico_distortion, and pedal_pico_chorus points the same struct and memory space */
     pedal_pico_distortion_process(normalized_1, 0, 0, sw_mode);
     pedal_pico_chorus_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, PEDAL_MULTI_DISTCHORUS_CHORUS_SW_MODE_FIXED_1);

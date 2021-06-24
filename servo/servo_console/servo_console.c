@@ -24,7 +24,7 @@
 #define SERVO_ADC_0_GPIO 26
 #define SERVO_PWM_THRESHOLD 0x3 // Range is 0x0-0xFF (0-255) Divided by 0x8 for 0x0-0x1F (0-31), (0x8 >> 1) - 1.
 
-uint16 servo_sequence[] = {
+uint16_t servo_sequence[] = {
     0x8000|720,
     0x8000|720,
     0x8000|720,
@@ -62,8 +62,8 @@ uint16 servo_sequence[] = {
 
 sequencer_pwm_pico* servo_the_sequencer_1;
 
-uint32 servo_pwm_slice_num;
-uint32 servo_pwm_channel;
+uint32_t servo_pwm_slice_num;
+uint32_t servo_pwm_channel;
 void servo_on_pwm_irq_wrap();
 void servo_on_adc_irq_fifo();
 
@@ -97,7 +97,7 @@ int main(void) {
     printf("@main 2 - Let's Start!\n");
     while (true) {
         puts("Type 0-F to Change Position of Servo Motor:");
-        int32 input = getchar_timeout_us(10000000);
+        int32_t input = getchar_timeout_us(10000000);
         if (input == PICO_ERROR_TIMEOUT) continue;
         printf("%c\n", input);
         if (input >= 0x30 && input <= 0x39) { // "0-9" to 0-9

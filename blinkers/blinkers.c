@@ -20,9 +20,9 @@
 #include "macros_pico.h"
 #include "sequencer_gpio_pico.h"
 
-uchar8 blinkers_pinlist[] = {15,16,25}; // Pin No. 0 to No. 29
-uint32 blinkers_pinlist_length = 3;
-uint16 blinkers_sequence[] = {0b1000000000000010,
+uint8_t blinkers_pinlist[] = {15,16,25}; // Pin No. 0 to No. 29
+uint32_t blinkers_pinlist_length = 3;
+uint16_t blinkers_sequence[] = {0b1000000000000010,
                               0b1000000000000101,
                               0b1000000000000010,
                               0b1000000000000101,
@@ -33,9 +33,9 @@ uint16 blinkers_sequence[] = {0b1000000000000010,
 
 sequencer_gpio_pico* blinkers_the_sequencer;
 
-uint32 blinkers_count;
-uint32 blinkers_pwm_slice_num;
-uint32 blinkers_pwm_channel;
+uint32_t blinkers_count;
+uint32_t blinkers_pwm_slice_num;
+uint32_t blinkers_pwm_channel;
 void blinkers_on_pwm_irq_wrap();
 
 #define BLINKERS_PWM_GPIO 14

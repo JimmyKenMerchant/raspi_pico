@@ -19,7 +19,7 @@
 #include "pedal_pico/pedal_pico_looper.h"
 #include "util_pedal_pico_ex.h"
 
-volatile uint32 pedal_looper_debug_time;
+volatile uint32_t pedal_looper_debug_time;
 
 int main(void) {
     util_pedal_pico_set_sys_clock_115200khz();
@@ -46,14 +46,14 @@ int main(void) {
     pedal_pico_looper_set(UTIL_PEDAL_PICO_LED_2_GPIO);
     util_pedal_pico_process = pedal_pico_looper_process;
     /* Launch Core 1 */
-    uint32* stack_pointer = (int32*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
+    uint32_t* stack_pointer = (int32_t*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     #if UTIL_PEDAL_PICO_DEBUG
         pedal_looper_debug_time = 0;
     #endif
     while (true) {
         #if UTIL_PEDAL_PICO_DEBUG
-            uint32 from_time = time_us_32();
+            uint32_t from_time = time_us_32();
         #endif
         pedal_pico_looper_flash_handler();
         #if UTIL_PEDAL_PICO_DEBUG

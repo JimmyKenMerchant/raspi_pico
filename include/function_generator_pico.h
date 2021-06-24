@@ -36,16 +36,16 @@ extern "C" {
 /* Structs */
 
 typedef struct {
-    uint16 width;
-    uint16 amplitude;
-    uint32 time; // Time in Width * 2^factor
-    uchar8 factor; // Width * 2^factor
+    uint16_t width;
+    uint16_t amplitude;
+    uint32_t time; // Time in Width * 2^factor
+    uint8_t factor; // Width * 2^factor
     bool is_end;
 } function_generator_pico;
 
 /* Functions */
-function_generator_pico* function_generator_pico_init(uint16 width, uchar8 factor, uint16 amplitude);
-int16 function_generator_pico_sine(function_generator_pico* function_generator);
+function_generator_pico* function_generator_pico_init(uint16_t width, uint8_t factor, uint16_t amplitude);
+int16_t function_generator_pico_sine(function_generator_pico* function_generator);
 
 #ifdef __cplusplus
 }

@@ -30,7 +30,7 @@ void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config) {
     pwm_config_set_wrap(ptr_config, 4095); // 0-4095, 4096 Cycles
 }
 
-util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2) {
+util_pedal_pico* util_pedal_pico_init(uint8_t gpio_1, uint8_t gpio_2) {
     #if UTIL_PEDAL_PICO_DEBUG
         stdio_init_all(); // After Changing Clock Speed for UART Baud Rate
         printf("@util_pedal_pico_init 1 - stdio is initialized.\n");
@@ -116,11 +116,11 @@ void util_pedal_pico_start() {
 void util_pedal_pico_on_pwm_irq_wrap_handler() {
     pwm_clear_irq(util_pedal_pico_obj->pwm_1_slice);
     #if UTIL_PEDAL_PICO_DEBUG
-        uint32 from_time = time_us_32();
+        uint32_t from_time = time_us_32();
     #endif
-    uint16 conversion_1 = util_pedal_pico_on_adc_conversion_1;
-    uint16 conversion_2 = util_pedal_pico_on_adc_conversion_2;
-    uint16 conversion_3 = util_pedal_pico_on_adc_conversion_3;
+    uint16_t conversion_1 = util_pedal_pico_on_adc_conversion_1;
+    uint16_t conversion_2 = util_pedal_pico_on_adc_conversion_2;
+    uint16_t conversion_3 = util_pedal_pico_on_adc_conversion_3;
     if (! util_pedal_pico_on_adc_is_outstanding) {
         util_pedal_pico_on_adc_is_outstanding = true;
         adc_select_input(0); // Ensure to Start from ADC0
@@ -130,19 +130,19 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
     }
     util_pedal_pico_renew_adc_middle_moving_average(conversion_1);
     if (util_pedal_pico_process != NULL) {
-        int32 normalized_1 = (int32)conversion_1 - (int32)util_pedal_pico_adc_middle_moving_average;
+        int32_t normalized_1 = (int32_t)conversion_1 - (int32_t)util_pedal_pico_adc_middle_moving_average;
         /**
          * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
          * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
          * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
          */
-        normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+        normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_pdf_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
         util_pedal_pico_process(normalized_1, conversion_2, conversion_3, util_pedal_pico_sw_mode);
-        util_pedal_pico_obj->output_1 = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1 + (int32)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
-        util_pedal_pico_obj->output_1_inverted = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1_inverted + (int32)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+        util_pedal_pico_obj->output_1 = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1 + (int32_t)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
+        util_pedal_pico_obj->output_1_inverted = util_pedal_pico_cutoff_biased(util_pedal_pico_obj->output_1_inverted + (int32_t)UTIL_PEDAL_PICO_PWM_OFFSET, UTIL_PEDAL_PICO_PWM_OFFSET + UTIL_PEDAL_PICO_PWM_PEAK, UTIL_PEDAL_PICO_PWM_OFFSET - UTIL_PEDAL_PICO_PWM_PEAK);
         /* Output */
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Positive
-        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Negative
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_1_slice, util_pedal_pico_obj->pwm_1_channel, (uint16_t)util_pedal_pico_obj->output_1 + (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Positive
+        pwm_set_chan_level(util_pedal_pico_obj->pwm_2_slice, util_pedal_pico_obj->pwm_2_channel, (uint16_t)util_pedal_pico_obj->output_1_inverted - (UTIL_PEDAL_PICO_PWM_OFFSET >> 1)); // Balanced Monaural (Biased for Single Power Op Amp) Negative
     }
     #if UTIL_PEDAL_PICO_DEBUG
         util_pedal_pico_debug_time = time_us_32() - from_time;
@@ -151,22 +151,22 @@ void util_pedal_pico_on_pwm_irq_wrap_handler() {
     __dsb();
 }
 
-void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion) {
-    uint32 middle_moving_average = util_pedal_pico_adc_middle_moving_average_sum / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
+void util_pedal_pico_renew_adc_middle_moving_average(uint16_t conversion) {
+    uint32_t middle_moving_average = util_pedal_pico_adc_middle_moving_average_sum / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
     util_pedal_pico_adc_middle_moving_average_sum -= middle_moving_average;
     util_pedal_pico_adc_middle_moving_average_sum += conversion;
-    util_pedal_pico_adc_middle_moving_average = (uint16)middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average = (uint16_t)middle_moving_average;
 }
 
 void util_pedal_pico_on_adc_irq_fifo() {
     adc_run(false);
     __dsb();
     __isb();
-    uint16 adc_fifo_level = adc_fifo_get_level(); // Seems 8 at Maximum
+    uint16_t adc_fifo_level = adc_fifo_get_level(); // Seems 8 at Maximum
     //printf("@util_pedal_pico_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
-    for (uint16 i = 0; i < adc_fifo_level; i++) {
+    for (uint16_t i = 0; i < adc_fifo_level; i++) {
         //printf("@util_pedal_pico_on_adc_irq_fifo 2 - i: %d\n", i);
-        uint16 temp = adc_fifo_get();
+        uint16_t temp = adc_fifo_get();
         if (temp & 0x8000) { // Procedure on Malfunction
             if (time_us_64() >= UTIL_PEDAL_PICO_ADC_ERROR_SINCE) {
                 reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
@@ -175,7 +175,7 @@ void util_pedal_pico_on_adc_irq_fifo() {
             break;
         } else {
             temp &= 0x7FFF; // Clear Bit[15]: ERR
-            uint16 remainder = i % 3;
+            uint16_t remainder = i % 3;
             if (remainder == 2) {
                 util_pedal_pico_on_adc_conversion_3 = temp;
             } else if (remainder == 1) {
@@ -194,9 +194,9 @@ void util_pedal_pico_on_adc_irq_fifo() {
     __dsb();
 }
 
-void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2) {
+void util_pedal_pico_init_sw(uint8_t gpio_1, uint8_t gpio_2) {
     /* Switch Configuration */
-    uint32 gpio_mask = 0b1<< gpio_1|0b1 << gpio_2;
+    uint32_t gpio_mask = 0b1<< gpio_1|0b1 << gpio_2;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_1);
@@ -206,22 +206,22 @@ void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2) {
     util_pedal_pico_sw_mode = 0; // Initialize Mode of Switch Before Running PWM and ADC
 }
 
-void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2) {
+void util_pedal_pico_free_sw(uint8_t gpio_1, uint8_t gpio_2) {
     gpio_disable_pulls(gpio_1);
     gpio_disable_pulls(gpio_2);
     util_pedal_pico_sw_gpio_1 = 0;
     util_pedal_pico_sw_gpio_2 = 0;
 }
 
-void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2) { // Considered Reducing to Access SRAM
-    uint16 count_sw_0 = 0; // Center
-    uint16 count_sw_1 = 0;
-    uint16 count_sw_2 = 0;
-    uint32 state_sw_1 = 0b1 << gpio_2;
-    uint32 state_sw_2 = 0b1 << gpio_1;
-    uchar8 mode = 0; // To Reduce Memory Access
+void util_pedal_pico_sw_loop(uint8_t gpio_1, uint8_t gpio_2) { // Considered Reducing to Access SRAM
+    uint16_t count_sw_0 = 0; // Center
+    uint16_t count_sw_1 = 0;
+    uint16_t count_sw_2 = 0;
+    uint32_t state_sw_1 = 0b1 << gpio_2;
+    uint32_t state_sw_2 = 0b1 << gpio_1;
+    uint8_t mode = 0; // To Reduce Memory Access
     while (true) {
-        uint32 status_sw = gpio_get_all() & (0b1 << gpio_1|0b1 << gpio_2);
+        uint32_t status_sw = gpio_get_all() & (0b1 << gpio_1|0b1 << gpio_2);
         if (status_sw == state_sw_1) {
             count_sw_0 = 0;
             count_sw_1++;
@@ -267,7 +267,7 @@ void util_pedal_pico_xip_turn_off() {
     __dsb();
 }
 
-void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 size_in_byte) {
+void util_pedal_pico_flash_write(uint32_t flash_offset, uint8_t* buffer, uint32_t size_in_byte) {
     __dsb();
     flash_range_erase(flash_offset, size_in_byte);
     __dsb();
@@ -275,7 +275,7 @@ void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 siz
     __dsb();
 }
 
-void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte) {
+void util_pedal_pico_flash_erase(uint32_t flash_offset, uint32_t size_in_byte) {
     __dsb();
     flash_range_erase(flash_offset, size_in_byte);
     __dsb();
@@ -294,12 +294,12 @@ void util_pedal_pico_wait() {
     #endif
 }
 
-void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2, uchar8 gpio_bit_3) {
+void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3) {
     util_pedal_pico_multi_set = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_process = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_free = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     /* Selector Configuration */
-    uint32 gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2|0b1 << gpio_bit_3;
+    uint32_t gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2|0b1 << gpio_bit_3;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_bit_0);
@@ -319,8 +319,8 @@ void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpi
 }
 
 void util_pedal_pico_select_multi() {
-    uint32 status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2|0b1 << util_pedal_pico_multi_gpio_bit_3);
-    uchar8 status_bit = 0;
+    uint32_t status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2|0b1 << util_pedal_pico_multi_gpio_bit_3);
+    uint8_t status_bit = 0;
     if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b0001;
     if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b0010;
     if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b0100;

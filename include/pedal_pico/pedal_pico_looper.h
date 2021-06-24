@@ -47,25 +47,25 @@ extern "C" {
  */
 
 volatile util_pedal_pico* pedal_pico_looper;
-volatile uchar8 pedal_pico_looper_indicator_led;
-volatile uint32 pedal_pico_looper_indicator_led_bit;
-volatile uint16 pedal_pico_looper_conversion_2;
-volatile uint16 pedal_pico_looper_conversion_3;
-volatile uint16 pedal_pico_looper_loss;
-volatile uchar8* pedal_pico_looper_flash;
-volatile uint32 pedal_pico_looper_flash_index;
-volatile uint32 pedal_pico_looper_flash_upto;
-volatile uint32 pedal_pico_looper_flash_offset;
-volatile uint32 pedal_pico_looper_flash_reserve_offset;
-volatile uint16 pedal_pico_looper_flash_offset_index;
-volatile uint16 pedal_pico_looper_flash_offset_upto;
-volatile int16* pedal_pico_looper_buffer_in_1;
-volatile int16* pedal_pico_looper_buffer_in_2;
-volatile int16* pedal_pico_looper_buffer_out_1;
-volatile int16* pedal_pico_looper_buffer_out_2;
-volatile uchar8 pedal_pico_looper_sw_mode;
-volatile uint32 pedal_pico_looper_sw_count;
-volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
+volatile uint8_t pedal_pico_looper_indicator_led;
+volatile uint32_t pedal_pico_looper_indicator_led_bit;
+volatile uint16_t pedal_pico_looper_conversion_2;
+volatile uint16_t pedal_pico_looper_conversion_3;
+volatile uint16_t pedal_pico_looper_loss;
+volatile uint8_t* pedal_pico_looper_flash;
+volatile uint32_t pedal_pico_looper_flash_index;
+volatile uint32_t pedal_pico_looper_flash_upto;
+volatile uint32_t pedal_pico_looper_flash_offset;
+volatile uint32_t pedal_pico_looper_flash_reserve_offset;
+volatile uint16_t pedal_pico_looper_flash_offset_index;
+volatile uint16_t pedal_pico_looper_flash_offset_upto;
+volatile int16_t* pedal_pico_looper_buffer_in_1;
+volatile int16_t* pedal_pico_looper_buffer_in_2;
+volatile int16_t* pedal_pico_looper_buffer_out_1;
+volatile int16_t* pedal_pico_looper_buffer_out_2;
+volatile uint8_t pedal_pico_looper_sw_mode;
+volatile uint32_t pedal_pico_looper_sw_count;
+volatile uint32_t pedal_pico_looper_led_toggle_count_on_erase;
 /**
  * pedal_pico_looper_buffer_status:
  * Bit[0]: Double Buffer Select
@@ -85,7 +85,7 @@ volatile uint32 pedal_pico_looper_led_toggle_count_on_erase;
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_OUTSTANDING_ERASE_BITS 0b00100000
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_PENDING_BITS 0b01000000
 #define PEDAL_PICO_LOOPER_FLASH_BUFFER_STATUS_ORDER_REWIND_BITS 0b10000000
-volatile uchar8 pedal_pico_looper_buffer_status;
+volatile uint8_t pedal_pico_looper_buffer_status;
 
 /**
  * __flash_binary_end can be watched in qspi_flash.elf.map.
@@ -102,12 +102,12 @@ volatile uchar8 pedal_pico_looper_buffer_status;
     #error "PICO_NO_FLASH is true."
 #endif
 
-static uchar8 pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {
+static uint8_t pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE] __attribute__((section (".PEDAL_PICO_LOOPER.FLASH"))) = {
     _4_BIG(_1000(0x88)) _2_BIG(_47(0x88)) 0x88, 0x88
 }; // One Sector = 4096 Bytes, Fill by 0x88
 
-void pedal_pico_looper_set(uchar8 indicator_led_gpio);
-void pedal_pico_looper_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_looper_set(uint8_t indicator_led_gpio);
+void pedal_pico_looper_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_looper_flash_handler();
 void pedal_pico_looper_free();
 

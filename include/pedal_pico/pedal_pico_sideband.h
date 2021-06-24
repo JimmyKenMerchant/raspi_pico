@@ -43,16 +43,16 @@ extern "C" {
 #define PEDAL_PICO_SIDEBAND_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 
 volatile util_pedal_pico* pedal_pico_sideband;
-volatile uint16 pedal_pico_sideband_conversion_2;
-volatile uint16 pedal_pico_sideband_conversion_3;
-volatile uint32 pedal_pico_sideband_osc_sine_1_index;
-volatile uint32 pedal_pico_sideband_osc_sine_2_index;
-volatile uint16 pedal_pico_sideband_osc_speed;
-volatile char8 pedal_pico_sideband_osc_start_threshold;
-volatile uint16 pedal_pico_sideband_osc_start_count;
+volatile uint16_t pedal_pico_sideband_conversion_2;
+volatile uint16_t pedal_pico_sideband_conversion_3;
+volatile uint32_t pedal_pico_sideband_osc_sine_1_index;
+volatile uint32_t pedal_pico_sideband_osc_sine_2_index;
+volatile uint16_t pedal_pico_sideband_osc_speed;
+volatile int8_t pedal_pico_sideband_osc_start_threshold;
+volatile uint16_t pedal_pico_sideband_osc_start_count;
 
 void pedal_pico_sideband_set();
-void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_sideband_free();
 
 #ifdef __cplusplus

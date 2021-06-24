@@ -12,7 +12,7 @@
 
 #include "function_generator_pico.h"
 
-function_generator_pico* function_generator_pico_init(uint16 width, uchar8 factor, uint16 amplitude) {
+function_generator_pico* function_generator_pico_init(uint16_t width, uint8_t factor, uint16_t amplitude) {
     function_generator_pico* function_generator = (function_generator_pico*)malloc(sizeof(function_generator_pico));
     if (function_generator == null) return function_generator;
     function_generator->width = width;
@@ -23,12 +23,12 @@ function_generator_pico* function_generator_pico_init(uint16 width, uchar8 facto
     return function_generator;
 }
 
-int16 function_generator_pico_sine(function_generator_pico* function_generator) {
+int16_t function_generator_pico_sine(function_generator_pico* function_generator) {
     if (function_generator == null) return 0;
-    uint32 width_factored = function_generator->width << function_generator->factor;
+    uint32_t width_factored = function_generator->width << function_generator->factor;
     if (function_generator->time >= width_factored) function_generator->time = 0;
-    float32 radius = ((float32)function_generator->time / (float32)width_factored) * 2.0f * CONSTANTS_SCIENCE_PICO_PI_FLOAT;
+    float radius = ((float)function_generator->time / (float)width_factored) * 2.0f * CONSTANTS_SCIENCE_PICO_PI_FLOAT;
     function_generator->time++;
     if (function_generator->time == width_factored) function_generator->is_end = true;
-    return (int16)(sinf(radius) * (float32)function_generator->amplitude);
+    return (int16_t)(sinf(radius) * (float)function_generator->amplitude);
 }

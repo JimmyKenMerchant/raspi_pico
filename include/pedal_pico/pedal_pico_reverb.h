@@ -39,16 +39,16 @@ extern "C" {
 #define PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM 1
 
 volatile util_pedal_pico* pedal_pico_reverb;
-volatile uint16 pedal_pico_reverb_conversion_2;
-volatile uint16 pedal_pico_reverb_conversion_3;
-volatile int16* pedal_pico_reverb_delay_array;
-volatile int32 pedal_pico_reverb_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-volatile uint16 pedal_pico_reverb_delay_time;
-volatile uint16 pedal_pico_reverb_delay_time_interpolation;
-volatile uint16 pedal_pico_reverb_delay_index;
+volatile uint16_t pedal_pico_reverb_conversion_2;
+volatile uint16_t pedal_pico_reverb_conversion_3;
+volatile int16_t* pedal_pico_reverb_delay_array;
+volatile int32_t pedal_pico_reverb_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile uint16_t pedal_pico_reverb_delay_time;
+volatile uint16_t pedal_pico_reverb_delay_time_interpolation;
+volatile uint16_t pedal_pico_reverb_delay_index;
 
 void pedal_pico_reverb_set();
-void pedal_pico_reverb_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_reverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_reverb_free();
 
 #ifdef __cplusplus

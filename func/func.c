@@ -26,10 +26,10 @@
 
 function_generator_pico* function_generator;
 
-uint32 func_pwm_slice_num;
-uint32 func_pwm_channel;
-uint32 func_next_factor;
-uint32 func_debug_time;
+uint32_t func_pwm_slice_num;
+uint32_t func_pwm_channel;
+uint32_t func_next_factor;
+uint32_t func_debug_time;
 
 void func_on_pwm_irq_wrap();
 
@@ -59,7 +59,7 @@ int main(void) {
     while (true) {
         puts("Type 0-5 to Change Frequency:");
         printf("@main 2 - func_debug_time %d\n", func_debug_time);
-        int32 input = getchar_timeout_us(10000000);
+        int32_t input = getchar_timeout_us(10000000);
         if (input == PICO_ERROR_TIMEOUT) continue;
         if (input >= 0x30 && input <= 0x35) { // "0-5" to 0-5
             printf("%c\n", input);
@@ -75,7 +75,7 @@ int main(void) {
 
 void func_on_pwm_irq_wrap() {
     pwm_clear_irq(func_pwm_slice_num);
-    uint32 from_time = time_us_32();
+    uint32_t from_time = time_us_32();
     pwm_set_chan_level(func_pwm_slice_num, func_pwm_channel, function_generator_pico_sine(function_generator) + FUNC_PWM_OFFSET);
     if(function_generator->is_end) {
         function_generator->factor = func_next_factor;

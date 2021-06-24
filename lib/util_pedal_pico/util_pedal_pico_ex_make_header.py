@@ -41,14 +41,14 @@ prefix = [
 
 declare_sine_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_sine_1[] = {\n"
+"int32_t util_pedal_pico_ex_table_sine_1[] = {\n"
 ]
 
 sine_length_1 = osc_sine_length
 
 declare_triangle_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_triangle_1[] = {\n"
+"int32_t util_pedal_pico_ex_table_triangle_1[] = {\n"
 ]
 
 triangle_length_1 = osc_triangle_length
@@ -56,7 +56,7 @@ triangle_height_1 = 1.0 # Maximum Height
 
 declare_pdf_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_pdf_1[] = {\n"
+"int32_t util_pedal_pico_ex_table_pdf_1[] = {\n"
 ]
 
 pdf_length_1 = peak_length # Number of Array
@@ -66,7 +66,7 @@ pdf_height_1 = 2.0 # Maximum Height
 
 declare_log_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_log_1[] = {\n"
+"int32_t util_pedal_pico_ex_table_log_1[] = {\n"
 ]
 
 log_length_1 = peak_length # Number of Array
@@ -76,7 +76,7 @@ log_height_1 = 6.0 # Maximum Height
 
 declare_log_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_log_2[] = {\n"
+"int32_t util_pedal_pico_ex_table_log_2[] = {\n"
 ]
 
 log_length_2 = peak_length # Number of Array
@@ -86,7 +86,7 @@ log_height_2 = 8.0 # Maximum Height
 
 declare_power_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
-"int32 util_pedal_pico_ex_table_power_1[] = {\n"
+"int32_t util_pedal_pico_ex_table_power_1[] = {\n"
 ]
 
 power_length_1 = peak_length # Number of Array

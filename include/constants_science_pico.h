@@ -21,7 +21,7 @@ extern "C" {
  * Mathmatics
  ********************************/
 
-#define CONSTANTS_SCIENCE_PICO_PI_FLOAT (float32)3.14159265358979
+#define CONSTANTS_SCIENCE_PICO_PI_FLOAT (float)3.14159265358979
 
 #ifdef __cplusplus
 }

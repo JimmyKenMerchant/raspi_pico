@@ -41,21 +41,20 @@ extern "C" {
 #define PEDAL_PICO_SUSTAIN_PEAK_FIXED_3 256
 #define PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT 2 // Divide by 4
 #define PEDAL_PICO_SUSTAIN_NOISE_GATE_THRESHOLD_MULTIPLIER 4
-#define PEDAL_PICO_SUSTAIN_NOISE_GATE_COUNT_MAX 4000 // 28125 Divided by 2000 = Approx. 14Hz
 
 volatile util_pedal_pico* pedal_pico_sustain;
-volatile uint16 pedal_pico_sustain_conversion_2;
-volatile uint16 pedal_pico_sustain_conversion_3;
-volatile int16* pedal_pico_sustain_delay_array;
-volatile int32 pedal_pico_sustain_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile uint16_t pedal_pico_sustain_conversion_2;
+volatile uint16_t pedal_pico_sustain_conversion_3;
+volatile int16_t* pedal_pico_sustain_delay_array;
+volatile int32_t pedal_pico_sustain_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 
-volatile uint16 pedal_pico_sustain_delay_time;
-volatile uint16 pedal_pico_sustain_delay_index;
-volatile char8 pedal_pico_sustain_noise_gate_threshold;
+volatile uint16_t pedal_pico_sustain_delay_time;
+volatile uint16_t pedal_pico_sustain_delay_index;
+volatile int8_t pedal_pico_sustain_noise_gate_threshold;
 volatile bool pedal_pico_sustain_is_on;
 
 void pedal_pico_sustain_set();
-void pedal_pico_sustain_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_sustain_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_sustain_free();
 
 #ifdef __cplusplus

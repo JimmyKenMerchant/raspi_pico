@@ -40,19 +40,19 @@ extern "C" {
 #define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 4 // Value to Accumulate, Small Value Makes Froggy
 
 volatile util_pedal_pico* pedal_pico_planets;
-volatile uint16 pedal_pico_planets_conversion_2;
-volatile uint16 pedal_pico_planets_conversion_3;
-volatile int32 pedal_pico_planets_coefficient; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-volatile int32 pedal_pico_planets_coefficient_interpolation;
-volatile int16* pedal_pico_planets_delay_x;
-volatile int16* pedal_pico_planets_delay_y;
-volatile uint16 pedal_pico_planets_delay_time;
-volatile uint16 pedal_pico_planets_delay_time_interpolation;
-volatile uint16 pedal_pico_planets_delay_time_interpolation_accum;
-volatile uint16 pedal_pico_planets_delay_index;
+volatile uint16_t pedal_pico_planets_conversion_2;
+volatile uint16_t pedal_pico_planets_conversion_3;
+volatile int32_t pedal_pico_planets_coefficient; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile int32_t pedal_pico_planets_coefficient_interpolation;
+volatile int16_t* pedal_pico_planets_delay_x;
+volatile int16_t* pedal_pico_planets_delay_y;
+volatile uint16_t pedal_pico_planets_delay_time;
+volatile uint16_t pedal_pico_planets_delay_time_interpolation;
+volatile uint16_t pedal_pico_planets_delay_time_interpolation_accum;
+volatile uint16_t pedal_pico_planets_delay_index;
 
 void pedal_pico_planets_set();
-void pedal_pico_planets_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_planets_free();
 
 #ifdef __cplusplus

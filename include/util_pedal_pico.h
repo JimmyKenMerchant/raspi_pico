@@ -94,7 +94,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_0_GPIO 26
 #define UTIL_PEDAL_PICO_ADC_1_GPIO 27
 #define UTIL_PEDAL_PICO_ADC_2_GPIO 28
-#define UTIL_PEDAL_PICO_ADC_ERROR_SINCE (uint64)1000000 // System Time (Micro Seconds) to Start Handling ADC Error
+#define UTIL_PEDAL_PICO_ADC_ERROR_SINCE (uint64_t)1000000 // System Time (Micro Seconds) to Start Handling ADC Error
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT 2048
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 #define UTIL_PEDAL_PICO_ADC_SHIFT 7 // 0x0-0xFFF (0-4095) to 0x0-0x1F (0-31)
@@ -110,64 +110,64 @@ extern "C" {
 
 /* Structs */
 typedef struct {
-    uchar8 pwm_1_slice;
-    uchar8 pwm_1_channel;
-    uchar8 pwm_2_slice;
-    uchar8 pwm_2_channel;
-    int32 output_1;
-    int32 output_1_inverted;
+    uint8_t pwm_1_slice;
+    uint8_t pwm_1_channel;
+    uint8_t pwm_2_slice;
+    uint8_t pwm_2_channel;
+    int32_t output_1;
+    int32_t output_1_inverted;
 } util_pedal_pico;
 
 /* Global Variables */
 volatile util_pedal_pico* util_pedal_pico_obj; // Pointer Needed to Be Initialized
-volatile uint16 util_pedal_pico_on_adc_conversion_1;
-volatile uint16 util_pedal_pico_on_adc_conversion_2;
-volatile uint16 util_pedal_pico_on_adc_conversion_3;
+volatile uint16_t util_pedal_pico_on_adc_conversion_1;
+volatile uint16_t util_pedal_pico_on_adc_conversion_2;
+volatile uint16_t util_pedal_pico_on_adc_conversion_3;
 volatile bool util_pedal_pico_on_adc_is_outstanding;
-volatile uint16 util_pedal_pico_adc_middle_moving_average;
-volatile uint32 util_pedal_pico_adc_middle_moving_average_sum;
-volatile uchar8 util_pedal_pico_sw_gpio_1;
-volatile uchar8 util_pedal_pico_sw_gpio_2;
-volatile uchar8 util_pedal_pico_sw_mode;
-volatile uint32 util_pedal_pico_debug_time;
-volatile uchar8 util_pedal_pico_multi_gpio_bit_0;
-volatile uchar8 util_pedal_pico_multi_gpio_bit_1;
-volatile uchar8 util_pedal_pico_multi_gpio_bit_2;
-volatile uchar8 util_pedal_pico_multi_gpio_bit_3;
-volatile uchar8 util_pedal_pico_multi_mode;
-volatile int32* util_pedal_pico_table_sine_1; // Assuming 0-1 Pi (0-180 Degrees)
-volatile int32* util_pedal_pico_table_triangle_1; // Assuming Right Triangle
-volatile int32* util_pedal_pico_table_pdf_1;
-volatile int32* util_pedal_pico_table_log_1;
-volatile int32* util_pedal_pico_table_log_2;
-volatile int32* util_pedal_pico_table_power_1;
+volatile uint16_t util_pedal_pico_adc_middle_moving_average;
+volatile uint32_t util_pedal_pico_adc_middle_moving_average_sum;
+volatile uint8_t util_pedal_pico_sw_gpio_1;
+volatile uint8_t util_pedal_pico_sw_gpio_2;
+volatile uint8_t util_pedal_pico_sw_mode;
+volatile uint32_t util_pedal_pico_debug_time;
+volatile uint8_t util_pedal_pico_multi_gpio_bit_0;
+volatile uint8_t util_pedal_pico_multi_gpio_bit_1;
+volatile uint8_t util_pedal_pico_multi_gpio_bit_2;
+volatile uint8_t util_pedal_pico_multi_gpio_bit_3;
+volatile uint8_t util_pedal_pico_multi_mode;
+volatile int32_t* util_pedal_pico_table_sine_1; // Assuming 0-1 Pi (0-180 Degrees)
+volatile int32_t* util_pedal_pico_table_triangle_1; // Assuming Right Triangle
+volatile int32_t* util_pedal_pico_table_pdf_1;
+volatile int32_t* util_pedal_pico_table_log_1;
+volatile int32_t* util_pedal_pico_table_log_2;
+volatile int32_t* util_pedal_pico_table_power_1;
 
 /* Hide Duplicate Declaration */
-extern int32 util_pedal_pico_ex_table_sine_1[];
-extern int32 util_pedal_pico_ex_table_triangle_1[];
-extern int32 util_pedal_pico_ex_table_pdf_1[];
-extern int32 util_pedal_pico_ex_table_log_1[];
-extern int32 util_pedal_pico_ex_table_log_2[];
-extern int32 util_pedal_pico_ex_table_power_1[];
+extern int32_t util_pedal_pico_ex_table_sine_1[];
+extern int32_t util_pedal_pico_ex_table_triangle_1[];
+extern int32_t util_pedal_pico_ex_table_pdf_1[];
+extern int32_t util_pedal_pico_ex_table_log_1[];
+extern int32_t util_pedal_pico_ex_table_log_2[];
+extern int32_t util_pedal_pico_ex_table_power_1[];
 
 /* Functions */
-void (*util_pedal_pico_process)(int32, uint16, uint16, uchar8); // Pointer Needed to Be Assigned
+void (*util_pedal_pico_process)(int32_t, uint16_t, uint16_t, uint8_t); // Pointer Needed to Be Assigned
 void util_pedal_pico_set_sys_clock_115200khz();
 void util_pedal_pico_set_pwm_28125hz(pwm_config* ptr_config);
-util_pedal_pico* util_pedal_pico_init(uchar8 gpio_1, uchar8 gpio_2);
+util_pedal_pico* util_pedal_pico_init(uint8_t gpio_1, uint8_t gpio_2);
 void util_pedal_pico_init_adc();
 void util_pedal_pico_start();
 void util_pedal_pico_on_pwm_irq_wrap_handler();
-void util_pedal_pico_renew_adc_middle_moving_average(uint16 conversion);
+void util_pedal_pico_renew_adc_middle_moving_average(uint16_t conversion);
 void util_pedal_pico_on_adc_irq_fifo();
-void util_pedal_pico_init_sw(uchar8 gpio_1, uchar8 gpio_2);
-void util_pedal_pico_free_sw(uchar8 gpio_1, uchar8 gpio_2);
-void util_pedal_pico_sw_loop(uchar8 gpio_1, uchar8 gpio_2); // Three Point Switch
+void util_pedal_pico_init_sw(uint8_t gpio_1, uint8_t gpio_2);
+void util_pedal_pico_free_sw(uint8_t gpio_1, uint8_t gpio_2);
+void util_pedal_pico_sw_loop(uint8_t gpio_1, uint8_t gpio_2); // Three Point Switch
 void util_pedal_pico_wait();
-void util_pedal_pico_init_multi(uchar8 gpio_bit_0, uchar8 gpio_bit_1, uchar8 gpio_bit_2, uchar8 gpio_bit_3);
+void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3);
 void util_pedal_pico_select_multi();
 void (**util_pedal_pico_multi_set)();
-void (**util_pedal_pico_multi_process)(int32, uint16, uint16, uchar8);
+void (**util_pedal_pico_multi_process)(int32_t, uint16_t, uint16_t, uint8_t);
 void (**util_pedal_pico_multi_free)();
 /**
  * Caution! These Functions tries to erase and write data to the on-board flash memory.
@@ -175,8 +175,8 @@ void (**util_pedal_pico_multi_free)();
  */
 #if PICO_COPY_TO_RAM
     void util_pedal_pico_xip_turn_off();
-    void util_pedal_pico_flash_write(uint32 flash_offset, uchar8* buffer, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
-    void util_pedal_pico_flash_erase(uint32 flash_offset, uint32 size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
+    void util_pedal_pico_flash_write(uint32_t flash_offset, uint8_t* buffer, uint32_t size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
+    void util_pedal_pico_flash_erase(uint32_t flash_offset, uint32_t size_in_byte); // size_in_byte Must Be Multiples of FLASH_SECTOR_SIZE (4096)
 #else
     #warning "util_pedal_pico_xip_turn_off and util_pedal_pico_flash_write are not declared because PICO_COPY_TO_RAM is false."
 #endif

@@ -18,7 +18,7 @@ void pedal_pico_distortion_set() {
     pedal_pico_distortion_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
 }
 
-void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_pico_distortion_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_distortion_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_distortion_conversion_2 = conversion_2;
     }
@@ -33,21 +33,21 @@ void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint
     normalized_1 = util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1);
     if (sw_mode == 1) {
         if (normalized_1 > 0) {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         } else {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_power_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_power_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         }
     } else if (sw_mode == 2) {
         if (normalized_1 > 0) {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         } else {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_log_2[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         }
     } else {
         if (normalized_1 > 0) {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         } else {
-            normalized_1 = (int32)((((int64)normalized_1 << 16) * (int64)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
+            normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)util_pedal_pico_table_log_1[abs(util_pedal_pico_cutoff_normalized(normalized_1, UTIL_PEDAL_PICO_PWM_PEAK))]) >> 32);
         }
     }
     /* Output */

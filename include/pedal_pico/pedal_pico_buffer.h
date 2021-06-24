@@ -36,9 +36,9 @@ extern "C" {
 #define PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT 8 // Multiply By 256 (0-7936), 7936 Divided by 28125 (0.282 Seconds)
 #define PEDAL_PICO_BUFFER_DELAY_TIME_MAX ((UTIL_PEDAL_PICO_ADC_RESOLUTION << PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM 1
-#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_1 (int32)(0x00004000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_2 (int32)(0x00008000)
-#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_3 (int32)(0x0000F000)
+#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_1 (int32_t)(0x00004000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_2 (int32_t)(0x00008000)
+#define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_3 (int32_t)(0x0000F000)
 #define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1 0x2
 #define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2 0x4
 #define PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_3 0x8
@@ -47,20 +47,20 @@ extern "C" {
 #define PEDAL_PICO_BUFFER_NOISE_GATE_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
 
 volatile util_pedal_pico* pedal_pico_buffer;
-volatile uint16 pedal_pico_buffer_conversion_2;
-volatile uint16 pedal_pico_buffer_conversion_3;
-volatile int16* pedal_pico_buffer_delay_array;
-volatile int32 pedal_pico_buffer_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-volatile int32 pedal_pico_buffer_delay_amplitude_interpolation;
-volatile uchar8 pedal_pico_buffer_delay_amplitude_interpolation_accum;
-volatile uint16 pedal_pico_buffer_delay_time;
-volatile uint16 pedal_pico_buffer_delay_time_interpolation;
-volatile uint16 pedal_pico_buffer_delay_index;
-volatile char8 pedal_pico_buffer_noise_gate_threshold;
-volatile uint16 pedal_pico_buffer_noise_gate_count;
+volatile uint16_t pedal_pico_buffer_conversion_2;
+volatile uint16_t pedal_pico_buffer_conversion_3;
+volatile int16_t* pedal_pico_buffer_delay_array;
+volatile int32_t pedal_pico_buffer_delay_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+volatile int32_t pedal_pico_buffer_delay_amplitude_interpolation;
+volatile uint8_t pedal_pico_buffer_delay_amplitude_interpolation_accum;
+volatile uint16_t pedal_pico_buffer_delay_time;
+volatile uint16_t pedal_pico_buffer_delay_time_interpolation;
+volatile uint16_t pedal_pico_buffer_delay_index;
+volatile int8_t pedal_pico_buffer_noise_gate_threshold;
+volatile uint16_t pedal_pico_buffer_noise_gate_count;
 
 void pedal_pico_buffer_set();
-void pedal_pico_buffer_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_buffer_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_buffer_free();
 
 #ifdef __cplusplus

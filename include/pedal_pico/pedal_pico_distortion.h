@@ -36,11 +36,11 @@ extern "C" {
 #define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0xFF // 8-bit (Normalized 0 to peak)
 
 volatile util_pedal_pico* pedal_pico_distortion;
-volatile uint16 pedal_pico_distortion_conversion_2;
-volatile uint16 pedal_pico_distortion_conversion_3;
+volatile uint16_t pedal_pico_distortion_conversion_2;
+volatile uint16_t pedal_pico_distortion_conversion_3;
 
 void pedal_pico_distortion_set();
-void pedal_pico_distortion_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode);
+void pedal_pico_distortion_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_pico_distortion_free();
 
 #ifdef __cplusplus

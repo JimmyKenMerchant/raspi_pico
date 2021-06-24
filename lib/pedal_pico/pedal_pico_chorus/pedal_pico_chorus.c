@@ -16,20 +16,20 @@ void pedal_pico_chorus_set() {
     if (! pedal_pico_chorus) panic("pedal_pico_chorus is not initialized.");
     pedal_pico_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_chorus_delay_array = (int16*)calloc(PEDAL_PICO_CHORUS_DELAY_TIME_MAX, sizeof(int16));
+    pedal_pico_chorus_delay_array = (int16_t*)calloc(PEDAL_PICO_CHORUS_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_chorus_delay_amplitude = PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1;
     pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1;
     pedal_pico_chorus_delay_index = 0;
     pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_chorus_osc_sine_1_index = 0;
-    pedal_pico_chorus_lr_distance_array =  (int16*)calloc(PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16));
-    uint16 lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    pedal_pico_chorus_lr_distance_array =  (int16_t*)calloc(PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16_t));
+    uint16_t lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_pico_chorus_lr_distance_time = lr_distance_time;
     pedal_pico_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_pico_chorus_lr_distance_index = 0;
 }
 
-void pedal_pico_chorus_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_pico_chorus_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_chorus_conversion_2 = conversion_2;
         pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
@@ -52,20 +52,20 @@ void pedal_pico_chorus_process(int32 normalized_1, uint16 conversion_2, uint16 c
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     /* Push and Pop Delay */
-    pedal_pico_chorus_delay_array[pedal_pico_chorus_delay_index] = (int16)normalized_1; // Push Current Value in Advance for 0
-    int32 delay_1 = (int32)pedal_pico_chorus_delay_array[((pedal_pico_chorus_delay_index + PEDAL_PICO_CHORUS_DELAY_TIME_MAX) - pedal_pico_chorus_delay_time) % PEDAL_PICO_CHORUS_DELAY_TIME_MAX];
+    pedal_pico_chorus_delay_array[pedal_pico_chorus_delay_index] = (int16_t)normalized_1; // Push Current Value in Advance for 0
+    int32_t delay_1 = (int32_t)pedal_pico_chorus_delay_array[((pedal_pico_chorus_delay_index + PEDAL_PICO_CHORUS_DELAY_TIME_MAX) - pedal_pico_chorus_delay_time) % PEDAL_PICO_CHORUS_DELAY_TIME_MAX];
     pedal_pico_chorus_delay_index++;
     if (pedal_pico_chorus_delay_index >= PEDAL_PICO_CHORUS_DELAY_TIME_MAX) pedal_pico_chorus_delay_index -= PEDAL_PICO_CHORUS_DELAY_TIME_MAX;
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_chorus_osc_sine_1_index / PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
+    int32_t fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_chorus_osc_sine_1_index / PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_pico_chorus_osc_sine_1_index += pedal_pico_chorus_osc_speed;
     if (pedal_pico_chorus_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_chorus_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
-    delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_pico_chorus_delay_amplitude) >> 32);
-    int32 delay_1_l = (int32)(int64)((((int64)delay_1 << 16) * (int64)abs(fixed_point_value_sine_1)) >> 32);
-    int32 delay_1_r = (int32)(int64)((((int64)delay_1 << 16) * (int64)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
+    delay_1 = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_chorus_delay_amplitude) >> 32);
+    int32_t delay_1_l = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)abs(fixed_point_value_sine_1)) >> 32);
+    int32_t delay_1_r = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
     /* Push and Pop Distance */
-    pedal_pico_chorus_lr_distance_array[pedal_pico_chorus_lr_distance_index] = (int16)((normalized_1 + delay_1_r) >> 1); // Push Current Value in Advance for 0
-    int32 lr_distance_1 = (int32)pedal_pico_chorus_lr_distance_array[((pedal_pico_chorus_lr_distance_index + PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX) - pedal_pico_chorus_lr_distance_time_interpolation) % PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX];
+    pedal_pico_chorus_lr_distance_array[pedal_pico_chorus_lr_distance_index] = (int16_t)((normalized_1 + delay_1_r) >> 1); // Push Current Value in Advance for 0
+    int32_t lr_distance_1 = (int32_t)pedal_pico_chorus_lr_distance_array[((pedal_pico_chorus_lr_distance_index + PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX) - pedal_pico_chorus_lr_distance_time_interpolation) % PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX];
     pedal_pico_chorus_lr_distance_index++;
     if (pedal_pico_chorus_lr_distance_index >= PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX) pedal_pico_chorus_lr_distance_index -= PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX;
     /* Output */

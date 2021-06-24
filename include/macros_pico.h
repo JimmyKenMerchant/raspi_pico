@@ -129,43 +129,11 @@ extern "C" {
 #define _900(x) _800(x) _100(x)
 #define _1000(x) _900(x) _100(x)
 
-#define uchar8 unsigned char
-#define uint16 unsigned short int
-#define uint32 unsigned long int
-#define uint64 unsigned long long int
-#define char8 char // Use as Pointer Too, Signed/Unsigned is Typically Unknown
-#define int16 short int
-#define int32 long int // Use as Pointer Too, Signed/Unsigned is Typically Unknown
-#define int64 long long int
-#define float32 float
-#define float64 double
-
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
-#ifndef exit_success
-#define exit_success 0
-#endif
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
-#endif
-#ifndef exit_failure
-#define exit_failure 1
-#endif
-#ifndef bool
-#define bool unsigned char
-#endif
-#ifndef FALSE
-#define FALSE ((bool)0)
-#endif
-#ifndef TRUE
-#define TRUE ((bool)1)
-#endif
-#ifndef false
-#define false FALSE
-#endif
-#ifndef true
-#define true TRUE
 #endif
 #ifndef NULL
 #define NULL ((void*)0) // As Integer Constant (#define NULL 0) or Pointer in Current ISO/IEC 9899

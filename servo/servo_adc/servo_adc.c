@@ -25,7 +25,7 @@
 #define SERVO_ADC_0_GPIO 26
 #define SERVO_PWM_THRESHOLD 0x3 // Range is 0x0-0xFF (0-255) Divided by 0x8 for 0x0-0x1F (0-31), (0x8 >> 1) - 1.
 
-uint16 servo_sequence[] = {
+uint16_t servo_sequence[] = {
     0x8000|720,
     0x8000|720,
     0x8000|720,
@@ -64,10 +64,10 @@ uint16 servo_sequence[] = {
 sequencer_pwm_pico* servo_the_sequencer_1;
 
 bool servo_is_outstanding_on_adc;
-uint32 servo_pwm_slice_num;
-uint32 servo_pwm_channel;
-uint16 servo_conversion_1;
-uint16 servo_conversion_1_temp;
+uint32_t servo_pwm_slice_num;
+uint32_t servo_pwm_channel;
+uint16_t servo_conversion_1;
+uint16_t servo_conversion_1_temp;
 void servo_on_pwm_irq_wrap();
 void servo_on_adc_irq_fifo();
 
@@ -139,9 +139,9 @@ void servo_on_pwm_irq_wrap() {
 
 void servo_on_adc_irq_fifo() {
     adc_run(false);
-    uint16 adc_fifo_level = adc_fifo_get_level();
+    uint16_t adc_fifo_level = adc_fifo_get_level();
     //printf("@servo_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
-    for (uint16 i = 0; i < adc_fifo_level; i++) {
+    for (uint16_t i = 0; i < adc_fifo_level; i++) {
         //printf("@servo_on_adc_irq_fifo 2 - i: %d\n", i);
         servo_conversion_1_temp = adc_fifo_get() & 0x7FFF; // Clear Bit[15]: ERR
     }

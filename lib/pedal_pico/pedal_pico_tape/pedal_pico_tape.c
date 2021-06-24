@@ -16,7 +16,7 @@ void pedal_pico_tape_set() {
     if (! pedal_pico_tape) panic("pedal_pico_tape is not initialized.");
     pedal_pico_tape_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_tape_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_tape_delay_array = (int16*)calloc(PEDAL_PICO_TAPE_DELAY_TIME_MAX, sizeof(int16));
+    pedal_pico_tape_delay_array = (int16_t*)calloc(PEDAL_PICO_TAPE_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_tape_delay_amplitude = PEDAL_PICO_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1;
     pedal_pico_tape_delay_time = PEDAL_PICO_TAPE_DELAY_TIME_FIXED_1;
     pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
@@ -26,7 +26,7 @@ void pedal_pico_tape_set() {
     pedal_pico_tape_osc_is_negative = false;
 }
 
-void pedal_pico_tape_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_pico_tape_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_tape_conversion_2 = conversion_2;
         pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
@@ -41,7 +41,7 @@ void pedal_pico_tape_process(int32 normalized_1, uint16 conversion_2, uint16 con
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     /* Get Oscillator */
-    int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_tape_osc_sine_1_index / PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER];
+    int32_t fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_tape_osc_sine_1_index / PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_pico_tape_osc_sine_1_index += pedal_pico_tape_osc_speed;
     if (pedal_pico_tape_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER) {
         pedal_pico_tape_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_TAPE_OSC_SINE_1_TIME_MULTIPLIER;
@@ -53,14 +53,14 @@ void pedal_pico_tape_process(int32 normalized_1, uint16 conversion_2, uint16 con
     } else {
         fixed_point_value_sine_1 >>= 1;
     }
-    int16 time_swing = (int16)(int64)((((int64)pedal_pico_tape_delay_time_swing << 16) * (int64)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
-    int32 delay_1 = (int32)pedal_pico_tape_delay_array[((pedal_pico_tape_delay_index + PEDAL_PICO_TAPE_DELAY_TIME_MAX) - ((int16)pedal_pico_tape_delay_time + time_swing)) % PEDAL_PICO_TAPE_DELAY_TIME_MAX];
+    int16_t time_swing = (int16_t)(int64_t)((((int64_t)pedal_pico_tape_delay_time_swing << 16) * (int64_t)fixed_point_value_sine_1) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
+    int32_t delay_1 = (int32_t)pedal_pico_tape_delay_array[((pedal_pico_tape_delay_index + PEDAL_PICO_TAPE_DELAY_TIME_MAX) - ((int16_t)pedal_pico_tape_delay_time + time_swing)) % PEDAL_PICO_TAPE_DELAY_TIME_MAX];
     if (pedal_pico_tape_delay_time + time_swing == 0) delay_1 = 0; // No Delay, Otherwise Latest
-    int32 pedal_pico_tape_normalized_1_amplitude = 0x00010000 - pedal_pico_tape_delay_amplitude;
-    normalized_1 = (int32)(int64)((((int64)normalized_1 << 16) * (int64)pedal_pico_tape_normalized_1_amplitude) >> 32);
-    delay_1 = (int32)(int64)((((int64)delay_1 << 16) * (int64)pedal_pico_tape_delay_amplitude) >> 32);
-    int32 mixed_1 = normalized_1 + delay_1;
-    pedal_pico_tape_delay_array[pedal_pico_tape_delay_index] = (int16)mixed_1;
+    int32_t pedal_pico_tape_normalized_1_amplitude = 0x00010000 - pedal_pico_tape_delay_amplitude;
+    normalized_1 = (int32_t)(int64_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_tape_normalized_1_amplitude) >> 32);
+    delay_1 = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_tape_delay_amplitude) >> 32);
+    int32_t mixed_1 = normalized_1 + delay_1;
+    pedal_pico_tape_delay_array[pedal_pico_tape_delay_index] = (int16_t)mixed_1;
     pedal_pico_tape_delay_index++;
     if (pedal_pico_tape_delay_index >= PEDAL_PICO_TAPE_DELAY_TIME_MAX) pedal_pico_tape_delay_index -= PEDAL_PICO_TAPE_DELAY_TIME_MAX;
     /* Output */

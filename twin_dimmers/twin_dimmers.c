@@ -28,19 +28,19 @@
 #define TWIN_DIMMERS_PWM_THRESHOLD (255/16) >> 2 // Maximum Value (0xFF = 255) of ADC Divide by Number of Array of twin_dimmers_sequence (16), Expecting 15
 #define TWIN_DIMMERS_COUNT_MAX 32
 
-uint16 twin_dimmers_sequence[] = {0x8000,0x8020,0x8030,0x8040,0x8050,0x8060,0x8070,0x8080,0x8090,0x80A0,0x80B0,0x80C0,0x80D0,0x80E0,0x80F0,0x8100,0x0000}; // 0 (No Pulse) to 256 (High on Full Range), Clear MSB to Show End of Sequence
+uint16_t twin_dimmers_sequence[] = {0x8000,0x8020,0x8030,0x8040,0x8050,0x8060,0x8070,0x8080,0x8090,0x80A0,0x80B0,0x80C0,0x80D0,0x80E0,0x80F0,0x8100,0x0000}; // 0 (No Pulse) to 256 (High on Full Range), Clear MSB to Show End of Sequence
 
 sequencer_pwm_pico* twin_dimmers_the_sequencer_1;
 sequencer_pwm_pico* twin_dimmers_the_sequencer_2;
 
 bool twin_dimmers_is_outstanding_on_adc;
-uint32 twin_dimmers_count;
-uint32 twin_dimmers_pwm_slice_num;
-uint32 twin_dimmers_pwm_channel;
-uint16 twin_dimmers_conversion_1;
-uint16 twin_dimmers_conversion_2;
-uint16 twin_dimmers_conversion_1_temp;
-uint16 twin_dimmers_conversion_2_temp;
+uint32_t twin_dimmers_count;
+uint32_t twin_dimmers_pwm_slice_num;
+uint32_t twin_dimmers_pwm_channel;
+uint16_t twin_dimmers_conversion_1;
+uint16_t twin_dimmers_conversion_2;
+uint16_t twin_dimmers_conversion_1_temp;
+uint16_t twin_dimmers_conversion_2_temp;
 void twin_dimmers_on_pwm_irq_wrap();
 void twin_dimmers_on_adc_irq_fifo();
 
@@ -126,11 +126,11 @@ void twin_dimmers_on_pwm_irq_wrap() {
 
 void twin_dimmers_on_adc_irq_fifo() {
     adc_run(false);
-    uint16 adc_fifo_level = adc_fifo_get_level();
+    uint16_t adc_fifo_level = adc_fifo_get_level();
     //printf("@twin_dimmers_on_adc_irq_fifo 1 - adc_fifo_level: %d\n", adc_fifo_level);
-    for (uint16 i = 0; i < adc_fifo_level; i++) {
+    for (uint16_t i = 0; i < adc_fifo_level; i++) {
         //printf("@twin_dimmers_on_adc_irq_fifo 2 - i: %d\n", i);
-        uint16 temp = adc_fifo_get();
+        uint16_t temp = adc_fifo_get();
         temp &= 0x7FFF; // Clear Bit[15]: ERR
         if (i % 2) {
             twin_dimmers_conversion_2_temp = temp;

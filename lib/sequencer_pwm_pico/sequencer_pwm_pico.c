@@ -12,7 +12,7 @@
 
 #include "sequencer_pwm_pico.h"
 
-sequencer_pwm_pico* sequencer_pwm_pico_init(uchar8 slice, uint16* sequence) {
+sequencer_pwm_pico* sequencer_pwm_pico_init(uint8_t slice, uint16_t* sequence) {
     sequencer_pwm_pico* sequencer_pwm = (sequencer_pwm_pico*)malloc(sizeof(sequencer_pwm_pico));
     if (sequencer_pwm == null) return sequencer_pwm;
     sequencer_pwm->slice = slice;
@@ -24,8 +24,8 @@ sequencer_pwm_pico* sequencer_pwm_pico_init(uchar8 slice, uint16* sequence) {
     return sequencer_pwm;
 }
 
-uint32 sequencer_pwm_pico_get_sequence_length(uint16* sequence) {
-    for (uint32 i = 0; i < SEQUENCER_PWM_PICO_SEQUENCE_LENGTH_MAXIMUM; i++) {
+uint32_t sequencer_pwm_pico_get_sequence_length(uint16_t* sequence) {
+    for (uint32_t i = 0; i < SEQUENCER_PWM_PICO_SEQUENCE_LENGTH_MAXIMUM; i++) {
         if (sequence[i] & 0x8000) {
             continue;
         } else {

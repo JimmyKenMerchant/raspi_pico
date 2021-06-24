@@ -19,18 +19,18 @@ void pedal_pico_sideband_set() {
     pedal_pico_sideband_osc_sine_1_index = 0;
     pedal_pico_sideband_osc_sine_2_index = 0;
     pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
-    pedal_pico_sideband_osc_start_threshold = (char8)((pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_sideband_osc_start_threshold = (int8_t)((pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_sideband_osc_start_count = 0;
 }
 
-void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16 conversion_3, uchar8 sw_mode) {
+void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_sideband_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sideband_conversion_2 = conversion_2;
         pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     }
     if (abs(conversion_3 - pedal_pico_sideband_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_sideband_conversion_3 = conversion_3;
-        pedal_pico_sideband_osc_start_threshold = (char8)((pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_sideband_osc_start_threshold = (int8_t)((pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     }
     /**
      * pedal_pico_sideband_osc_start_count:
@@ -49,9 +49,9 @@ void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16
      *-----------------------------------------------------------------------------------------------------------
      * Over Negative Threshold             ## Reset to 1
      */
-    if (normalized_1 > (int32)pedal_pico_sideband_osc_start_threshold || normalized_1 < -((int32)pedal_pico_sideband_osc_start_threshold)) {
+    if (normalized_1 > (int32_t)pedal_pico_sideband_osc_start_threshold || normalized_1 < -((int32_t)pedal_pico_sideband_osc_start_threshold)) {
         pedal_pico_sideband_osc_start_count = 1;
-    } else if (pedal_pico_sideband_osc_start_count != 0 && (normalized_1 > (int32)(pedal_pico_sideband_osc_start_threshold >> PEDAL_PICO_SIDEBAND_OSC_START_HYSTERESIS_SHIFT) || normalized_1 < -((int32)(pedal_pico_sideband_osc_start_threshold >> PEDAL_PICO_SIDEBAND_OSC_START_HYSTERESIS_SHIFT)))) {
+    } else if (pedal_pico_sideband_osc_start_count != 0 && (normalized_1 > (int32_t)(pedal_pico_sideband_osc_start_threshold >> PEDAL_PICO_SIDEBAND_OSC_START_HYSTERESIS_SHIFT) || normalized_1 < -((int32_t)(pedal_pico_sideband_osc_start_threshold >> PEDAL_PICO_SIDEBAND_OSC_START_HYSTERESIS_SHIFT)))) {
         pedal_pico_sideband_osc_start_count = 1;
     } else if (pedal_pico_sideband_osc_start_count != 0) {
         pedal_pico_sideband_osc_start_count++;
@@ -62,14 +62,14 @@ void pedal_pico_sideband_process(int32 normalized_1, uint16 conversion_2, uint16
         pedal_pico_sideband_osc_sine_2_index = 0;
     }
     normalized_1 = util_pedal_pico_cutoff_normalized(normalized_1, PEDAL_PICO_SIDEBAND_CUTOFF_FIXED_1);
-    int32 fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_1_index / PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER];
-    int32 fixed_point_value_sine_2 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_2_index / PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER] >> 1; // Divide By 2
+    int32_t fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_1_index / PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER];
+    int32_t fixed_point_value_sine_2 = util_pedal_pico_table_sine_1[pedal_pico_sideband_osc_sine_2_index / PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER] >> 1; // Divide By 2
     pedal_pico_sideband_osc_sine_1_index += pedal_pico_sideband_osc_speed;
     pedal_pico_sideband_osc_sine_2_index += pedal_pico_sideband_osc_speed;
     if (pedal_pico_sideband_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER;
     if (pedal_pico_sideband_osc_sine_2_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_2_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER;
-    int32 osc_value = (int32)((((int64)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64)fixed_point_value_sine_1 + (int64)fixed_point_value_sine_2) >> 1)) >> 16); // Remain Decimal Part
-    osc_value = (int32)(((int64)osc_value * ((int64)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
+    int32_t osc_value = (int32_t)((((int64_t)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64_t)fixed_point_value_sine_1 + (int64_t)fixed_point_value_sine_2) >> 1)) >> 16); // Remain Decimal Part
+    osc_value = (int32_t)(((int64_t)osc_value * ((int64_t)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
     osc_value -= PEDAL_PICO_SIDEBAND_OSC_PEAK >> 1;
     /* Output */
     pedal_pico_sideband->output_1 = osc_value;
