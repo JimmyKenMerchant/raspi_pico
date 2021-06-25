@@ -60,9 +60,9 @@ void pedal_pico_chorus_process(int32_t normalized_1, uint16_t conversion_2, uint
     int32_t fixed_point_value_sine_1 = util_pedal_pico_table_sine_1[pedal_pico_chorus_osc_sine_1_index / PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER];
     pedal_pico_chorus_osc_sine_1_index += pedal_pico_chorus_osc_speed;
     if (pedal_pico_chorus_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_chorus_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_CHORUS_OSC_SINE_1_TIME_MULTIPLIER;
-    delay_1 = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_chorus_delay_amplitude) >> 32);
-    int32_t delay_1_l = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)abs(fixed_point_value_sine_1)) >> 32);
-    int32_t delay_1_r = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)(0x00010000 - abs(fixed_point_value_sine_1))) >> 32);
+    delay_1 = (int32_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_chorus_delay_amplitude) >> 32);
+    int32_t delay_1_l = (int32_t)((((int64_t)delay_1 << 16) * (int64_t)fixed_point_value_sine_1) >> 32);
+    int32_t delay_1_r = (int32_t)((((int64_t)delay_1 << 16) * (int64_t)(0x00010000 - fixed_point_value_sine_1)) >> 32);
     /* Push and Pop Distance */
     pedal_pico_chorus_lr_distance_array[pedal_pico_chorus_lr_distance_index] = (int16_t)((normalized_1 + delay_1_r) >> 1); // Push Current Value in Advance for 0
     int32_t lr_distance_1 = (int32_t)pedal_pico_chorus_lr_distance_array[((pedal_pico_chorus_lr_distance_index + PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX) - pedal_pico_chorus_lr_distance_time_interpolation) % PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX];

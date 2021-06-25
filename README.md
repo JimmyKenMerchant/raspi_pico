@@ -183,13 +183,13 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 5: Tape
   * 6: Phaser
   * 7: Planets
-  * 8: Distortion
-  * 9: Dist Reverb
-  * 10: Dist Planets
-  * 11: Fuzz Planets
-  * 12: Dist Chorus
-  * 13: Sustain
-  * 14: Phaser (Reservation)
+  * 8: Tremolo
+  * 9: Distortion
+  * 10: Dist Reverb
+  * 11: Dist Planets
+  * 12: Fuzz Planets
+  * 13: Dist Chorus
+  * 14: Sustain
   * 15: Planets (Reservation)
 
 * Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on Switch-1 sets the high attack, and the low state on Switch-2 sets the low attack and the looping feedback at the sustain.
@@ -204,9 +204,11 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Tape is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. There are output modes to change the effectiveness of the swing depth.
 
-* Phaser is using an all-pass filter. In default, this sweeps the depth (delay time) of the all-pass filter. In an output mode, this sweeps the coefficient of the function of the all-pass filter. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. There are output modes. The low state on Switch-1 sets sets the mode to sweep coefficient. The low state on Switch-2 sets the deep depth of the Phaser.
+* Phaser is using an all-pass filter. This sweeps the depth (delay time) of the all-pass filter. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. There are output modes. The low state on Switch-1 sets sets the shallow depth to swing. The low state on Switch-2 sets the deep depth to swing.
 
 * Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. This uses digital filters, and the effectiveness of filters is different from the one of analogue filters. I called this as the galactic Planets because of this difference between digital and analogue (in other words, this effect was hard to be achieved). This type of filters which have one-stage feedback, even high-pass or law-pass, seems to be emphasizes a particular band of frequencies. This doesn't gives only noise, but also an effect towards wah-wah.
+
+* Tremolo sweeps amplitude of sound.  ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. There are output modes. The low state on Switch-1 sets sets the shallow intensity to swing. The low state on Switch-2 sets the deep intensity to swing.
 
 * Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
 

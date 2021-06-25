@@ -89,8 +89,8 @@ void pedal_pico_buffer_process(int32_t normalized_1, uint16_t conversion_2, uint
     int32_t delay_1 = (int32_t)pedal_pico_buffer_delay_array[((pedal_pico_buffer_delay_index + PEDAL_PICO_BUFFER_DELAY_TIME_MAX) - pedal_pico_buffer_delay_time_interpolation) % PEDAL_PICO_BUFFER_DELAY_TIME_MAX];
     if (pedal_pico_buffer_delay_time_interpolation == 0) delay_1 = 0; // No Reverb, Otherwise Latest
     int32_t pedal_pico_buffer_normalized_1_amplitude = 0x00010000 - pedal_pico_buffer_delay_amplitude_interpolation;
-    normalized_1 = (int32_t)(int64_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_buffer_normalized_1_amplitude) >> 32);
-    delay_1 = (int32_t)(int64_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_buffer_delay_amplitude_interpolation) >> 32);
+    normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_buffer_normalized_1_amplitude) >> 32);
+    delay_1 = (int32_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_buffer_delay_amplitude_interpolation) >> 32);
     int32_t mixed_1 = normalized_1 + delay_1;
     pedal_pico_buffer_delay_array[pedal_pico_buffer_delay_index] = (int16_t)mixed_1;
     pedal_pico_buffer_delay_index++;

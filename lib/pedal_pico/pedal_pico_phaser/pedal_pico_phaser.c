@@ -16,14 +16,13 @@ void pedal_pico_phaser_set() {
     if (! pedal_pico_phaser) panic("pedal_pico_phaser is not initialized.");
     pedal_pico_phaser_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_phaser_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_phaser_coefficient_swing = PEDAL_PICO_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1;
     pedal_pico_phaser_delay_x = (int16_t*)calloc(PEDAL_PICO_PHASER_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_phaser_delay_y = (int16_t*)calloc(PEDAL_PICO_PHASER_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1;
     pedal_pico_phaser_delay_index = 0;
-    pedal_pico_phaser_osc_triangle_1_index = (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1;
-    pedal_pico_phaser_osc_is_negative = true;
+    pedal_pico_phaser_osc_triangle_1_index = 0;
     pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
+    pedal_pico_phaser_osc_is_negative = false;
     pedal_pico_phaser_osc_start_threshold = (int8_t)((pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_phaser_osc_start_count = 0;
 }
@@ -63,17 +62,16 @@ void pedal_pico_phaser_process(int32_t normalized_1, uint16_t conversion_2, uint
     }
     if (pedal_pico_phaser_osc_start_count >= PEDAL_PICO_PHASER_OSC_START_COUNT_MAX) pedal_pico_phaser_osc_start_count = 0;
     if (pedal_pico_phaser_osc_start_count == 0) {
-        pedal_pico_phaser_osc_triangle_1_index = (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1;
-        pedal_pico_phaser_osc_is_negative = true;
+        pedal_pico_phaser_osc_triangle_1_index = 0;
+        pedal_pico_phaser_osc_is_negative = false;
     }
     /* Get Oscillator */
     int32_t fixed_point_value_triangle_1 = util_pedal_pico_table_triangle_1[abs(pedal_pico_phaser_osc_triangle_1_index) / PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER]; // Depending on osc_spped, the index value may have a negative value.
     pedal_pico_phaser_osc_is_negative ? (pedal_pico_phaser_osc_triangle_1_index -= pedal_pico_phaser_osc_speed) : (pedal_pico_phaser_osc_triangle_1_index += pedal_pico_phaser_osc_speed);
-    if (pedal_pico_phaser_osc_triangle_1_index >= UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) {
+    if (pedal_pico_phaser_osc_triangle_1_index >= (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1) {
         pedal_pico_phaser_osc_triangle_1_index = (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1;
         pedal_pico_phaser_osc_is_negative = true;
-    }
-    if (pedal_pico_phaser_osc_triangle_1_index < 0) {
+    } else if (pedal_pico_phaser_osc_triangle_1_index <= 0) {
         pedal_pico_phaser_osc_triangle_1_index = 0;
         pedal_pico_phaser_osc_is_negative = false;
     }
@@ -106,23 +104,20 @@ void pedal_pico_phaser_process(int32_t normalized_1, uint16_t conversion_2, uint
      * In this case, the most effective frequency is 15259Hz, and other frequencies far from the frequency isn't effected.
      * This phenomenon can also use for canceling noise at the intended frequency.
      */
+    int32_t coefficient;
     if (sw_mode == 1) {
-        pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1;
-    } else if (sw_mode == 2) {
         pedal_pico_phaser_delay_time = (uint32_t)(((((int64_t)(PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 - 1) << 16) * (int64_t)fixed_point_value_triangle_1) >> 32) + 1); // Dont't Use 0 for Delay Time
+        coefficient = PEDAL_PICO_PHASER_COEFFICIENT_PEAK_FIXED_1 >> 1;
+    } else if (sw_mode == 2) {
+        pedal_pico_phaser_delay_time = (uint32_t)(((((int64_t)(PEDAL_PICO_PHASER_DELAY_TIME_FIXED_3 - 1) << 16) * (int64_t)fixed_point_value_triangle_1) >> 32) + 1); // Dont't Use 0 for Delay Time
+        coefficient = PEDAL_PICO_PHASER_COEFFICIENT_PEAK_FIXED_1 >> 1;
     } else {
         pedal_pico_phaser_delay_time = (uint32_t)(((((int64_t)(PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2 - 1) << 16) * (int64_t)fixed_point_value_triangle_1) >> 32) + 1); // Dont't Use 0 for Delay Time
+        coefficient = PEDAL_PICO_PHASER_COEFFICIENT_PEAK_FIXED_1 >> 1;
     }
     /* All-pass Filter for Phaser */
     int16_t delay_x = pedal_pico_phaser_delay_x[((pedal_pico_phaser_delay_index + PEDAL_PICO_PHASER_DELAY_TIME_MAX) - pedal_pico_phaser_delay_time) % PEDAL_PICO_PHASER_DELAY_TIME_MAX];
     int16_t delay_y = pedal_pico_phaser_delay_y[((pedal_pico_phaser_delay_index + PEDAL_PICO_PHASER_DELAY_TIME_MAX) - pedal_pico_phaser_delay_time) % PEDAL_PICO_PHASER_DELAY_TIME_MAX];
-    int32_t coefficient;
-    if (sw_mode == 1) {
-        coefficient = (int32_t)(((int64_t)pedal_pico_phaser_coefficient_swing * (int64_t)fixed_point_value_triangle_1) >> 16); // Remain Decimal Part
-        if (coefficient > PEDAL_PICO_PHASER_COEFFICIENT_CUTOFF_TOP_FIXED_1) coefficient = PEDAL_PICO_PHASER_COEFFICIENT_CUTOFF_TOP_FIXED_1;
-    } else {
-        coefficient = PEDAL_PICO_PHASER_COEFFICIENT_CUTOFF_TOP_FIXED_1 >> 1;
-    }
     int32_t phase_shift = (int32_t)((((int64_t)delay_x << 32) - (((int64_t)delay_y << 16) * (int64_t)coefficient) + (((int64_t)normalized_1 << 16) * (int64_t)coefficient)) >> 32); // Two 16-bit Decimal Parts Need 32-bit Shift after Multiplication to Get Only Integer Part
     pedal_pico_phaser_delay_x[pedal_pico_phaser_delay_index] = (int16_t)normalized_1;
     pedal_pico_phaser_delay_y[pedal_pico_phaser_delay_index] = (int16_t)phase_shift;

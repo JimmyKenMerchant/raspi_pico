@@ -33,12 +33,12 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_PHASER_COEFFICIENT_SWING_PEAK_FIXED_1 (int32_t)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_PHASER_COEFFICIENT_CUTOFF_TOP_FIXED_1 (int32_t)(0x0000C000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 64 // 28125 Divided by 64 (439.45Hz, Folding Frequency is 59.93Hz)
-#define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2 (PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 * 2) // 28125 Divided by 128 (219.72Hz, Folding Frequency is 6.87Hz)
-#define PEDAL_PICO_PHASER_DELAY_TIME_MAX (PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2 + 1) // Don't Use Delay Time = 0
-#define PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER 72
+#define PEDAL_PICO_PHASER_COEFFICIENT_PEAK_FIXED_1 (int32_t)(0x00010000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 64 // 28125 Divided by 64 (439.45Hz)
+#define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_2 (PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 * 2) // 28125 Divided by 128 (219.72Hz)
+#define PEDAL_PICO_PHASER_DELAY_TIME_FIXED_3 (PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1 * 4) // 28125 Divided by 256 (109.86Hz)
+#define PEDAL_PICO_PHASER_DELAY_TIME_MAX (PEDAL_PICO_PHASER_DELAY_TIME_FIXED_3 + 1) // Don't Use Delay Time = 0
+#define PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER 108
 #define PEDAL_PICO_PHASER_OSC_START_HYSTERESIS_SHIFT 1 // Divide by 2
 #define PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PICO_PHASER_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
@@ -46,7 +46,6 @@ extern "C" {
 volatile util_pedal_pico* pedal_pico_phaser;
 volatile uint16_t pedal_pico_phaser_conversion_2;
 volatile uint16_t pedal_pico_phaser_conversion_3;
-volatile int32_t pedal_pico_phaser_coefficient_swing;
 volatile int16_t* pedal_pico_phaser_delay_x;
 volatile int16_t* pedal_pico_phaser_delay_y;
 volatile uint16_t pedal_pico_phaser_delay_time;

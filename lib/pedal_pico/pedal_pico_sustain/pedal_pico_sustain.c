@@ -85,8 +85,8 @@ void pedal_pico_sustain_process(int32_t normalized_1, uint16_t conversion_2, uin
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
     int32_t pedal_pico_sustain_normalized_1_amplitude = 0x00010000 - pedal_pico_sustain_delay_amplitude;
-    normalized_1 = (int32_t)(int64_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_sustain_normalized_1_amplitude) >> 32);
-    low_pass_1 = (int32_t)(int64_t)((((int64_t)low_pass_1 << 16) * (int64_t)pedal_pico_sustain_delay_amplitude) >> 32);
+    normalized_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_sustain_normalized_1_amplitude) >> 32);
+    low_pass_1 = (int32_t)((((int64_t)low_pass_1 << 16) * (int64_t)pedal_pico_sustain_delay_amplitude) >> 32);
     int32_t mixed_1 = normalized_1 + low_pass_1;
     pedal_pico_sustain->output_1 = mixed_1;
     pedal_pico_sustain->output_1_inverted = -mixed_1;
