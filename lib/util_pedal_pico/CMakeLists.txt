@@ -39,7 +39,7 @@ target_include_directories(${target_name}
 
 # Unique Definition for Debugging
 target_compile_definitions(${target_name}
-    PUBLIC UTIL_PEDAL_PICO_DEBUG=1
+    PUBLIC UTIL_PEDAL_PICO_DEBUG=0
 )
 
 # GPIO Assignment
