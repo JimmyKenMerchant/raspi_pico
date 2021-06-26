@@ -46,9 +46,9 @@ extern "C" {
 #define UTIL_PEDAL_PICO_LED_1_GPIO 25
 #warning "UTIL_PEDAL_PICO_LED_1_GPIO is defined with the default value 25."
 #endif
-#ifndef UTIL_PEDAL_PICO_LED_2_GPIO
-#define UTIL_PEDAL_PICO_LED_2_GPIO 8
-#warning "UTIL_PEDAL_PICO_LED_2_GPIO is defined with the default value 8."
+#ifndef UTIL_PEDAL_PICO_LED_2_MULTI_BIT_4_GPIO
+#define UTIL_PEDAL_PICO_LED_2_MULTI_BIT_4_GPIO 8
+#warning "UTIL_PEDAL_PICO_LED_2_MULTI_BIT_4_GPIO is defined with the default value 8."
 #endif
 #ifndef UTIL_PEDAL_PICO_SW_1_GPIO
 #define UTIL_PEDAL_PICO_SW_1_GPIO 10
@@ -102,7 +102,8 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
 #define UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX 9375
 #define UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX (UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX / 3)
-#define UTIL_PEDAL_PICO_MULTI_LENGTH 16 // 4-bit Length
+#define UTIL_PEDAL_PICO_MULTI_LENGTH 17 // 4-bit Length
+#define UTIL_PEDAL_PICO_MULTI_MASK 0b10000 // On Reaching Length
 
 /* Macros */
 #define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
@@ -134,6 +135,7 @@ volatile uint8_t util_pedal_pico_multi_gpio_bit_0;
 volatile uint8_t util_pedal_pico_multi_gpio_bit_1;
 volatile uint8_t util_pedal_pico_multi_gpio_bit_2;
 volatile uint8_t util_pedal_pico_multi_gpio_bit_3;
+volatile uint8_t util_pedal_pico_multi_gpio_bit_4;
 volatile uint8_t util_pedal_pico_multi_mode;
 volatile int32_t* util_pedal_pico_table_sine_1; // Assuming 0-1 Pi (0-180 Degrees)
 volatile int32_t* util_pedal_pico_table_triangle_1; // Assuming Right Triangle
@@ -164,7 +166,7 @@ void util_pedal_pico_init_sw(uint8_t gpio_1, uint8_t gpio_2);
 void util_pedal_pico_free_sw(uint8_t gpio_1, uint8_t gpio_2);
 void util_pedal_pico_sw_loop(uint8_t gpio_1, uint8_t gpio_2); // Three Point Switch
 void util_pedal_pico_wait();
-void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3);
+void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3, uint8_t gpio_bit_4);
 void util_pedal_pico_select_multi();
 void (**util_pedal_pico_multi_set)();
 void (**util_pedal_pico_multi_process)(int32_t, uint16_t, uint16_t, uint8_t);

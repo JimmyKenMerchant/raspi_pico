@@ -39,14 +39,14 @@ target_include_directories(${target_name}
 
 # Unique Definition for Debugging
 target_compile_definitions(${target_name}
-    PUBLIC UTIL_PEDAL_PICO_DEBUG=0
+    PUBLIC UTIL_PEDAL_PICO_DEBUG=1
 )
 
 # GPIO Assignment
 if("${PICO_BOARD}" STREQUAL "pico")
     target_compile_definitions(${target_name}
         PUBLIC UTIL_PEDAL_PICO_LED_1_GPIO=25
-        PUBLIC UTIL_PEDAL_PICO_LED_2_GPIO=8
+        PUBLIC UTIL_PEDAL_PICO_LED_2_MULTI_BIT_4_GPIO=8
         PUBLIC UTIL_PEDAL_PICO_SW_1_GPIO=10
         PUBLIC UTIL_PEDAL_PICO_SW_2_GPIO=9
         PUBLIC UTIL_PEDAL_PICO_PWM_1_GPIO=16

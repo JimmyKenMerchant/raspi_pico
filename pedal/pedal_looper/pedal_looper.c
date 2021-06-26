@@ -43,7 +43,7 @@ int main(void) {
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
-    pedal_pico_looper_set(UTIL_PEDAL_PICO_LED_2_GPIO);
+    pedal_pico_looper_set(UTIL_PEDAL_PICO_LED_2_MULTI_BIT_4_GPIO);
     util_pedal_pico_process = pedal_pico_looper_process;
     /* Launch Core 1 */
     uint32_t* stack_pointer = (int32_t*)malloc(UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);

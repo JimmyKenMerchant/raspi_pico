@@ -294,22 +294,24 @@ void util_pedal_pico_wait() {
     #endif
 }
 
-void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3) {
+void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3, uint8_t gpio_bit_4) {
     util_pedal_pico_multi_set = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_process = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     util_pedal_pico_multi_free = (void*)malloc(UTIL_PEDAL_PICO_MULTI_LENGTH * sizeof(void*));
     /* Selector Configuration */
-    uint32_t gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2|0b1 << gpio_bit_3;
+    uint32_t gpio_mask = 0b1 << gpio_bit_0|0b1 << gpio_bit_1|0b1 << gpio_bit_2|0b1 << gpio_bit_3|0b1 << gpio_bit_4;
     gpio_init_mask(gpio_mask);
     gpio_set_dir_masked(gpio_mask, 0x00000000);
     gpio_pull_up(gpio_bit_0);
     gpio_pull_up(gpio_bit_1);
     gpio_pull_up(gpio_bit_2);
     gpio_pull_up(gpio_bit_3);
+    gpio_pull_up(gpio_bit_4);
     util_pedal_pico_multi_gpio_bit_0 = gpio_bit_0;
     util_pedal_pico_multi_gpio_bit_1 = gpio_bit_1;
     util_pedal_pico_multi_gpio_bit_2 = gpio_bit_2;
     util_pedal_pico_multi_gpio_bit_3 = gpio_bit_3;
+    util_pedal_pico_multi_gpio_bit_4 = gpio_bit_4;
     util_pedal_pico_multi_mode = 0xFF; // To Detect util_pedal_pico_multi_mode Including 0 at Initialization
     #if UTIL_PEDAL_PICO_DEBUG
         printf("@util_pedal_pico_init_multi 1 - util_pedal_pico_multi_set %08x\n", util_pedal_pico_multi_set);
@@ -319,12 +321,14 @@ void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t 
 }
 
 void util_pedal_pico_select_multi() {
-    uint32_t status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2|0b1 << util_pedal_pico_multi_gpio_bit_3);
+    uint32_t status_sw = gpio_get_all() & (0b1 << util_pedal_pico_multi_gpio_bit_0|0b1 << util_pedal_pico_multi_gpio_bit_1|0b1 << util_pedal_pico_multi_gpio_bit_2|0b1 << util_pedal_pico_multi_gpio_bit_3|0b1 << util_pedal_pico_multi_gpio_bit_4);
     uint8_t status_bit = 0;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b0001;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b0010;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b0100;
-    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_3))) status_bit |= 0b1000;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_0))) status_bit |= 0b00001;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_1))) status_bit |= 0b00010;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_2))) status_bit |= 0b00100;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_3))) status_bit |= 0b01000;
+    if (! (status_sw & (0b1 << util_pedal_pico_multi_gpio_bit_4))) status_bit |= 0b10000;
+    if (status_bit >= UTIL_PEDAL_PICO_MULTI_LENGTH) status_bit &= UTIL_PEDAL_PICO_MULTI_MASK;
     if (util_pedal_pico_multi_mode != status_bit) {
         util_pedal_pico_process = NULL;
         __dsb();
