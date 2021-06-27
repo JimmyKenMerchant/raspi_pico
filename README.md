@@ -174,7 +174,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 #### pedal_multi
 
-* Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO11 (Bit 0), GPIO15 (Bit 1), GPIO12 (Bit 2), GPIO14 (Bit 3), and GPIO8 (Bit 4). Note that these pins are pulled up, and detect low states as bit-set. Caution that GPIO8 (Bit 4) is shared with LED indicator of another executable, "pedal_looper". In pedal_multi, there is no need to have a resistor with GPIO8 for grounding because of the internal pull-up. However in pedal_looper, GPIO8 must have a resistor for grounding because of just an output.
+* Executable, "pedal_multi" has multiselection. You can select 16 effects by GPIO11 (Bit 0), GPIO15 (Bit 1), GPIO12 (Bit 2), GPIO14 (Bit 3), and GPIO8 (Bit 4). Note that these pins are pulled up, and detect low states as bit-set. Caution that GPIO8 (Bit 4) is shared with LED indicator of another executable, "pedal_looper". In pedal_multi, there is no need to have a resistor with GPIO8 for grounding because of the internal pull-up. However in pedal_looper, GPIO8 must have a resistor for grounding because of just an output. When GPIO8 sets low state, the effect is forced to be No. 16 even if other bits are set.
   * 0: Buffer
   * 1: Sideband
   * 2: Chorus
@@ -209,7 +209,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. This uses digital filters, and the effectiveness of filters is different from the one of analogue filters. I called this as the galactic Planets because of this difference between digital and analogue (in other words, this effect was hard to be achieved). This type of filters which have one-stage feedback, even high-pass or law-pass, seems to be emphasizes a particular band of frequencies. This doesn't gives only noise, but also an effect towards wah-wah.
 
-* Planets Reverb is the combination of the Planets and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. There are output modes to change effectiveness of high tones. The mode of the Planets is fixed to the high-pass filter mode. The mode of the Reverb is fixed to the feedback (reverb) mode. The sound emphasizes high tones, and is like a sound from a distance through concrete buildings.
+* Planets Reverb is the combination of the Planets and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. There are output modes to change effectiveness of high tones. The mode of the Planets is fixed to the high-pass filter mode. The mode of the Reverb is fixed to the feedback (reverb) mode. The sound emphasizes high tones, and is like a sound from a distance through concrete buildings. In view of sound, It's "Concrete" Planets Reverb.
 
 * Tremolo swings amplitude of sound. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to swing, and ADC2 is for the threshold to start the oscillator to swing. There are output modes. The low state on Switch-1 sets the shallow intensity to swing with inverted wave (strong at first). The low state on Switch-2 sets the fade-in mode.
 
@@ -217,7 +217,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Distortion is fixed to the high distortion mode.
 
-* Dist Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
+* Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
 
 * Dist Chorus is the combination of the Distortion and the Chorus. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. The mode of the Chorus is fixed to long delay time. There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
 
