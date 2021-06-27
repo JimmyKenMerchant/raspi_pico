@@ -43,14 +43,14 @@ void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uin
      * In the calculation, we extend the value to 64-bit signed integer because of the overflow from the 32-bit space.
      * In the multiplication to get only the integer part, 32-bit arithmetic shift left is needed at the end because we have had two 16-bit decimal part in each value.
      */
-    int16_t delay_x = pedal_pico_planets_delay_x[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - (uint16_t)((int16_t)pedal_pico_planets_delay_time_interpolation)) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
-    int16_t delay_y = pedal_pico_planets_delay_y[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - (uint16_t)((int16_t)pedal_pico_planets_delay_time_interpolation)) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
+    int16_t delay_x = pedal_pico_planets_delay_x[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - pedal_pico_planets_delay_time_interpolation) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
+    int16_t delay_y = pedal_pico_planets_delay_y[((pedal_pico_planets_delay_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - pedal_pico_planets_delay_time_interpolation) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
     /* First Stage: High Pass Filter */
     int32_t high_pass_1 = (int32_t)((-(((int64_t)delay_x << 16) * (int64_t)pedal_pico_planets_coefficient_interpolation) + (((int64_t)normalized_1 << 16) * (int64_t)(0x00010000 - pedal_pico_planets_coefficient_interpolation))) >> 32);
+    pedal_pico_planets_delay_x[pedal_pico_planets_delay_index] = (int16_t)high_pass_1;
     /* Second Stage: Low Pass Filter */
     if (util_pedal_pico_sw_mode == 1) high_pass_1 = normalized_1; // Bypass High Pass Filter
     int32_t low_pass_1 = (int32_t)(((((int64_t)delay_y << 16) * (int64_t)pedal_pico_planets_coefficient_interpolation) + (((int64_t)high_pass_1 << 16) * (int64_t)(0x00010000 - pedal_pico_planets_coefficient_interpolation))) >> 32);
-    pedal_pico_planets_delay_x[pedal_pico_planets_delay_index] = (int16_t)high_pass_1;
     pedal_pico_planets_delay_y[pedal_pico_planets_delay_index] = (int16_t)low_pass_1;
     pedal_pico_planets_delay_index++;
     if (pedal_pico_planets_delay_index >= PEDAL_PICO_PLANETS_DELAY_TIME_MAX) pedal_pico_planets_delay_index -= PEDAL_PICO_PLANETS_DELAY_TIME_MAX;
