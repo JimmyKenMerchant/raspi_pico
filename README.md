@@ -183,14 +183,14 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 5: Tape
   * 6: Phaser
   * 7: Planets
-  * 8: Tremolo
-  * 9: Distortion
-  * 10: Dist Reverb
-  * 11: Dist Planets
+  * 8: Planets Reverb
+  * 9: Tremolo
+  * 10: Distortion
+  * 11: Dist Reverb
   * 12: Fuzz Planets
   * 13: Dist Chorus
   * 14: Sustain
-  * 15: Planets (Reservation)
+  * 15: Dist Sustain
   * 16: True Buffer
 
 * Buffer implements a noise gate with -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF. ADC_VREF is typically 3.3V, and in this case the gate cuts 3.2mVp-p to 48mVp-p. The noise gate has the combination of the hysteresis and the time counting after triggering. I set the hysteresis is the half of the threshold, and the time counting is fixed. Note that the time counting effects the sustain. ADC0 is for the audio input, ADC1 is for the sustain time of the noise gate, and ADC2 is for the threshold of the noise gate. There are output modes. The low state on Switch-1 sets the high attack, and the low state on Switch-2 sets the low attack and the looping feedback at the sustain.
@@ -209,25 +209,27 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Planets is using a high-pass filter. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. Unlike the Phaser, this effect doesn't have any oscillator. There are output modes. The low state on Switch-1 sets low-pass filter mode. The low state on Switch-2 sets band-pass filter mode. The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. This uses digital filters, and the effectiveness of filters is different from the one of analogue filters. I called this as the galactic Planets because of this difference between digital and analogue (in other words, this effect was hard to be achieved). This type of filters which have one-stage feedback, even high-pass or law-pass, seems to be emphasizes a particular band of frequencies. This doesn't gives only noise, but also an effect towards wah-wah.
 
+* Planets Reverb is the combination of the Planets and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. There are output modes to change effectiveness of high tones. The mode of the Planets is fixed to the high-pass filter mode. The mode of the Reverb is fixed to the feedback (reverb) mode. The sound emphasizes high tones, and is like a sound from a distance through concrete buildings.
+
 * Tremolo swings amplitude of sound. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to swing, and ADC2 is for the threshold to start the oscillator to swing. There are output modes. The low state on Switch-1 sets the shallow intensity to swing with inverted wave (strong at first). The low state on Switch-2 sets the fade-in mode.
 
 * Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
 
-* Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
+* Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Distortion is fixed to the high distortion mode.
 
-* Dist Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the high distortion mode.
-
-* Fuzz Planets is almost the same as Dist Planets, but the mode of the Distortion is fixed to the fuzz mode.
+* Dist Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
 
 * Dist Chorus is the combination of the Distortion and the Chorus. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. The mode of the Chorus is fixed to long delay time. There are output modes. The low state on Switch-1 sets fuzz mode. The low state on Switch-2 sets high distortion mode.
 
 * Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion. I uses moving average as a low-pass filter, and this filter is costly to spend CPU clocks because of accessing SRAM. I thought this effect could be made of a Schmitt trigger such as 74LS14. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power.
 
+* Dist Sustain is the combination of the Distortion and the Sustain. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power. The mode of the Distortion is fixed to the high distortion mode.
+
 * True Buffer is for making bufferd bypass. ADC0 is for the audio input, and other inputs are ignored.
 
 #### pedal_looper
 
-* Executables, "pedal_looper" is a multi-track recording tool for approx. 29 seconds. ADC0 is for the audio input, ADC1 is for the level of the output and recording. Switch-1 acts as the button-1, and Switch-2 acts as the button-2, i.e., push for the low state, and release for the high state. On the first power-on, the pedal erases data in the region of the external flash memory for recording (blinking GPIO8 during erasing data in default). Hold the button-1 for two seconds also erases all data. After erasing data, the status of the pedal goes on pending. After power-on, the pedal also goes on pending. Push the button-2 to release from pending, and play existing sound tracks. Push the button-2 again to record a new track with existing tracks from the start (turning on GPIO8 during recording in default). To stop recording, push the button-2, then the pedal starts to play tracks that the new track is added. To back to pending, push the button-1 (during recording, the button-1 isn't functioned). By backing to pending, the time to rewind is also reset. Note that the space for 29 seconds in the external flash memory can be allocated by storing the instruction code to SRAM on booting. The space in the flash memory is iteratively rewritten for recording. By attaching a microphone, this pedal would be a multi-track voice memo. Even in 2021, this voice memo can be a local media in a real community.
+* Executable, "pedal_looper" is a multi-track recording tool for approx. 29 seconds. ADC0 is for the audio input, ADC1 is for the level of the output and recording. Switch-1 acts as the button-1, and Switch-2 acts as the button-2, i.e., push for the low state, and release for the high state. On the first power-on, the pedal erases data in the region of the external flash memory for recording (blinking GPIO8 during erasing data in default). Hold the button-1 for two seconds also erases all data. After erasing data, the status of the pedal goes on pending. After power-on, the pedal also goes on pending. Push the button-2 to release from pending, and play existing sound tracks. Push the button-2 again to record a new track with existing tracks from the start (turning on GPIO8 during recording in default). To stop recording, push the button-2, then the pedal starts to play tracks that the new track is added. To back to pending, push the button-1 (during recording, the button-1 isn't functioned). By backing to pending, the time to rewind is also reset. Note that the space for 29 seconds in the external flash memory can be allocated by storing the instruction code to SRAM on booting. The space in the flash memory is iteratively rewritten for recording. By attaching a microphone, this pedal would be a multi-track voice memo. Even in 2021, this voice memo can be a local media in a real community.
 
 ### QSPI Flash
 
