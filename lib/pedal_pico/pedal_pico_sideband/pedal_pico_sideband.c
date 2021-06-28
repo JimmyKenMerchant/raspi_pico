@@ -79,7 +79,7 @@ void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, ui
     /* Correction of Biasing */
     int32_t middle_moving_average = pedal_pico_sideband_middle_moving_average_sum / PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER;
     pedal_pico_sideband_middle_moving_average_sum -= middle_moving_average;
-    pedal_pico_sideband_middle_moving_average_sum += osc_value >> 1; // Middle Point
+    pedal_pico_sideband_middle_moving_average_sum += osc_value;
     middle_moving_average = pedal_pico_sideband_middle_moving_average_sum / PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER;
     osc_value -= middle_moving_average;
     if (sw_mode == 1) {
@@ -88,6 +88,7 @@ void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, ui
         pedal_pico_sideband_wave_moving_average_sum -= wave_moving_average;
         pedal_pico_sideband_wave_moving_average_sum += osc_value;
         osc_value = pedal_pico_sideband_wave_moving_average_sum / PEDAL_PICO_SIDEBAND_WAVE_MOVING_AVERAGE_NUMBER;
+        osc_value <<= PEDAL_PICO_SIDEBAND_WAVE_SHIFT;
     }
     /* Output */
     pedal_pico_sideband->output_1 = osc_value;

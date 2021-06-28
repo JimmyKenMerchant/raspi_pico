@@ -55,21 +55,21 @@ void pedal_multi_roomreverb_set();
 void pedal_multi_planetsreverb_set();
 void pedal_multi_distreverb_set();
 void pedal_multi_fuzzplanets_set();
-void pedal_multi_sidebandreverb_set();
+void pedal_multi_parallelreverb_set();
 void pedal_multi_distsustain_set();
 void pedal_multi_truebuffer_set();
 void pedal_multi_roomreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_planetsreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_distreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_fuzzplanets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
-void pedal_multi_sidebandreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
+void pedal_multi_parallelreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_distsustain_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_truebuffer_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
 void pedal_multi_roomreverb_free();
 void pedal_multi_planetsreverb_free();
 void pedal_multi_distreverb_free();
 void pedal_multi_fuzzplanets_free();
-void pedal_multi_sidebandreverb_free();
+void pedal_multi_parallelreverb_free();
 void pedal_multi_distsustain_free();
 void pedal_multi_truebuffer_free();
 
@@ -117,7 +117,7 @@ int main(void) {
     util_pedal_pico_multi_set[10] = pedal_pico_distortion_set;
     util_pedal_pico_multi_set[11] = pedal_multi_distreverb_set;
     util_pedal_pico_multi_set[12] = pedal_multi_fuzzplanets_set;
-    util_pedal_pico_multi_set[13] = pedal_multi_sidebandreverb_set;
+    util_pedal_pico_multi_set[13] = pedal_multi_parallelreverb_set;
     util_pedal_pico_multi_set[14] = pedal_pico_sustain_set;
     util_pedal_pico_multi_set[15] = pedal_multi_distsustain_set;
     util_pedal_pico_multi_set[16] = pedal_multi_truebuffer_set;
@@ -134,7 +134,7 @@ int main(void) {
     util_pedal_pico_multi_process[10] = pedal_pico_distortion_process;
     util_pedal_pico_multi_process[11] = pedal_multi_distreverb_process;
     util_pedal_pico_multi_process[12] = pedal_multi_fuzzplanets_process;
-    util_pedal_pico_multi_process[13] = pedal_multi_sidebandreverb_process;
+    util_pedal_pico_multi_process[13] = pedal_multi_parallelreverb_process;
     util_pedal_pico_multi_process[14] = pedal_pico_sustain_process;
     util_pedal_pico_multi_process[15] = pedal_multi_distsustain_process;
     util_pedal_pico_multi_process[16] = pedal_multi_truebuffer_process;
@@ -151,7 +151,7 @@ int main(void) {
     util_pedal_pico_multi_free[10] = pedal_pico_distortion_free;
     util_pedal_pico_multi_free[11] = pedal_multi_distreverb_free;
     util_pedal_pico_multi_free[12] = pedal_multi_fuzzplanets_free;
-    util_pedal_pico_multi_free[13] = pedal_multi_sidebandreverb_free;
+    util_pedal_pico_multi_free[13] = pedal_multi_parallelreverb_free;
     util_pedal_pico_multi_free[14] = pedal_pico_sustain_free;
     util_pedal_pico_multi_free[15] = pedal_multi_distsustain_free;
     util_pedal_pico_multi_free[16] = pedal_multi_truebuffer_free;
@@ -189,8 +189,7 @@ void pedal_multi_fuzzplanets_set() {
     pedal_pico_planets_set();
 }
 
-void pedal_multi_sidebandreverb_set() {
-    pedal_pico_sideband_set();
+void pedal_multi_parallelreverb_set() {
     pedal_pico_reverb_set();
 }
 
@@ -247,11 +246,11 @@ void pedal_multi_fuzzplanets_process(int32_t normalized_1, uint16_t conversion_2
     pedal_pico_planets_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, sw_mode);
 }
 
-void pedal_multi_sidebandreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
+void pedal_multi_parallelreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     /* Objective entities, util_pedal_pico_obj, pedal_pico_sideband, and pedal_pico_reverb point the same struct and memory space */
-    pedal_pico_sideband_process(normalized_1, 0, 0, 1);
-    pedal_pico_reverb_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, sw_mode);
-    util_pedal_pico_obj->output_1 = util_pedal_pico_obj->output_1 + normalized_1;
+    pedal_pico_reverb_process(normalized_1, conversion_2, conversion_3, sw_mode);
+    util_pedal_pico_obj->output_1 += normalized_1;
+    util_pedal_pico_obj->output_1_inverted -= normalized_1;
 }
 
 void pedal_multi_distsustain_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
@@ -285,8 +284,7 @@ void pedal_multi_fuzzplanets_free() {
     pedal_pico_planets_free();
 }
 
-void pedal_multi_sidebandreverb_free() {
-    pedal_pico_sideband_free();
+void pedal_multi_parallelreverb_free() {
     pedal_pico_reverb_free();
 }
 

@@ -188,7 +188,7 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 10: Distortion
   * 11: Dist Reverb
   * 12: Fuzz Planets
-  * 13: Sideband Reverb
+  * 13: Parallel Reverb
   * 14: Sustain
   * 15: Dist Sustain
   * 16: True Buffer
@@ -219,7 +219,7 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
 
-* Sideband Reverb is the combination of the Sideband and the Reverb. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Sideband is fixed to the non-oscillation mode.
+* Parallel Reverb is the addition of the buffered sound and the Reverb. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. This is useful on the situation that you want much wet in the rate.
 
 * Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion. I uses moving average as a low-pass filter, and this filter is costly to spend CPU clocks because of accessing SRAM. I thought this effect could be made of a Schmitt trigger such as 74LS14. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power.
 

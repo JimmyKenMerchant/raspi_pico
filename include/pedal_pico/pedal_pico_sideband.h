@@ -41,8 +41,9 @@ extern "C" {
 #define PEDAL_PICO_SIDEBAND_OSC_START_HYSTERESIS_SHIFT 1 // Divide by 2
 #define PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER 1 // From -66.22dB (Loss 2047) to -36.39dB (Loss 66) in ADC_VREF (Typically 3.3V)
 #define PEDAL_PICO_SIDEBAND_OSC_START_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
-#define PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER 2048 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define PEDAL_PICO_SIDEBAND_WAVE_MOVING_AVERAGE_NUMBER 8 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_PICO_SIDEBAND_WAVE_MOVING_AVERAGE_NUMBER 16 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_PICO_SIDEBAND_WAVE_SHIFT 1 // After Moving Average, Correct Peak of Wave
 
 volatile util_pedal_pico* pedal_pico_sideband;
 volatile uint16_t pedal_pico_sideband_conversion_2;
