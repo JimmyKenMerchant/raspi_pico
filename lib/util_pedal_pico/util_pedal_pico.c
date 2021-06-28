@@ -155,7 +155,7 @@ void util_pedal_pico_renew_adc_middle_moving_average(uint16_t conversion) {
     uint32_t middle_moving_average = util_pedal_pico_adc_middle_moving_average_sum / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER;
     util_pedal_pico_adc_middle_moving_average_sum -= middle_moving_average;
     util_pedal_pico_adc_middle_moving_average_sum += conversion;
-    util_pedal_pico_adc_middle_moving_average = (uint16_t)middle_moving_average;
+    util_pedal_pico_adc_middle_moving_average = (uint16_t)(util_pedal_pico_adc_middle_moving_average_sum / UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER);
 }
 
 void util_pedal_pico_on_adc_irq_fifo() {

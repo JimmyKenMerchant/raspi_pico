@@ -21,6 +21,8 @@ void pedal_pico_sideband_set() {
     pedal_pico_sideband_osc_speed = pedal_pico_sideband_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_sideband_osc_start_threshold = (int8_t)((pedal_pico_sideband_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_SIDEBAND_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_sideband_osc_start_count = 0;
+    pedal_pico_sideband_middle_moving_average_sum = (PEDAL_PICO_SIDEBAND_OSC_PEAK >> 1) * PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER;
+    pedal_pico_sideband_wave_moving_average_sum = 0;
 }
 
 void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
@@ -69,8 +71,24 @@ void pedal_pico_sideband_process(int32_t normalized_1, uint16_t conversion_2, ui
     if (pedal_pico_sideband_osc_sine_1_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_1_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_1_TIME_MULTIPLIER;
     if (pedal_pico_sideband_osc_sine_2_index >= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER) pedal_pico_sideband_osc_sine_2_index -= UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX * PEDAL_PICO_SIDEBAND_OSC_SINE_2_TIME_MULTIPLIER;
     int32_t osc_value = (int32_t)((((int64_t)PEDAL_PICO_SIDEBAND_OSC_PEAK << 16) * (((int64_t)fixed_point_value_sine_1 + (int64_t)fixed_point_value_sine_2) >> 1)) >> 16); // Remain Decimal Part
-    osc_value = (int32_t)(((int64_t)osc_value * ((int64_t)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
-    osc_value -= PEDAL_PICO_SIDEBAND_OSC_PEAK >> 1;
+    if (sw_mode == 1) {
+        osc_value = abs(normalized_1) << 1;
+    } else {
+        osc_value = (int32_t)(((int64_t)osc_value * ((int64_t)abs(normalized_1) << PEDAL_PICO_SIDEBAND_GAIN_SHIFT_FIXED_1)) >> 32); // Absolute normalized_1 to Multiply Frequency
+    }
+    /* Correction of Biasing */
+    int32_t middle_moving_average = pedal_pico_sideband_middle_moving_average_sum / PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER;
+    pedal_pico_sideband_middle_moving_average_sum -= middle_moving_average;
+    pedal_pico_sideband_middle_moving_average_sum += osc_value >> 1; // Middle Point
+    middle_moving_average = pedal_pico_sideband_middle_moving_average_sum / PEDAL_PICO_SIDEBAND_MIDDLE_MOVING_AVERAGE_NUMBER;
+    osc_value -= middle_moving_average;
+    if (sw_mode == 1) {
+        /* Low-pass filter */
+        int32_t wave_moving_average = pedal_pico_sideband_wave_moving_average_sum / PEDAL_PICO_SIDEBAND_WAVE_MOVING_AVERAGE_NUMBER;
+        pedal_pico_sideband_wave_moving_average_sum -= wave_moving_average;
+        pedal_pico_sideband_wave_moving_average_sum += osc_value;
+        osc_value = pedal_pico_sideband_wave_moving_average_sum / PEDAL_PICO_SIDEBAND_WAVE_MOVING_AVERAGE_NUMBER;
+    }
     /* Output */
     pedal_pico_sideband->output_1 = osc_value;
     pedal_pico_sideband->output_1_inverted = -osc_value;
