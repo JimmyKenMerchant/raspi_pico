@@ -180,15 +180,15 @@ gdb-multiarch blinkers/blinkdrs.elf
   * 2: Chorus
   * 3: Reverb
   * 4: Room Reverb
-  * 5: Tape
-  * 6: Phaser
-  * 7: Planets
-  * 8: Planets Reverb
-  * 9: Tremolo
-  * 10: Distortion
-  * 11: Dist Reverb
-  * 12: Fuzz Planets
-  * 13: Parallel Reverb
+  * 5: Parallel Reverb
+  * 6: Tape
+  * 7: Phaser
+  * 8: Planets
+  * 9: Planets Reverb
+  * 10: Tremolo
+  * 11: Distortion
+  * 12: Dist Reverb
+  * 13: Fuzz Planets
   * 14: Sustain
   * 15: Dist Sustain
   * 16: True Buffer
@@ -199,9 +199,11 @@ gdb-multiarch blinkers/blinkdrs.elf
 
 * Chorus is using a delay without feedback. However, to get the spatial expanse, we need an oscillator and another delay, i.e., this effect is simulating a pair of stereo speakers which output the delay alternately with an oscillator, and the function of the speakers is also simulating a rotary speaker too. Besides, a rotary speaker is also simulating sound reflections in a hall too. ADC0 is for the audio input, ADC1 is for the speed of the oscillator, and ADC2 is for the distance between L and R. One of two outputs is L, and another is R which is delayed to simulate the distance of two speakers (another is also inverted for balanced monaural). There are output modes to change the delay time.
 
-* Reverb (reverberation) is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode.
+* Reverb (reverberation) is using a delay with feedback. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets the non-feedback (echo) mode. Switch-1 sets the high-pass filter mode.
 
 * Room Reverb is the combination of the Reverb and the Chorus. ADC0 is for the audio input, ADC1 is for the delay time of the Reverb, and ADC2 is for the speed of chorus' oscillator. There are output modes to change the reflection and the room size. As a result, the Chorus is like sound reflections of a room. I thought this combination makes natural reverberation in a room. The sound of this effect is like in a tall lobby of a shopping mall, i.e., there is a lot of factors to reflect. Whereas, the sound of the Chorus is like in an open lobby of a hotel.
+
+* Parallel Reverb is the addition of the buffered sound and the Reverb. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. This is useful on the situation that you want much wet in the rate.
 
 * Tape is using a delay with feedback. However, to simulate the glitch of the tape double-tracking, the delay time is swung by an oscillator. By the swung delay time, the pitch is swung up and down because the music wave is shrunk and stretched. Note that this type of vibrations with changing the pitch of a note, but not the volume, is not preferred in instrumental ensembles and chorus ensembles because the changed pitch generates a discord. By dialing 10 to the depth, and controlling the speed knob, you can listen the sound like vinyl scratching (but a little wet). ADC0 is for the audio input, ADC1 is for the swing depth, and ADC2 is for the speed of the oscillator. There are output modes to change the effectiveness of the swing depth.
 
@@ -218,8 +220,6 @@ gdb-multiarch blinkers/blinkdrs.elf
 * Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Distortion is fixed to the high distortion mode.
 
 * Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
-
-* Parallel Reverb is the addition of the buffered sound and the Reverb. ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. This is useful on the situation that you want much wet in the rate.
 
 * Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion. I uses moving average as a low-pass filter, and this filter is costly to spend CPU clocks because of accessing SRAM. I thought this effect could be made of a Schmitt trigger such as 74LS14. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power.
 

@@ -22,6 +22,7 @@ void pedal_pico_reverb_set() {
     pedal_pico_reverb_delay_time = delay_time;
     pedal_pico_reverb_delay_time_interpolation = delay_time;
     pedal_pico_reverb_delay_index = 0;
+    pedal_pico_reverb_wave_moving_average_sum = 0;
 }
 
 void pedal_pico_reverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
@@ -45,6 +46,13 @@ void pedal_pico_reverb_process(int32_t normalized_1, uint16_t conversion_2, uint
     int32_t reduced_1 = (int32_t)((((int64_t)normalized_1 << 16) * (int64_t)pedal_pico_reverb_normalized_1_amplitude) >> 32);
     delay_1 = (int32_t)((((int64_t)delay_1 << 16) * (int64_t)pedal_pico_reverb_delay_amplitude) >> 32);
     int32_t mixed_1 = reduced_1 + delay_1;
+    if (sw_mode == 2) {
+        /* High-pass Filter */
+        int32_t wave_moving_average = pedal_pico_reverb_wave_moving_average_sum / PEDAL_PICO_REVERB_WAVE_MOVING_AVERAGE_NUMBER;
+        pedal_pico_reverb_wave_moving_average_sum -= wave_moving_average;
+        pedal_pico_reverb_wave_moving_average_sum += mixed_1;
+        mixed_1 -= pedal_pico_reverb_wave_moving_average_sum / PEDAL_PICO_REVERB_WAVE_MOVING_AVERAGE_NUMBER;
+    }
     if (sw_mode == 1) {
         pedal_pico_reverb_delay_array[pedal_pico_reverb_delay_index] = (int16_t)normalized_1;
     } else {
