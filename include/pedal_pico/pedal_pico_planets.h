@@ -33,23 +33,21 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_PLANETS_COEFFICIENT_MULTIPLIER 1920 // Multiply by 1920 (0x01-0x20 to 0x00000780-0x0000F000)
-#define PEDAL_PICO_PLANETS_COEFFICIENT_INTERPOLATION_ACCUM 64 // Value to Accumulate, 64 * 30 = 1920
-#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT 3 // Multiply by 8 (1-32 to 8-256)
+#define PEDAL_PICO_PLANETS_COEFFICIENT_FIXED_1 (int32_t)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
+#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT 1 // Multiply by 2 (1-32 to 2-64)
 #define PEDAL_PICO_PLANETS_DELAY_TIME_MAX (((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
-#define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 4 // Value to Accumulate, Small Value Makes Froggy
+#define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Small Value Makes Froggy
 
 volatile util_pedal_pico* pedal_pico_planets;
 volatile uint16_t pedal_pico_planets_conversion_2;
 volatile uint16_t pedal_pico_planets_conversion_3;
-volatile int32_t pedal_pico_planets_coefficient; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-volatile int32_t pedal_pico_planets_coefficient_interpolation;
-volatile int16_t* pedal_pico_planets_delay_x;
 volatile int16_t* pedal_pico_planets_delay_y;
-volatile uint16_t pedal_pico_planets_delay_time;
-volatile uint16_t pedal_pico_planets_delay_time_interpolation;
-volatile uint16_t pedal_pico_planets_delay_time_interpolation_accum;
-volatile uint16_t pedal_pico_planets_delay_index;
+volatile uint16_t pedal_pico_planets_delay_y_index;
+volatile uint16_t pedal_pico_planets_delay_time_high_pass;
+volatile uint16_t pedal_pico_planets_delay_time_high_pass_interpolation;
+volatile uint16_t pedal_pico_planets_delay_time_low_pass;
+volatile uint16_t pedal_pico_planets_delay_time_low_pass_interpolation;
+volatile int32_t pedal_pico_planets_moving_average_sum_low_pass;
 
 void pedal_pico_planets_set();
 void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode);
