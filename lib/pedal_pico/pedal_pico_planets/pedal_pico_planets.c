@@ -18,7 +18,7 @@ void pedal_pico_planets_set() {
     pedal_pico_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_planets_delay_y = (int16_t*)calloc(PEDAL_PICO_PLANETS_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_planets_delay_y_index = 0;
-    uint16_t delay_time_high_pass = ((pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
+    uint16_t delay_time_high_pass = ((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (32-1) and Shift
     pedal_pico_planets_delay_time_high_pass = delay_time_high_pass;
     pedal_pico_planets_delay_time_high_pass_interpolation = delay_time_high_pass;
     uint16_t delay_time_low_pass = ((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (32-1) and Shift
@@ -30,7 +30,7 @@ void pedal_pico_planets_set() {
 void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_planets_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_planets_conversion_2 = conversion_2;
-        pedal_pico_planets_delay_time_high_pass = ((pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (1-32) and Shift
+        pedal_pico_planets_delay_time_high_pass = ((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) - (pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (32-1) and Shift
     }
     if (abs(conversion_3 - pedal_pico_planets_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_planets_conversion_3 = conversion_3;
@@ -39,7 +39,7 @@ void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uin
     pedal_pico_planets_delay_time_high_pass_interpolation = _interpolate(pedal_pico_planets_delay_time_high_pass_interpolation, pedal_pico_planets_delay_time_high_pass, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);
     pedal_pico_planets_delay_time_low_pass_interpolation = _interpolate(pedal_pico_planets_delay_time_low_pass_interpolation, pedal_pico_planets_delay_time_low_pass, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);
     if (sw_mode == 1) {
-        pedal_pico_planets_delay_time_high_pass_interpolation = pedal_pico_planets_delay_time_low_pass_interpolation;
+        pedal_pico_planets_delay_time_low_pass_interpolation = pedal_pico_planets_delay_time_high_pass_interpolation;
     }
     /* High-pass Filter */
     int16_t delay_y = pedal_pico_planets_delay_y[((pedal_pico_planets_delay_y_index + PEDAL_PICO_PLANETS_DELAY_TIME_MAX) - pedal_pico_planets_delay_time_high_pass_interpolation) % PEDAL_PICO_PLANETS_DELAY_TIME_MAX];
