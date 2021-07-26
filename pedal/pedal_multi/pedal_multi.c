@@ -37,12 +37,9 @@
 #define PEDAL_MULTI_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_1 0
 #define PEDAL_MULTI_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_2 0x7FF
 #define PEDAL_MULTI_ROOMREVERB_CHORUS_CONVERSION_3_FIXED_3 0xFFF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_1 0xAFF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_2 0xAFF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_3 0xAFF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_1 0x0FF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_2 0x3FF
-#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_3 0x7FF
+#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_1 0x0FF
+#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_2 0x3FF
+#define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_3 0x7FF
 
 /* Global Variables for Combinations */
 uint16_t pedal_multi_roomreverb_reverb_conversion_2;
@@ -221,16 +218,13 @@ void pedal_multi_roomreverb_process(int32_t normalized_1, uint16_t conversion_2,
 void pedal_multi_planetsreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (sw_mode == 1) {
         pedal_multi_planetsreverb_planets_conversion_2 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_1;
-        pedal_multi_planetsreverb_planets_conversion_3 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_1;
     } else if (sw_mode == 2) {
         pedal_multi_planetsreverb_planets_conversion_2 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_3;
-        pedal_multi_planetsreverb_planets_conversion_3 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_3;
     } else {
         pedal_multi_planetsreverb_planets_conversion_2 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_2;
-        pedal_multi_planetsreverb_planets_conversion_3 = PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_3_FIXED_2;
     }
     /* Objective entities, util_pedal_pico_obj, pedal_pico_planets, and pedal_pico_reverb point the same struct and memory space */
-    pedal_pico_planets_process(normalized_1, pedal_multi_planetsreverb_planets_conversion_2, pedal_multi_planetsreverb_planets_conversion_3, 0);
+    pedal_pico_planets_process(normalized_1, pedal_multi_planetsreverb_planets_conversion_2, 0, 1);
     pedal_pico_reverb_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, 0);
 }
 

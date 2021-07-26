@@ -36,7 +36,7 @@ extern "C" {
 #define PEDAL_PICO_PLANETS_COEFFICIENT_FIXED_1 (int32_t)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT 1 // Multiply by 2 (1-32 to 2-64)
 #define PEDAL_PICO_PLANETS_DELAY_TIME_MAX (((UTIL_PEDAL_PICO_ADC_RESOLUTION + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
-#define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Small Value Makes Froggy
+#define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Have to Be Small Value with Moving Average
 
 volatile util_pedal_pico* pedal_pico_planets;
 volatile uint16_t pedal_pico_planets_conversion_2;
