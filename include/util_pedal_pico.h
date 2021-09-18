@@ -100,6 +100,7 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_SHIFT 7 // 0x0-0xFFF (0-4095) to 0x0-0x1F (0-31)
 #define UTIL_PEDAL_PICO_ADC_RESOLUTION 0x1F
 #define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
+#define UTIL_PEDAL_PICO_ADC_MASK 0xFFC // ADC is 12-bit, but having noise. Clear LSBs to reduce noise.
 #define UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX 9375
 #define UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX (UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX / 3)
 #define UTIL_PEDAL_PICO_MULTI_LENGTH 17 // 4-bit Length

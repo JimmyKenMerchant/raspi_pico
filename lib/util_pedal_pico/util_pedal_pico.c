@@ -167,14 +167,14 @@ void util_pedal_pico_on_adc_irq_fifo() {
     for (uint16_t i = 0; i < adc_fifo_level; i++) {
         //printf("@util_pedal_pico_on_adc_irq_fifo 2 - i: %d\n", i);
         uint16_t temp = adc_fifo_get();
-        if (temp & 0x8000) { // Procedure on Malfunction
+        if (temp & ADC_FIFO_ERR_BITS) { // Procedure on Malfunction
             if (time_us_64() >= UTIL_PEDAL_PICO_ADC_ERROR_SINCE) {
                 reset_block(RESETS_RESET_PWM_BITS|RESETS_RESET_ADC_BITS);
                 panic("Detected ADC Error in Function, \"util_pedal_pico_on_adc_irq_fifo\"");
             }
             break;
         } else {
-            temp &= 0x7FFF; // Clear Bit[15]: ERR
+            temp &= UTIL_PEDAL_PICO_ADC_MASK; // Clear Bit[15]: ERR, LSBs
             uint16_t remainder = i % 3;
             if (remainder == 2) {
                 util_pedal_pico_on_adc_conversion_3 = temp;
