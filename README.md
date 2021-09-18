@@ -108,6 +108,13 @@ gdb-multiarch blinkers/blinkdrs.elf
 # For Multicore, "info threads", "thread 2", etc.
 ```
 
+* You may want to use a Picoprobe. Read "Appendix A: Using Picoprobe" in "Getting started with Raspberry Pi Pico" to install OpenOCD to your PC and Picoprobe to your Pico to upload software into another Pico. Note that to build Picoprobe, assign the path of Pico SDK as well as pico-examples.git (check 3.1. Building "Blink" of "Getting started with Raspberry Pi Pico").
+
+```
+# In Ubuntu 20.04 on amd64, I need to prefix sudo to the command.
+sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program blinkers/blinkers.elf verify reset exit"
+```
+
 ## Notes on Projects
 
 * Projects may output and input strings through USB. To monitor these, use minicom.
@@ -159,6 +166,8 @@ gdb-multiarch blinkers/blinkdrs.elf
 * Pedals decides the middle point of the wave by the moving average. The number of moving average is fixed. The more number is slow to move the middle point. Whereas, the less number is fast, but is effected by the large peak of the wave.
 
 * I use a number table of a normal distribution for the correction to become the natural sound at each pedal. The normal distribution can be aliased as Gaussian distribution, i.e., this correction is well-known in the world of image processing.
+
+* The table of a normal distribution, "int32_t util_pedal_pico_ex_table_pdf_1[]" can make compression to the input. The value of pdf_mean_1 in "util_pedal_pico_ex_make_header.py" changes the status of compression. If the value is 0, the maximum gain is on the half of the peak, i.e., +-0.375V (assuming Pico is powered by 3.0V and limited to +-0.75V on the input). If the value is -0.5, the maximum gain is on the lower quarter of the peak, i.e, +-0.1875V. Not to reduce the gained peak of the voltage (in fact an integer 0 to 1023 on Pico), change the value of pdf_height_1 to 2.0 with pdf_mean_1 = 0, or 4.0 with pdf_mean_1 = -0.5. The value of pdf_halfwidth_1 changes the gain on the bottom and the top of the input. The value of pdf_variance_1 should be 1.0 because the variance of the standard deviation of a normal distribution is assumed to be 1.0 and relates the effect of pdf_halfwidth_1.
 
 * ADC0 inputs an audio signal. Whereas, ADC1 and ADC2 input values of potentiometers to control effects.
 
