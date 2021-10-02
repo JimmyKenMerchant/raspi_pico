@@ -36,6 +36,9 @@ sequencer_gpio_pico* blinkers_the_sequencer;
 uint32_t blinkers_count;
 uint32_t blinkers_pwm_slice_num;
 uint32_t blinkers_pwm_channel;
+uint64_t blinkers_timestamp_64;
+uint32_t blinkers_timestamp_64_msbs;
+uint32_t blinkers_timestamp_64_lsbs;
 void blinkers_on_pwm_irq_wrap();
 
 #define BLINKERS_PWM_GPIO 14
@@ -67,6 +70,13 @@ int main(void) {
     while (true) {
         //tight_loop_contents();
         printf("@main 4 - blinkers_the_sequencer->index: %d\n", blinkers_the_sequencer->index);
+        blinkers_timestamp_64 = time_us_64();
+        blinkers_timestamp_64_lsbs = (uint32_t)(blinkers_timestamp_64 & 0xFFFFFFFF ); // Bit[31:0] Least Significant Bits
+        blinkers_timestamp_64_msbs = (uint32_t)(blinkers_timestamp_64 >> 32 & 0xFFFFFFFF ); // Bit[63:32] Most Significant Bits
+        printf("@main 5 - blinkers_timestamp_64 (%%llu): %llu\n", blinkers_timestamp_64); // "uint64_t" is "unsigned long long int" in This System
+        printf("@main 6 - blinkers_timestamp_64 (%%lu): %lu\n", blinkers_timestamp_64);
+        printf("@main 7 - blinkers_timestamp_64_lsbs (%%lu): %lu\n", blinkers_timestamp_64_lsbs); // "uint32_t" is "unsigned long int"
+        printf("@main 8 - blinkers_timestamp_64_msbs (%%u): %u\n", blinkers_timestamp_64_msbs); // "uint32_t" is also "unsigned int"
         sleep_ms(500);
     }
     free(blinkers_the_sequencer);
