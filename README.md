@@ -117,13 +117,15 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
 
 ## Notes on Projects
 
-* Projects may output and input strings through USB. To monitor these, use minicom.
+* Projects may output and input strings through USB and UART. To monitor these, use minicom.
 
 ### Blinkers
 
 * Outputs: GPIO14 (PMW7 A), GPIO15, GPIO16, and GPIO25 (Embedded LED)
 
 * I tested an output with a 3.0mm red LED and a 1K ohms resistor in series.
+
+* This project also outputs 64-bit timestamps iteratively to know the behavior of the function, printf, i.e., its format specifiers.
 
 ### Twin Dimmers
 
