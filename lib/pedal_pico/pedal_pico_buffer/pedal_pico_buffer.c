@@ -24,7 +24,7 @@ void pedal_pico_buffer_set() {
     pedal_pico_buffer_delay_time = delay_time;
     pedal_pico_buffer_delay_time_interpolation = delay_time;
     pedal_pico_buffer_delay_index = 0;
-    pedal_pico_buffer_noise_gate_threshold = (int8_t)((pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_buffer_noise_gate_threshold = (uint16_t)((pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_buffer_noise_gate_count = 0;
 }
 
@@ -35,34 +35,11 @@ void pedal_pico_buffer_process(int32_t normalized_1, uint16_t conversion_2, uint
     }
     if (abs(conversion_3 - pedal_pico_buffer_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_buffer_conversion_3 = conversion_3;
-        pedal_pico_buffer_noise_gate_threshold = (int8_t)((pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_buffer_noise_gate_threshold = (uint16_t)((pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     }
     pedal_pico_buffer_delay_time_interpolation = _interpolate(pedal_pico_buffer_delay_time_interpolation, pedal_pico_buffer_delay_time, PEDAL_PICO_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM);
-    /**
-     * pedal_pico_buffer_noise_gate_count:
-     *
-     * Over Positive Threshold       ## 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Positive Threshold     # 0 # 2      ### Reset to 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                  # 0   # 3   # 5   # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PICO_BUFFER_NOISE_GATE_COUNT_MAX
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                         # 5 # 3      #### 4
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Negative Threshold           # 6 # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * Over Negative Threshold             ## Reset to 1
-     */
-    if (normalized_1 > (int32_t)pedal_pico_buffer_noise_gate_threshold || normalized_1 < -((int32_t)pedal_pico_buffer_noise_gate_threshold)) {
-        pedal_pico_buffer_noise_gate_count = 1;
-        pedal_pico_buffer_delay_amplitude = 0x00000000;
-    } else if (pedal_pico_buffer_noise_gate_count != 0 && (normalized_1 > (int32_t)(pedal_pico_buffer_noise_gate_threshold >> PEDAL_PICO_BUFFER_NOISE_GATE_HYSTERESIS_SHIFT) || normalized_1 < -((int32_t)(pedal_pico_buffer_noise_gate_threshold >> PEDAL_PICO_BUFFER_NOISE_GATE_HYSTERESIS_SHIFT)))) {
-        pedal_pico_buffer_noise_gate_count = 1;
-    } else if (pedal_pico_buffer_noise_gate_count != 0) {
-        pedal_pico_buffer_noise_gate_count++;
-    }
+    /* Noise Gate */
+    pedal_pico_buffer_noise_gate_count = util_pedal_pico_threshold_gate_count(pedal_pico_buffer_noise_gate_count, normalized_1, pedal_pico_buffer_noise_gate_threshold, PEDAL_PICO_BUFFER_NOISE_GATE_HYSTERESIS_SHIFT);
     if (pedal_pico_buffer_noise_gate_count >= PEDAL_PICO_BUFFER_NOISE_GATE_COUNT_MAX) {
         pedal_pico_buffer_noise_gate_count = 0;
         if (sw_mode == 1) {
@@ -75,6 +52,8 @@ void pedal_pico_buffer_process(int32_t normalized_1, uint16_t conversion_2, uint
             pedal_pico_buffer_delay_amplitude = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_2;
             pedal_pico_buffer_delay_amplitude_interpolation_accum = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_2;
         }
+    } else if (pedal_pico_buffer_noise_gate_count != 0) {
+        pedal_pico_buffer_delay_amplitude = 0x00000000;
     }
     pedal_pico_buffer_delay_amplitude_interpolation = _interpolate(pedal_pico_buffer_delay_amplitude_interpolation, pedal_pico_buffer_delay_amplitude, pedal_pico_buffer_delay_amplitude_interpolation_accum);
     if (pedal_pico_buffer_noise_gate_count == 0) {

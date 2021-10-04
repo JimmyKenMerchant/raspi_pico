@@ -51,7 +51,7 @@ volatile uint16_t pedal_pico_sideband_conversion_3;
 volatile uint32_t pedal_pico_sideband_osc_sine_1_index;
 volatile uint32_t pedal_pico_sideband_osc_sine_2_index;
 volatile uint16_t pedal_pico_sideband_osc_speed;
-volatile int8_t pedal_pico_sideband_osc_start_threshold;
+volatile uint16_t pedal_pico_sideband_osc_start_threshold;
 volatile uint16_t pedal_pico_sideband_osc_start_count;
 volatile int32_t pedal_pico_sideband_middle_moving_average_sum;
 volatile int32_t pedal_pico_sideband_wave_moving_average_sum;

@@ -44,7 +44,7 @@ volatile uint16_t pedal_pico_tremolo_conversion_3;
 volatile int32_t pedal_pico_tremolo_osc_triangle_1_index; // May Have Negative Value Depending on osc_speed
 volatile uint16_t pedal_pico_tremolo_osc_speed;
 volatile bool pedal_pico_tremolo_osc_is_negative;
-volatile int8_t pedal_pico_tremolo_osc_start_threshold;
+volatile uint16_t pedal_pico_tremolo_osc_start_threshold;
 volatile uint16_t pedal_pico_tremolo_osc_start_count;
 volatile bool pedal_pico_tremolo_osc_is_faded;
 

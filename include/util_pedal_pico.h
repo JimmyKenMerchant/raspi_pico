@@ -169,6 +169,34 @@ void util_pedal_pico_sw_loop(uint8_t gpio_1, uint8_t gpio_2); // Three Point Swi
 void util_pedal_pico_wait();
 void util_pedal_pico_init_multi(uint8_t gpio_bit_0, uint8_t gpio_bit_1, uint8_t gpio_bit_2, uint8_t gpio_bit_3, uint8_t gpio_bit_4);
 void util_pedal_pico_select_multi();
+static inline uint16_t util_pedal_pico_threshold_gate_count(uint16_t gate_count, int32_t normalized_1, uint16_t gate_threshold, uint8_t hysteresis_shift) {
+    /**
+     * gate_count:
+     *
+     * Over Positive Threshold       ## 1
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Positive Threshold     # 0 # 2      ### Reset to 1
+     *-----------------------------------------------------------------------------------------------------------
+     * Hysteresis                  # 0   # 3   # 5   # 2
+     *-----------------------------------------------------------------------------------------------------------
+     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PICO_*_COUNT_MAX
+     *-----------------------------------------------------------------------------------------------------------
+     * Hysteresis                         # 5 # 3      #### 4
+     *-----------------------------------------------------------------------------------------------------------
+     * Under Negative Threshold           # 6 # 2
+     *-----------------------------------------------------------------------------------------------------------
+     * Over Negative Threshold             ## Reset to 1
+     */
+    uint32_t abs_noramalized_1 = abs(normalized_1);
+    if (abs_noramalized_1 > (uint32_t)gate_threshold) {
+        gate_count = 1;
+    } else if (gate_count != 0 && abs_noramalized_1 > (uint32_t)(gate_threshold >> hysteresis_shift)) {
+        gate_count = 1;
+    } else if (gate_count != 0) {
+        gate_count++;
+    }
+    return gate_count;
+}
 void (**util_pedal_pico_multi_set)();
 void (**util_pedal_pico_multi_process)(int32_t, uint16_t, uint16_t, uint8_t);
 void (**util_pedal_pico_multi_free)();

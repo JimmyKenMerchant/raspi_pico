@@ -19,7 +19,7 @@ void pedal_pico_tremolo_set() {
     pedal_pico_tremolo_osc_triangle_1_index = 0;
     pedal_pico_tremolo_osc_speed = pedal_pico_tremolo_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_tremolo_osc_is_negative = false;
-    pedal_pico_tremolo_osc_start_threshold = (int8_t)((pedal_pico_tremolo_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_TREMOLO_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_tremolo_osc_start_threshold = (uint16_t)((pedal_pico_tremolo_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_TREMOLO_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     pedal_pico_tremolo_osc_start_count = 0;
     pedal_pico_tremolo_osc_is_faded = false;
 }
@@ -31,32 +31,10 @@ void pedal_pico_tremolo_process(int32_t normalized_1, uint16_t conversion_2, uin
     }
     if (abs(conversion_3 - pedal_pico_tremolo_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
         pedal_pico_tremolo_conversion_3 = conversion_3;
-        pedal_pico_tremolo_osc_start_threshold = (int8_t)((pedal_pico_tremolo_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_TREMOLO_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_tremolo_osc_start_threshold = (uint16_t)((pedal_pico_tremolo_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) * PEDAL_PICO_TREMOLO_OSC_START_THRESHOLD_MULTIPLIER); // Make 5-bit Value (0-31) and Multiply
     }
-    /**
-     * pedal_pico_tremolo_osc_start_count:
-     *
-     * Over Positive Threshold       ## 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Positive Threshold     # 0 # 2      ### Reset to 1
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                  # 0   # 3   # 5   # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * 0                           # 0   # 4   # 4   # 3   # 5 ...Count Up to PEDAL_PICO_TREMOLO_OSC_START_COUNT_MAX
-     *-----------------------------------------------------------------------------------------------------------
-     * Hysteresis                         # 5 # 3      #### 4
-     *-----------------------------------------------------------------------------------------------------------
-     * Under Negative Threshold           # 6 # 2
-     *-----------------------------------------------------------------------------------------------------------
-     * Over Negative Threshold             ## Reset to 1
-     */
-    if (normalized_1 > (int32_t)pedal_pico_tremolo_osc_start_threshold || normalized_1 < -((int32_t)pedal_pico_tremolo_osc_start_threshold)) {
-        pedal_pico_tremolo_osc_start_count = 1;
-    } else if (pedal_pico_tremolo_osc_start_count != 0 && (normalized_1 > (int32_t)(pedal_pico_tremolo_osc_start_threshold >> PEDAL_PICO_TREMOLO_OSC_START_HYSTERESIS_SHIFT) || normalized_1 < -((int32_t)(pedal_pico_tremolo_osc_start_threshold >> PEDAL_PICO_TREMOLO_OSC_START_HYSTERESIS_SHIFT)))) {
-        pedal_pico_tremolo_osc_start_count = 1;
-    } else if (pedal_pico_tremolo_osc_start_count != 0) {
-        pedal_pico_tremolo_osc_start_count++;
-    }
+    /* Oscillator Start */
+    pedal_pico_tremolo_osc_start_count = util_pedal_pico_threshold_gate_count(pedal_pico_tremolo_osc_start_count, normalized_1, pedal_pico_tremolo_osc_start_threshold, PEDAL_PICO_TREMOLO_OSC_START_HYSTERESIS_SHIFT);
     if (pedal_pico_tremolo_osc_start_count >= PEDAL_PICO_TREMOLO_OSC_START_COUNT_MAX) pedal_pico_tremolo_osc_start_count = 0;
     if (pedal_pico_tremolo_osc_start_count == 0) {
         pedal_pico_tremolo_osc_triangle_1_index = 0;

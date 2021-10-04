@@ -35,17 +35,17 @@ extern "C" {
 
 #define PEDAL_PICO_SUSTAIN_AMPLITUDE_SHIFT 11 // Multiply by 2048 (0x00000000-0x0000F800)
 #define PEDAL_PICO_SUSTAIN_PEAK_FIXED_1 128
-#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_2 192
-#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_3 256
-#define PEDAL_PICO_SUSTAIN_NOISE_GATE_HYSTERESIS_SHIFT 2 // Divide by 4
-#define PEDAL_PICO_SUSTAIN_NOISE_GATE_THRESHOLD_MULTIPLIER 4
+#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_2 256
+#define PEDAL_PICO_SUSTAIN_PEAK_FIXED_3 512
+#define PEDAL_PICO_SUSTAIN_GATE_HYSTERESIS_SHIFT 2 // Divide by 4
+#define PEDAL_PICO_SUSTAIN_GATE_THRESHOLD_MULTIPLIER 4
 #define PEDAL_PICO_SUSTAIN_WAVE_MOVING_AVERAGE_NUMBER 8 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 
 volatile util_pedal_pico* pedal_pico_sustain;
 volatile uint16_t pedal_pico_sustain_conversion_2;
 volatile uint16_t pedal_pico_sustain_conversion_3;
 volatile int32_t pedal_pico_sustain_amplitude; // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-volatile int8_t pedal_pico_sustain_noise_gate_threshold;
+volatile uint16_t pedal_pico_sustain_gate_threshold;
 volatile bool pedal_pico_sustain_is_on;
 volatile int32_t pedal_pico_sustain_wave_moving_average_sum;
 

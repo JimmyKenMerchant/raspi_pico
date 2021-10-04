@@ -56,7 +56,7 @@ volatile uint8_t pedal_pico_buffer_delay_amplitude_interpolation_accum;
 volatile uint16_t pedal_pico_buffer_delay_time;
 volatile uint16_t pedal_pico_buffer_delay_time_interpolation;
 volatile uint16_t pedal_pico_buffer_delay_index;
-volatile int8_t pedal_pico_buffer_noise_gate_threshold;
+volatile uint16_t pedal_pico_buffer_noise_gate_threshold;
 volatile uint16_t pedal_pico_buffer_noise_gate_count;
 
 void pedal_pico_buffer_set();
