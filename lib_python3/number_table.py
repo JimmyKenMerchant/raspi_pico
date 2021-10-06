@@ -12,7 +12,7 @@ from scipy.stats import norm
 # halfwidth: Center to Side
 # scale: Variance
 # height: Maximum Height
-def makeTablePdf(header, length, halfwidth, mean, variance, height):
+def makeTableNormPdf(header, length, halfwidth, mean, variance, height):
     list_pdf = norm.pdf(numpy.linspace(-halfwidth, halfwidth, length), loc=mean, scale=variance);
     max_pdf = max(list_pdf)
     for i in range(length):

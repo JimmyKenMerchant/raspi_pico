@@ -61,9 +61,12 @@ declare_pdf_1 = [
 
 pdf_length_1 = peak_length # Number of Array
 pdf_halfwidth_1 = 1.0 # Absolute Value of Side, X of PDF
-pdf_mean_1 = -0.5 # Mean
+pdf_mean_1 = 0 # Mean
 pdf_variance_1 = 1.0 # Variance
-pdf_height_1 = 4.0 # Maximum Height
+pdf_height_1 = 2.0 # Maximum Height
+pdf_mean_1_comp = -0.5 # Mean
+pdf_variance_1_comp = 0.4 # Variance
+pdf_height_1_comp = 3.999 # Maximum Height
 
 declare_log_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -116,7 +119,8 @@ nt.makeTableRightTriangle(header, triangle_length_1, triangle_height_1)
 
 # Table PDF 1
 header.writelines(declare_pdf_1)
-nt.makeTablePdf(header, pdf_length_1, pdf_halfwidth_1, pdf_mean_1, pdf_variance_1, pdf_height_1)
+#nt.makeTableNormPdf(header, pdf_length_1, pdf_halfwidth_1, pdf_mean_1, pdf_variance_1, pdf_height_1)
+nt.makeTableNormPdf(header, pdf_length_1, pdf_halfwidth_1, pdf_mean_1_comp, pdf_variance_1_comp, pdf_height_1_comp)
 
 # Table Logarithm 1
 header.writelines(declare_log_1)
