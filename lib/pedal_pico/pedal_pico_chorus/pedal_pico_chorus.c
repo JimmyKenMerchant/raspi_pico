@@ -20,23 +20,23 @@ void pedal_pico_chorus_set() {
     pedal_pico_chorus_delay_amplitude = PEDAL_PICO_CHORUS_DELAY_AMPLITUDE_FIXED_1;
     pedal_pico_chorus_delay_time = PEDAL_PICO_CHORUS_DELAY_TIME_FIXED_1;
     pedal_pico_chorus_delay_index = 0;
-    pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
+    pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_chorus_osc_sine_1_index = 0;
-    pedal_pico_chorus_lr_distance_array =  (int16_t*)calloc(PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16_t));
-    uint16_t lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    pedal_pico_chorus_lr_distance_array = (int16_t*)calloc(PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_MAX, sizeof(int16_t));
+    uint16_t lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_pico_chorus_lr_distance_time = lr_distance_time;
     pedal_pico_chorus_lr_distance_time_interpolation = lr_distance_time;
     pedal_pico_chorus_lr_distance_index = 0;
 }
 
 void pedal_pico_chorus_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_chorus_conversion_2) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
         pedal_pico_chorus_conversion_2 = conversion_2;
-        pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_SHIFT; // Make 5-bit Value (0-31)
+        pedal_pico_chorus_osc_speed = pedal_pico_chorus_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT; // Make 5-bit Value (0-31)
     }
-    if (abs(conversion_3 - pedal_pico_chorus_conversion_3) > UTIL_PEDAL_PICO_ADC_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_chorus_conversion_3) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
         pedal_pico_chorus_conversion_3 = conversion_3;
-        pedal_pico_chorus_lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+        pedal_pico_chorus_lr_distance_time = (pedal_pico_chorus_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
     pedal_pico_chorus_lr_distance_time_interpolation = _interpolate(pedal_pico_chorus_lr_distance_time_interpolation, pedal_pico_chorus_lr_distance_time, PEDAL_PICO_CHORUS_LR_DISTANCE_TIME_INTERPOLATION_ACCUM);
     if (sw_mode == 1) {

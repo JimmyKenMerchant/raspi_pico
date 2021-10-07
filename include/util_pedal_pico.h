@@ -37,6 +37,11 @@
 extern "C" {
 #endif
 
+/* Macros */
+#define util_pedal_pico_threshold(x) (((0x1 << (x)) >> 1) - 1) // x: UTIL_PEDAL_PICO_ADC_*_SHIFT
+#define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
+#define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
+
 /* Definitions */
 #ifndef UTIL_PEDAL_PICO_DEBUG
 #define UTIL_PEDAL_PICO_DEBUG 0
@@ -97,18 +102,20 @@ extern "C" {
 #define UTIL_PEDAL_PICO_ADC_ERROR_SINCE (uint64_t)1000000 // System Time (Micro Seconds) to Start Handling ADC Error
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT 2048
 #define UTIL_PEDAL_PICO_ADC_MIDDLE_MOVING_AVERAGE_NUMBER 16384 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
-#define UTIL_PEDAL_PICO_ADC_SHIFT 7 // 0x0-0xFFF (0-4095) to 0x0-0x1F (0-31)
-#define UTIL_PEDAL_PICO_ADC_RESOLUTION 0x1F
-#define UTIL_PEDAL_PICO_ADC_THRESHOLD 0x3F // Range is 0x0-0xFFF (0-4095) Divided by 0x80 (128) for 0x0-0x1F (0-31), (0x80 >> 1) - 1.
+#define UTIL_PEDAL_PICO_ADC_RANGE 0xFFF // 12-bit (0-4095)
 #define UTIL_PEDAL_PICO_ADC_MASK 0xFFC // ADC is 12-bit, but having noise. Clear LSBs to reduce noise.
+#define UTIL_PEDAL_PICO_ADC_COARSE_MULTIPLIER 2
+#define UTIL_PEDAL_PICO_ADC_COARSE_SHIFT 7 // Divided by 0x80 (128)
+#define UTIL_PEDAL_PICO_ADC_COARSE_RESOLUTION (UTIL_PEDAL_PICO_ADC_RANGE >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) // 0x1F (31)
+#define UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD util_pedal_pico_threshold(UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) // 0x3F (63)
+#define UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER 1
+#define UTIL_PEDAL_PICO_ADC_FINE_SHIFT 6 // Divided by 0x40 (64)
+#define UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION (UTIL_PEDAL_PICO_ADC_RANGE >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) // 0x3F (63)
+#define UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD util_pedal_pico_threshold(UTIL_PEDAL_PICO_ADC_FINE_SHIFT) // 0x1F (31)
 #define UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX 9375
 #define UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX (UTIL_PEDAL_PICO_OSC_SINE_1_TIME_MAX / 3)
 #define UTIL_PEDAL_PICO_MULTI_LENGTH 17 // 4-bit Length
 #define UTIL_PEDAL_PICO_MULTI_MASK 0b10000 // On Reaching Length
-
-/* Macros */
-#define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
-#define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
 
 /* Structs */
 typedef struct {
@@ -188,9 +195,9 @@ static inline uint16_t util_pedal_pico_threshold_gate_count(uint16_t gate_count,
      * Over Negative Threshold             ## Reset to 1
      */
     uint32_t abs_noramalized_1 = abs(normalized_1);
-    if (abs_noramalized_1 > (uint32_t)gate_threshold) {
+    if (abs_noramalized_1 >= (uint32_t)gate_threshold) {
         gate_count = 1;
-    } else if (gate_count != 0 && abs_noramalized_1 > (uint32_t)(gate_threshold >> hysteresis_shift)) {
+    } else if (gate_count != 0 && abs_noramalized_1 >= (uint32_t)(gate_threshold >> hysteresis_shift)) {
         gate_count = 1;
     } else if (gate_count != 0) {
         gate_count++;
