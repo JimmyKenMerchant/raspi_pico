@@ -16,20 +16,20 @@ void pedal_pico_sustain_set() {
     if (! pedal_pico_sustain) panic("pedal_pico_sustain is not initialized.");
     pedal_pico_sustain_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_sustain_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_sustain_amplitude = (int32_t)(pedal_pico_sustain_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_SUSTAIN_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
-    pedal_pico_sustain_gate_threshold = ((UTIL_PEDAL_PICO_ADC_COARSE_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT)) * PEDAL_PICO_SUSTAIN_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
+    pedal_pico_sustain_amplitude = (int32_t)(pedal_pico_sustain_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_SUSTAIN_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+    pedal_pico_sustain_gate_threshold = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) * PEDAL_PICO_SUSTAIN_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
     pedal_pico_sustain_is_on = false;
     pedal_pico_sustain_wave_moving_average_sum = 0;
 }
 
 void pedal_pico_sustain_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_sustain_conversion_2) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_sustain_conversion_2) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_sustain_conversion_2 = conversion_2;
-        pedal_pico_sustain_amplitude = (int32_t)(pedal_pico_sustain_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_SUSTAIN_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
+        pedal_pico_sustain_amplitude = (int32_t)(pedal_pico_sustain_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_SUSTAIN_AMPLITUDE_SHIFT; // Make 5-bit Value (0-31) and Shift for 32-bit Signed (Two's Compliment) Fixed Decimal
     }
-    if (abs(conversion_3 - pedal_pico_sustain_conversion_3) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_sustain_conversion_3) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_sustain_conversion_3 = conversion_3;
-        pedal_pico_sustain_gate_threshold = ((UTIL_PEDAL_PICO_ADC_COARSE_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT)) * PEDAL_PICO_SUSTAIN_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
+        pedal_pico_sustain_gate_threshold = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_sustain_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) * PEDAL_PICO_SUSTAIN_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (32-1) and Multiply
     }
     /**
      * pedal_pico_sustain_is_on:

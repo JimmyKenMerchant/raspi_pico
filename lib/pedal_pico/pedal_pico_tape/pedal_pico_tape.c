@@ -19,21 +19,21 @@ void pedal_pico_tape_set() {
     pedal_pico_tape_delay_array = (int16_t*)calloc(PEDAL_PICO_TAPE_DELAY_TIME_MAX, sizeof(int16_t));
     pedal_pico_tape_delay_amplitude = PEDAL_PICO_TAPE_DELAY_AMPLITUDE_PEAK_FIXED_1;
     pedal_pico_tape_delay_time = PEDAL_PICO_TAPE_DELAY_TIME_FIXED_1;
-    pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
+    pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
     pedal_pico_tape_delay_index = 0;
-    pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT; // Make 5-bit Value (0-31)
+    pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 5-bit Value (0-31)
     pedal_pico_tape_osc_sine_1_index = 0;
     pedal_pico_tape_osc_is_negative = false;
 }
 
 void pedal_pico_tape_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_tape_conversion_2 = conversion_2;
-        pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
+        pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
-    if (abs(conversion_3 - pedal_pico_tape_conversion_3) > UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_tape_conversion_3) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_tape_conversion_3 = conversion_3;
-        pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT; // Make 5-bit Value (0-31)
+        pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 5-bit Value (0-31)
     }
     /**
      * Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part:
