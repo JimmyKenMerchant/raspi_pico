@@ -27,11 +27,11 @@ void pedal_pico_tape_set() {
 }
 
 void pedal_pico_tape_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_tape_conversion_2) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_tape_conversion_2) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_tape_conversion_2 = conversion_2;
         pedal_pico_tape_delay_time_swing = (pedal_pico_tape_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_TAPE_DELAY_TIME_SWING_SHIFT; // Make 5-bit Value (0-31) and Shift
     }
-    if (abs(conversion_3 - pedal_pico_tape_conversion_3) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_tape_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_tape_conversion_3 = conversion_3;
         pedal_pico_tape_osc_speed = pedal_pico_tape_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 5-bit Value (0-31)
     }

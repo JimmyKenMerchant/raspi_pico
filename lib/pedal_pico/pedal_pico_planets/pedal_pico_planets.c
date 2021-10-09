@@ -28,11 +28,11 @@ void pedal_pico_planets_set() {
 }
 
 void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_planets_conversion_2) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_planets_conversion_2) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_planets_conversion_2 = conversion_2;
         pedal_pico_planets_delay_time_high_pass = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (32-1) and Shift
     }
-    if (abs(conversion_3 - pedal_pico_planets_conversion_3) > UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_planets_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_planets_conversion_3 = conversion_3;
         pedal_pico_planets_delay_time_low_pass = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 5-bit Value (32-1) and Shift
     }

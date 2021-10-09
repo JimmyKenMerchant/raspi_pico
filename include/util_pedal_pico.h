@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /* Macros */
-#define util_pedal_pico_threshold(x) (((0x1 << (x)) >> 1) - 1) // x: UTIL_PEDAL_PICO_ADC_*_SHIFT
+#define util_pedal_pico_threshold(x) ((0x1 << (x)) >> 1) // Beginning of Range, x: UTIL_PEDAL_PICO_ADC_*_SHIFT
 #define util_pedal_pico_cutoff_normalized(x, y) (_max(-y, _min(x, y))) // x: Value, y: Absolute Peak
 #define util_pedal_pico_cutoff_biased(x, y, z) (_max(z, _min(x, y))) // x: Value, y: Peak, z: Bottom
 
