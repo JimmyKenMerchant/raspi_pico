@@ -51,9 +51,31 @@ def makeTableSineHalf(header, length): # Make Sine Values in 0-180 Degrees
 # number_log: Base Number
 # height: Multiplier
 def makeTableLog(header, length, reach, number_log, height): # Make Logarithm
-    list_log = numpy.linspace(1, reach, length)
+    list_x = numpy.linspace(1, reach, length)
+    list_log = []
     for i in range(length):
-        floating_point_value = math.log(list_log[i], number_log) * height # Floating Point Decimal
+        list_log.append(math.log(list_x[i], number_log))
+    max_log = max(list_log)
+    for i in range(length):
+        floating_point_value = (list_log[i] / max_log) * height # Floating Point Decimal
+        writeFixedDecimal(header, floating_point_value)
+        if i != length - 1:
+            header.write(",")
+        header.write("\n")
+    header.write("};\n\n")
+
+# header: Object to Be Written
+# length: Number of Array
+# reach: Number to Reach from 0
+# height: Multiplier
+def makeTablePower(header, length, reach, height): # Make Power
+    list_x = numpy.linspace(1, reach, length)
+    list_power = []
+    for i in range(length):
+        list_power.append(list_x[i] * list_x[i])
+    max_power = max(list_power)
+    for i in range(length):
+        floating_point_value = (list_power[i] / max_power) * height # Floating Point Decimal
         writeFixedDecimal(header, floating_point_value)
         if i != length - 1:
             header.write(",")
@@ -67,20 +89,6 @@ def makeTableRightTriangle(header, length, height): # Make Right Triangle
     list_power = numpy.linspace(0, height, length)
     for i in range(length):
         floating_point_value = list_power[i] # Floating Point Decimal
-        writeFixedDecimal(header, floating_point_value)
-        if i != length - 1:
-            header.write(",")
-        header.write("\n")
-    header.write("};\n\n")
-
-# header: Object to Be Written
-# length: Number of Array
-# reach: Number to Reach from 0
-# height: Multiplier
-def makeTablePower(header, length, reach, height): # Make Power
-    list_power = numpy.linspace(0, reach, length)
-    for i in range(length):
-        floating_point_value = list_power[i] * list_power[i] * height # Floating Point Decimal
         writeFixedDecimal(header, floating_point_value)
         if i != length - 1:
             header.write(",")

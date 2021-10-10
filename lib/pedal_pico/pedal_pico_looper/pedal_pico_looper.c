@@ -18,7 +18,7 @@ void pedal_pico_looper_set(uint8_t indicator_led_gpio) {
     pedal_pico_looper_indicator_led_bit = 0b1 << indicator_led_gpio;
     pedal_pico_looper_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_looper_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_pico_looper_loss = (UTIL_PEDAL_PICO_ADC_COARSE_RESOLUTION + 1) - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT); // Make 5-bit Value (1-32)
+    pedal_pico_looper_loss = (UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT); // Make 5-bit Value (1-32)
     //uint8_t* binary_end = (uint8_t*)&__flash_binary_end;
     pedal_pico_looper_flash = (uint8_t*)(&__pedal_pico_looper_flash + FLASH_SECTOR_SIZE); // Offset for Reserve
     if ((uint32_t)pedal_pico_looper_flash % FLASH_SECTOR_SIZE) pedal_pico_looper_flash = (uint8_t*)(((uint32_t)pedal_pico_looper_flash + FLASH_SECTOR_SIZE) & ~(0xFFFFFFFF & (FLASH_SECTOR_SIZE - 1))); // 4096-byte (1024 Words) Aligned Sector (256-byte Aligned Page)
@@ -49,11 +49,11 @@ void pedal_pico_looper_set(uint8_t indicator_led_gpio) {
 }
 
 void pedal_pico_looper_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
-    if (abs(conversion_2 - pedal_pico_looper_conversion_2) >= UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_2 - pedal_pico_looper_conversion_2) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_looper_conversion_2 = conversion_2;
-        pedal_pico_looper_loss = (UTIL_PEDAL_PICO_ADC_COARSE_RESOLUTION + 1) - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_COARSE_SHIFT); // Make 5-bit Value (1-32)
+        pedal_pico_looper_loss = (UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_looper_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT); // Make 5-bit Value (1-32)
     }
-    if (abs(conversion_3 - pedal_pico_looper_conversion_3) >= UTIL_PEDAL_PICO_ADC_COARSE_THRESHOLD) {
+    if (abs(conversion_3 - pedal_pico_looper_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_looper_conversion_3 = conversion_3;
     }
     // LED Indication on Erasing

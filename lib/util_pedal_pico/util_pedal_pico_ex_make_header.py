@@ -74,9 +74,9 @@ declare_log_1 = [
 ]
 
 log_length_1 = peak_length # Number of Array
-log_reach_1 = 2.0 # Number to Reach from 1
+log_reach_1 = 100.0 # Number to Reach from 1
 log_number_log_1 = 2.0 # Base Number
-log_height_1 = 6.0 # Maximum Height
+log_height_1 = 5.0 # Maximum Height (Distortion's Cutoff = 0x7F [127])
 
 declare_log_2 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",
@@ -84,9 +84,9 @@ declare_log_2 = [
 ]
 
 log_length_2 = peak_length # Number of Array
-log_reach_2 = 2.0 # Number to Reach from 1
+log_reach_2 = 500.0 # Number to Reach from 1
 log_number_log_2 = 2.0 # Base Number
-log_height_2 = 8.0 # Maximum Height
+log_height_2 = 5.0 # Maximum Height (Distortion's Cutoff = 0x7F [127])
 
 declare_power_1 = [
 "// 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part\n",

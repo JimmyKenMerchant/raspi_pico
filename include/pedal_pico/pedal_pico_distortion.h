@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0xFF // 8-bit (Normalized 0 to peak)
+#define PEDAL_PICO_DISTORTION_CUTOFF_FIXED_1 0x7F // 8-bit (Normalized 0 to peak)
 
 volatile util_pedal_pico* pedal_pico_distortion;
 volatile uint16_t pedal_pico_distortion_conversion_2;
