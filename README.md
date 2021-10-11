@@ -456,10 +456,28 @@ Thread 1 received signal SIGINT, Interrupt.
 
 ## Version History
 
+* 1.0 (v1.0) - 10/11/2021
+  * Tools and Versions:
+    * pico-sdk 1.2.0
+    * "arm-none-eabi-gcc --version": arm-none-eabi-gcc (15:9-2019-q4-0ubuntu1) 9.2.1 20191025 (release) [ARM/arm-9-branch revision 277599]
+    * "apt show libstdc++-arm-none-eabi-newlib": libstdc++-arm-none-eabi-newlib 15:9-2019-q4-0ubuntu1+12build2
+    * "arm-none-eabi-as --version": GNU assembler (2.34-4ubuntu1+13ubuntu1) 2.34
+    * "apt show binutils-arm-none-eabi": binutils-arm-none-eabi (Including GNU assembler) 2.34-4ubuntu1+13ubuntu1
+    * "cmake --version": cmake version 3.16.3
+    * "make --version": GNU Make 4.2.1
+    * "python3 --version": Python 3.8.10
+    * "lsb_release -a": Ubuntu 20.04.3 LTS
+    * "dpkg --print-architecture": amd64
+   * Functional Test of Software (pedal_multi) by Kenta Ishii:
+    * Effects
+    * Distinction Between Noise and Intended Sound
+    * With Electric Guitar with Coil Pickups
+    * With Prototype Hardware
+
 * 0.9 Beta (v0.9b) - 05/21/2021
   * Tools and Versions:
     * pico-sdk 1.1.2
-    * gcc version 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907] (15:7-2018-q2-6)
+    * arm-none-eabi-gcc (15:7-2018-q2-6) 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907]
     * libstdc++-arm-none-eabi-newlib 15:7-2018-q2-5+12
     * GNU assembler version 2.31.1 (arm-none-eabi) using BFD version (2.31.1-11+rpi1+11) 2.31.1
     * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
@@ -467,13 +485,14 @@ Thread 1 received signal SIGINT, Interrupt.
     * GNU Make 4.2.1
     * Python 3.7.3
     * Raspbian GNU/Linux 10 (buster)
+    * armhf
   * Evaluate Minor Bugs on Software
   * Test with Developing Hardware
 
 * 0.8 Alpha (v0.8a) - 04/20/2021
   * Tools and Versions:
     * pico-sdk 1.1.2
-    * gcc version 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907] (15:7-2018-q2-6)
+    * arm-none-eabi-gcc (15:7-2018-q2-6) 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907]
     * libstdc++-arm-none-eabi-newlib 15:7-2018-q2-5+12
     * GNU assembler version 2.31.1 (arm-none-eabi) using BFD version (2.31.1-11+rpi1+11) 2.31.1
     * binutils-arm-none-eabi (Including GNU assembler) 2.31.1-11+rpi1+11
@@ -481,6 +500,7 @@ Thread 1 received signal SIGINT, Interrupt.
     * GNU Make 4.2.1
     * Python 3.7.3
     * Raspbian GNU/Linux 10 (buster)
+    * armhf
   * Evaluate Major Bugs on Software
   * Evaluate Performances of Chip and Board
 
