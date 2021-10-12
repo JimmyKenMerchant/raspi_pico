@@ -69,7 +69,7 @@ def makeTableLog(header, length, reach, number_log, height): # Make Logarithm
 # reach: Number to Reach from 0
 # height: Multiplier
 def makeTablePower(header, length, reach, height): # Make Power
-    list_x = numpy.linspace(1, reach, length)
+    list_x = numpy.linspace(0, reach, length)
     list_power = []
     for i in range(length):
         list_power.append(list_x[i] * list_x[i])
