@@ -30,6 +30,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/include/auto/${target_name}_ex.h")
     )
 else()
     message("${PROJECT_SOURCE_DIR}/include/auto/${target_name}_ex.h doesn't exist. The header file will be made by a script, ${CMAKE_CURRENT_SOURCE_DIR}/${target_name}_ex_make_header.py.")
+    find_package(Python 3.7 REQUIRED COMPONENTS Interpreter)
+    message("Python Version: ${Python_VERSION}")
     # Extension for Number Table
     add_custom_target(${target_name}_ex_header
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

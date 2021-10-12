@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Author: Kenta Ishii
 # SPDX short identifier: BSD-3-Clause
