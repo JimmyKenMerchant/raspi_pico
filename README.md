@@ -456,6 +456,12 @@ Thread 1 received signal SIGINT, Interrupt.
 
 ## Version History
 
+* Packages as dependencies like [libatlas-base-dev](https://packages.ubuntu.com/focal/libatlas-base-dev) that I don't tell in detail would be restored by using a container of a distro (If you care about a specific version, you can search this with the changelog).
+
+* Python packages like [NumPy and SciPy](https://scipy.org) are on day-by-day updates. I think any difference between versions is nothing in the result of my code as long as the package version you would use is updated on the near date (+- half a year) as I describe below. Go to repositories of these projects and check release dates of version tags like [tags of the repository of NumPy](https://github.com/numpy/numpy/tags) and [tags of the repository of SciPy](https://github.com/scipy/scipy/tags). If you have any issue in my Python scripts on this project, please report to me. I would rewrite scripts using Perl when issues with Python will be reported. Python scripts in this project affects values of arrays with fixed decimal in "build/lib/util_pedal_pico/util_pedal_pico_ex.h".
+
+* I use debugging tools (openocd, picoprobe, gdb-multiarch, etc.) with timely updating. I know specific versions of debugging tools are needed to perfectly reproduce a particular bug. Note that public repositories and changelogs in a distro show dates of versions.
+
 * 1.0 (v1.0) - 10/11/2021
   * Tools and Versions:
     * pico-sdk 1.2.0
