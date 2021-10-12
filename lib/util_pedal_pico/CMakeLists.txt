@@ -21,13 +21,23 @@ target_link_libraries(${target_name}
     hardware_flash
 )
 
-# Extension for Number Table
-add_custom_target(${target_name}_ex_header
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ./${target_name}_ex_make_header.py
-    COMMAND cp ${target_name}_ex.h ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND rm ${target_name}_ex.h
-)
+if(EXISTS "${PROJECT_SOURCE_DIR}/include/auto/${target_name}_ex.h")
+    message("${PROJECT_SOURCE_DIR}/include/auto/${target_name}_ex.h exists.")
+    # Extension for Number Table
+    add_custom_target(${target_name}_ex_header
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include/auto
+        COMMAND cp ${target_name}_ex.h ${CMAKE_CURRENT_BINARY_DIR}
+    )
+else()
+    message("${PROJECT_SOURCE_DIR}/include/auto/${target_name}_ex.h doesn't exist. The header file will be made by a script, ${CMAKE_CURRENT_SOURCE_DIR}/${target_name}_ex_make_header.py.")
+    # Extension for Number Table
+    add_custom_target(${target_name}_ex_header
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ./${target_name}_ex_make_header.py
+        COMMAND cp ${target_name}_ex.h ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND rm ${target_name}_ex.h
+    )
+endif()
 
 add_dependencies(${target_name}
     ${target_name}_ex_header
