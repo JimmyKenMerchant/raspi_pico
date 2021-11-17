@@ -26,6 +26,7 @@
 #include "pedal_pico/pedal_pico_distortion.h"
 #include "pedal_pico/pedal_pico_sustain.h"
 #include "pedal_pico/pedal_pico_tremolo.h"
+#include "pedal_pico/pedal_pico_envelope.h"
 #include "util_pedal_pico_ex.h"
 
 #define PEDAL_MULTI_SLEEP_TIME 250000 // 250000 Micro Seconds
@@ -96,6 +97,7 @@ int main(void) {
     pedal_pico_distortion = util_pedal_pico_obj;
     pedal_pico_sustain = util_pedal_pico_obj;
     pedal_pico_tremolo = util_pedal_pico_obj;
+    pedal_pico_envelope = util_pedal_pico_obj;
     /* Initialize ADC */
     util_pedal_pico_init_adc();
     /* Initialize Multi Functions */
@@ -112,8 +114,8 @@ int main(void) {
     util_pedal_pico_multi_set[8] = pedal_pico_planets_set;
     util_pedal_pico_multi_set[9] = pedal_multi_planetsreverb_set;
     util_pedal_pico_multi_set[10] = pedal_pico_tremolo_set;
-    util_pedal_pico_multi_set[11] = pedal_pico_distortion_set;
-    util_pedal_pico_multi_set[12] = pedal_multi_distreverb_set;
+    util_pedal_pico_multi_set[11] = pedal_pico_envelope_set;
+    util_pedal_pico_multi_set[12] = pedal_pico_distortion_set;
     util_pedal_pico_multi_set[13] = pedal_multi_fuzzplanets_set;
     util_pedal_pico_multi_set[14] = pedal_pico_sustain_set;
     util_pedal_pico_multi_set[15] = pedal_multi_distsustain_set;
@@ -129,8 +131,8 @@ int main(void) {
     util_pedal_pico_multi_process[8] = pedal_pico_planets_process;
     util_pedal_pico_multi_process[9] = pedal_multi_planetsreverb_process;
     util_pedal_pico_multi_process[10] = pedal_pico_tremolo_process;
-    util_pedal_pico_multi_process[11] = pedal_pico_distortion_process;
-    util_pedal_pico_multi_process[12] = pedal_multi_distreverb_process;
+    util_pedal_pico_multi_process[11] = pedal_pico_envelope_process;
+    util_pedal_pico_multi_process[12] = pedal_pico_distortion_process;
     util_pedal_pico_multi_process[13] = pedal_multi_fuzzplanets_process;
     util_pedal_pico_multi_process[14] = pedal_pico_sustain_process;
     util_pedal_pico_multi_process[15] = pedal_multi_distsustain_process;
@@ -146,8 +148,8 @@ int main(void) {
     util_pedal_pico_multi_free[8] = pedal_pico_planets_free;
     util_pedal_pico_multi_free[9] = pedal_multi_planetsreverb_free;
     util_pedal_pico_multi_free[10] = pedal_pico_tremolo_free;
-    util_pedal_pico_multi_free[11] = pedal_pico_distortion_free;
-    util_pedal_pico_multi_free[12] = pedal_multi_distreverb_free;
+    util_pedal_pico_multi_free[11] = pedal_pico_envelope_free;
+    util_pedal_pico_multi_free[12] = pedal_pico_distortion_free;
     util_pedal_pico_multi_free[13] = pedal_multi_fuzzplanets_free;
     util_pedal_pico_multi_free[14] = pedal_pico_sustain_free;
     util_pedal_pico_multi_free[15] = pedal_multi_distsustain_free;

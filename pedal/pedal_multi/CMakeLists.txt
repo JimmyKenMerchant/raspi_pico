@@ -19,6 +19,7 @@ target_link_libraries(${target_name}
     pedal_pico_distortion
     pedal_pico_sustain
     pedal_pico_tremolo
+    pedal_pico_envelope
 )
 
 # With No Setting CMAKE_MODULE_PATH

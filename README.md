@@ -199,8 +199,8 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
   * 8: Planets
   * 9: Planets Reverb
   * 10: Tremolo
-  * 11: Distortion
-  * 12: Dist Reverb
+  * 11: Envelope
+  * 12: Distortion
   * 13: Fuzz Planets
   * 14: Sustain
   * 15: Dist Sustain
@@ -228,9 +228,9 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
 
 * Tremolo swings amplitude of sound. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to swing, and ADC2 is for the threshold to start the oscillator to swing. There are output modes. The low state on Switch-1 sets the shallow intensity to swing with inverted wave (strong at first). The low state on Switch-2 sets the fade-in mode.
 
-* Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
+* Envelope makes a trapezoid (decay-release) envelope triggered by an input threshold. ADC0 is for the audio input, ADC1 is for the decaying/releasing speed, and ADC2 is for the attacking threshold to start decaying. There are modes to determine the decay rate. This is useful to reduce clipping noise.
 
-* Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Distortion is fixed to the high distortion mode.
+* Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
 
 * Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
 
