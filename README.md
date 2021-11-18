@@ -196,12 +196,12 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
   * 5: Parallel Reverb
   * 6: Tape
   * 7: Phaser
-  * 8: Planets
-  * 9: Planets Reverb
-  * 10: Tremolo
-  * 11: Envelope
-  * 12: Distortion
-  * 13: Fuzz Planets
+  * 8: Rack Phaser
+  * 9: Planets
+  * 10: Planets Reverb
+  * 11: Tremolo
+  * 12: Envelope
+  * 13: Distortion
   * 14: Sustain
   * 15: Dist Sustain
   * 16: True Buffer
@@ -222,6 +222,8 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
 
 * Phaser is using an all-pass filter. This sweeps the depth (delay time) of the all-pass filter. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. There are output modes. The low state on Switch-1 sets sets the shallow depth to swing. The low state on Switch-2 sets the deep depth to swing.
 
+* Rack Phaser has modes to set a preset envelop. ADC0 is for the audio input, ADC1 is for the speed of the oscillator to sweep, and ADC2 is for the threshold to start the oscillator to sweep. Modes to set a preset envelop can be selected by status of Switch-1 and Switch-2. The output mode of Phaser is fixed to the deep depth.
+
 * Planets is using a high-pass filter and a low-pass filter. ADC0 is for the audio input, ADC1 is for the high-pass filter, and ADC2 is for the low-pass filter (both filters have high frequencies on high values of ADCs). There are output modes. The low state on Switch-1 sets band-pass filter mode (ADC1 is only effective). The low state on Switch-2 sets stand-alone mode of the high-pass filter (ADC1 is only effective). The world of wah-wah says a band-pass filter is essential, but in my experience, the high-pass filter is the best for wah-wah. This uses digital filters, and the effectiveness of filters is different from the one of analogue filters. I called this as the galactic Planets because of this difference between digital and analogue (in other words, this effect was hard to be achieved). For the high-pass filter, I applied an one-stage feedback which emphasizes some frequency and gives an effect towards wah-wah. Whereas, I applied an approximate formula of a moving average for the low-pass filter which is a little similar to an analogue filter. Note that the coefficient for the high-pass filter is fixed with PEDAL_PICO_PLANETS_COEFFICIENT_FIXED_1 because the high coefficient gives some emphasized frequency more than the low coefficient and reduces original sound. Note that the approximate formula isn't suitable to be variable on the number, so I interpolated the number to be incremented or decremented by 1 on the change. Otherwise, the low-pass filter makes noise on the change.
 
 * Planets Reverb is the combination of the Planets and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. There are output modes to change effectiveness of high tones. The mode of the Planets is fixed to the band-pass filter mode. The mode of the Reverb is fixed to the feedback (reverb) mode. The sound is like a sound from a distance through concrete buildings. In view of sound, It's "Concrete" Planets Reverb.
@@ -232,13 +234,19 @@ sudo openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl -c "program 
 
 * Distortion is simulating non-linear amplification. ADC0 is for the audio input. There are output modes. The low state on Switch-1 sets the fuzz mode. The low state on Switch-2 sets the high distortion mode.
 
-* Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
-
 * Sustain makes the sustain of the sound. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. Note that the sound is like the Distortion. I uses moving average as a low-pass filter, and this filter is costly to spend CPU clocks because of accessing SRAM. I thought this effect could be made of a Schmitt trigger such as 74LS14. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power.
 
 * Dist Sustain is the combination of the Distortion and the Sustain. ADC0 is for the audio input, ADC1 is for the mixing rate between the real and the sustain, and ADC2 is for the threshold of the sustain. There are output modes to change the outputting power of sustain. Switch-1 is low power, and Switch-2 is high power. The mode of the Distortion is fixed to the high distortion mode.
 
-* True Buffer is for making bufferd bypass. ADC0 is for the audio input, and other inputs are ignored.
+* True Buffer is for making buffered bypass. ADC0 is for the audio input, and other inputs are ignored.
+
+* I deprecated several effects because many guitarists commit to make their own sound with distortion pedals. However, deprecated effects has been still listed as functions in "pedal_multi".
+ * Dist Reverb
+ * Fuzz Planets
+
+* Dist Reverb is the combination of the Distortion and the Reverb (reverberation). ADC0 is for the audio input, ADC1 is for the mixing rate of the dry = current and the wet = delay (Dial 0 is the loudest volume), and ADC2 is for the room size (delay time). There are output modes. Switch-1 sets non-feedback (echo) mode. The mode of the Distortion is fixed to the high distortion mode.
+
+* Fuzz Planets is the combination of the Distortion and the Planets. ADC0 is for the audio input, ADC1 is for the coefficient of the filter, and ADC2 is for the frequency of the filter. There are output modes (low-pass/high-pass/band-pass filter). The mode of the Distortion is fixed to the fuzz mode that is tends to have more harmonics than the high-distortion mode.
 
 #### pedal_looper
 

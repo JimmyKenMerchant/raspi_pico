@@ -35,11 +35,22 @@ extern "C" {
 
 #define PEDAL_PICO_ENVELOPE_DECAY_LIMIT_FIXED_1 (int32_t)(0x00004000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
 #define PEDAL_PICO_ENVELOPE_DECAY_LIMIT_FIXED_2 (int32_t)(0x00008000)
-#define PEDAL_PICO_ENVELOPE_DECAY_LIMIT_FIXED_3 (int32_t)(0x0000F000)
-#define PEDAL_PICO_ENVELOPE_DECAY_TRIANGLE_1_TIME_MULTIPLIER (6 / UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER)
+#define PEDAL_PICO_ENVELOPE_DECAY_LIMIT_FIXED_3 (int32_t)(0x0000C000)
+#define PEDAL_PICO_ENVELOPE_DECAY_TRIANGLE_1_TIME_MULTIPLIER (12 / UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER)
 #define PEDAL_PICO_ENVELOPE_DECAY_HYSTERESIS_SHIFT 0
 #define PEDAL_PICO_ENVELOPE_DECAY_THRESHOLD_MULTIPLIER (16 * UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER) // Up to 1008 in 2047 as Quantization Peak
-#define PEDAL_PICO_ENVELOPE_DECAY_COUNT_MAX 2000 // 28125 Divided by 2000 = Approx. 14Hz
+/**
+ * Maximum Frequency on Enveloping:
+ * (Sample Rate Divided by
+ * (((PEDAL_PICO_ENVELOPE_DECAY_TRIANGLE_1_TIME_MULTIPLIER * UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX))
+ * Divided by UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION)) Divided by 2 for Decay-Release
+ *
+ * Thus:
+ * (28125 Divided by ((12 * 3125) Divided by 64)) Divided by 2 = 24Hz
+ *
+ * PEDAL_PICO_ENVELOPE_DECAY_COUNT_MAX needs value to exceed the maximum frequency on enveloping.
+ */
+#define PEDAL_PICO_ENVELOPE_DECAY_COUNT_MAX 75 // 28125 Divided by 75 = 375Hz
 
 volatile util_pedal_pico* pedal_pico_envelope;
 volatile uint16_t pedal_pico_envelope_conversion_2;
