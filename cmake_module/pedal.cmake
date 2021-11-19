@@ -17,7 +17,7 @@ pico_set_program_description(${target_name}
 
 # Binary Info
 pico_set_program_version(${target_name}
-    "v1.0"
+    "v1.1"
 )
 
 # Binary Info
