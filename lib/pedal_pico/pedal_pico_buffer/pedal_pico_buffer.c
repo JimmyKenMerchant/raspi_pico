@@ -20,22 +20,22 @@ void pedal_pico_buffer_set() {
     pedal_pico_buffer_delay_amplitude = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_1;
     pedal_pico_buffer_delay_amplitude_interpolation = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_FIXED_1;
     pedal_pico_buffer_delay_amplitude_interpolation_accum = PEDAL_PICO_BUFFER_DELAY_AMPLITUDE_INTERPOLATION_ACCUM_FIXED_1;
-    uint16_t delay_time = (pedal_pico_buffer_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+    uint16_t delay_time = (pedal_pico_buffer_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT; // Make 6-bit Value (0-63) and Shift
     pedal_pico_buffer_delay_time = delay_time;
     pedal_pico_buffer_delay_time_interpolation = delay_time;
     pedal_pico_buffer_delay_index = 0;
-    pedal_pico_buffer_noise_gate_threshold = (pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_buffer_noise_gate_threshold = (pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 6-bit Value (0-63) and Multiply
     pedal_pico_buffer_noise_gate_count = 0;
 }
 
 void pedal_pico_buffer_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_buffer_conversion_2) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_buffer_conversion_2 = conversion_2;
-        pedal_pico_buffer_delay_time = (pedal_pico_buffer_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT; // Make 5-bit Value (0-31) and Shift
+        pedal_pico_buffer_delay_time = (pedal_pico_buffer_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) << PEDAL_PICO_BUFFER_DELAY_TIME_SHIFT; // Make 6-bit Value (0-63) and Shift
     }
     if (abs(conversion_3 - pedal_pico_buffer_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_buffer_conversion_3 = conversion_3;
-        pedal_pico_buffer_noise_gate_threshold = (pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_buffer_noise_gate_threshold = (pedal_pico_buffer_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_BUFFER_NOISE_GATE_THRESHOLD_MULTIPLIER; // Make 6-bit Value (0-63) and Multiply
     }
     pedal_pico_buffer_delay_time_interpolation = _interpolate(pedal_pico_buffer_delay_time_interpolation, pedal_pico_buffer_delay_time, PEDAL_PICO_BUFFER_DELAY_TIME_INTERPOLATION_ACCUM);
     /* Noise Gate */

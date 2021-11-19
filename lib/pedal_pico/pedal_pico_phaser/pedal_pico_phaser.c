@@ -21,20 +21,20 @@ void pedal_pico_phaser_set() {
     pedal_pico_phaser_delay_time = PEDAL_PICO_PHASER_DELAY_TIME_FIXED_1;
     pedal_pico_phaser_delay_index = 0;
     pedal_pico_phaser_osc_triangle_1_index = 0;
-    pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 5-bit Value (0-31)
+    pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 6-bit Value (0-63)
     pedal_pico_phaser_osc_is_negative = false;
-    pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+    pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 6-bit Value (0-63) and Multiply
     pedal_pico_phaser_osc_start_count = 0;
 }
 
 void pedal_pico_phaser_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (abs(conversion_2 - pedal_pico_phaser_conversion_2) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_phaser_conversion_2 = conversion_2;
-        pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 5-bit Value (0-31)
+        pedal_pico_phaser_osc_speed = pedal_pico_phaser_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT; // Make 6-bit Value (0-63)
     }
     if (abs(conversion_3 - pedal_pico_phaser_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_phaser_conversion_3 = conversion_3;
-        pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 5-bit Value (0-31) and Multiply
+        pedal_pico_phaser_osc_start_threshold = (pedal_pico_phaser_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_PHASER_OSC_START_THRESHOLD_MULTIPLIER; // Make 6-bit Value (0-63) and Multiply
     }
     /* Oscillator Start */
     pedal_pico_phaser_osc_start_count = util_pedal_pico_threshold_gate_count(pedal_pico_phaser_osc_start_count, normalized_1, pedal_pico_phaser_osc_start_threshold, PEDAL_PICO_PHASER_OSC_START_HYSTERESIS_SHIFT);
@@ -44,7 +44,7 @@ void pedal_pico_phaser_process(int32_t normalized_1, uint16_t conversion_2, uint
         pedal_pico_phaser_osc_is_negative = false;
     }
     /* Get Oscillator */
-    int32_t fixed_point_value_triangle_1 = util_pedal_pico_table_triangle_1[abs(pedal_pico_phaser_osc_triangle_1_index) / PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER]; // Depending on osc_spped, the index value may have a negative value.
+    int32_t fixed_point_value_triangle_1 = util_pedal_pico_table_triangle_1[abs(pedal_pico_phaser_osc_triangle_1_index) / PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER]; // Depending on osc_speed, the index value may have a negative value.
     pedal_pico_phaser_osc_is_negative ? (pedal_pico_phaser_osc_triangle_1_index -= pedal_pico_phaser_osc_speed) : (pedal_pico_phaser_osc_triangle_1_index += pedal_pico_phaser_osc_speed);
     if (pedal_pico_phaser_osc_triangle_1_index >= (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1) {
         pedal_pico_phaser_osc_triangle_1_index = (UTIL_PEDAL_PICO_OSC_TRIANGLE_1_TIME_MAX * PEDAL_PICO_PHASER_OSC_TRIANGLE_1_TIME_MULTIPLIER) - 1;
