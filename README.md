@@ -30,7 +30,7 @@
 
 * To Develop Applications of Raspberry Pi Pico Using C Language and Assembler Language
 
-* In view of managing versions, this repository is mainly developing projects in "[Pedal](pedal) (guitar pedals)". Therefore, functional tests of software on v1.1 and over are taken only for "pedal_multi" unless otherwise noted.
+* In view of managing versions, this repository is mainly developing "[Pedal](pedal) (guitar pedals)". Therefore, functional tests of software on v1.1 and over are taken only for "pedal_multi" unless otherwise noted. [Notes on developing and demonstrations of sound effects are in my website.](https://ukulele.jimmykenmerchant.com/internet/#raspi)
 
 **About Raspberry Pi Pico**
 
@@ -38,7 +38,7 @@
 
 * The chip on Raspberry Pi Pico is RP2040, an original microcontroller By Raspberry Pi (Trading) Ltd.
 
-* On the forum releasing Raspberry Pi 4, a piece of the RP 2040 data sheet is mixed as the Raspberry Pi 4. This chip is long-awaited one for learners and hobbyists.
+* On the forum releasing Raspberry Pi 4, a piece of the RP2040 data sheet is mixed as the Raspberry Pi 4. This chip is long-awaited one for learners and hobbyists.
 
 ## Installation
 
@@ -59,15 +59,15 @@ mkdir ~/pico_projects
 cd ~/pico_projects
 # Install Projects
 git clone -b master https://github.com/raspberrypi/pico-sdk.git
-git clone -b main https://github.com/JimmyKenMerchant/raspi_pico.git
+git clone -b main https://github.com/JimmyKenMerchant/raspi_pico.git pico_jimmyken
 # Install TinyUSB as A Submodule of pico-sdk
 cd pico-sdk
 git submodule update --init
 cd ../
 # Import CMAKE File in PICO-SDK to My Projects
-cp pico-sdk/external/pico_sdk_import.cmake raspi_pico/
+cp pico-sdk/external/pico_sdk_import.cmake pico_jimmyken/
 # Build
-cd raspi_pico
+cd pico_jimmyken
 mkdir build
 cd build
 # In CMakeLists.txt at the top level, PICO_COPY_TO_RAM is set because I prefer not to use XIP (Execute in place) to make a tricky memory extension for execution.
