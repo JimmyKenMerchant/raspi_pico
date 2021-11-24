@@ -41,15 +41,6 @@
 #define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_1 0x0FF
 #define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_2 0x3FF
 #define PEDAL_MULTI_PLANETSREVERB_PLANETS_CONVERSION_2_FIXED_3 0x7FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_1 0x7FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_2 0x3FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_3 0x0FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_1 0x3FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_2 0x3FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_3 0x0FF
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_1 2
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_2 2
-#define PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_3 2
 
 /* Global Variables for Combinations */
 uint16_t pedal_multi_roomreverb_reverb_conversion_2;
@@ -58,7 +49,8 @@ uint16_t pedal_multi_planetsreverb_planets_conversion_2;
 uint16_t pedal_multi_planetsreverb_planets_conversion_3;
 uint16_t pedal_multi_rackphaser_envelope_conversion_2;
 uint16_t pedal_multi_rackphaser_envelope_conversion_3;
-uint16_t pedal_multi_rackphaser_envelope_sw_mode;
+uint16_t pedal_multi_rackphaser_phaser_conversion_2;
+uint16_t pedal_multi_rackphaser_phaser_conversion_3;
 
 /* Functions for Combinations */
 void pedal_multi_roomreverb_set();
@@ -217,6 +209,10 @@ void pedal_multi_truebuffer_set() {
 }
 
 void pedal_multi_rackphaser_set() {
+    pedal_multi_rackphaser_envelope_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_rackphaser_envelope_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_rackphaser_phaser_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_rackphaser_phaser_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
     pedal_pico_envelope_set();
     pedal_pico_phaser_set();
 }
@@ -283,21 +279,15 @@ void pedal_multi_truebuffer_process(int32_t normalized_1, uint16_t conversion_2,
 
 void pedal_multi_rackphaser_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
     if (sw_mode == 1) {
-        pedal_multi_rackphaser_envelope_conversion_2 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_1;
-        pedal_multi_rackphaser_envelope_conversion_3 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_1;
-        pedal_multi_rackphaser_envelope_sw_mode = PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_1;
+        pedal_multi_rackphaser_envelope_conversion_2 = conversion_2;
+        pedal_multi_rackphaser_envelope_conversion_3 = conversion_3;
     } else if (sw_mode == 2) {
-        pedal_multi_rackphaser_envelope_conversion_2 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_3;
-        pedal_multi_rackphaser_envelope_conversion_3 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_3;
-        pedal_multi_rackphaser_envelope_sw_mode = PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_3;
-    } else {
-        pedal_multi_rackphaser_envelope_conversion_2 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_2_FIXED_2;
-        pedal_multi_rackphaser_envelope_conversion_3 = PEDAL_MULTI_RACKPHASER_ENVELOPE_CONVERSION_3_FIXED_2;
-        pedal_multi_rackphaser_envelope_sw_mode = PEDAL_MULTI_RACKPHASER_ENVELOPE_SW_MODE_FIXED_2;
+        pedal_multi_rackphaser_phaser_conversion_2 = conversion_2;
+        pedal_multi_rackphaser_phaser_conversion_3 = conversion_3;
     }
     /* Objective entities, util_pedal_pico_obj, pedal_pico_envelope, and pedal_pico_phaser point the same struct and memory space */
-    pedal_pico_envelope_process(normalized_1, pedal_multi_rackphaser_envelope_conversion_2, pedal_multi_rackphaser_envelope_conversion_3, pedal_multi_rackphaser_envelope_sw_mode);
-    pedal_pico_phaser_process(util_pedal_pico_obj->output_1, conversion_2, conversion_3, 2);
+    pedal_pico_envelope_process(normalized_1, pedal_multi_rackphaser_envelope_conversion_2, pedal_multi_rackphaser_envelope_conversion_3, 2);
+    pedal_pico_phaser_process(util_pedal_pico_obj->output_1, pedal_multi_rackphaser_phaser_conversion_2, pedal_multi_rackphaser_phaser_conversion_3, 2);
 }
 
 void pedal_multi_roomreverb_free() {
