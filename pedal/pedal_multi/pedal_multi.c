@@ -27,13 +27,21 @@
 #include "pedal_pico/pedal_pico_sustain.h"
 #include "pedal_pico/pedal_pico_tremolo.h"
 #include "pedal_pico/pedal_pico_envelope.h"
+#include "pedal_pico/pedal_pico_looper.h"
 #include "util_pedal_pico_ex.h"
 
 #define PEDAL_MULTI_SLEEP_TIME 250000 // 250000 Micro Seconds
 
 /* Definitions for Combinations */
+#define PEDAL_MULTI_MEMORY_MAX 12
+#define PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX 0
+#define PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX 4
+#define PEDAL_MULTI_MEMORY_RACKPHASER_INDEX 8
 
 /* Global Variables for Combinations */
+volatile int16_t* pedal_multi_memory_buffer;
+bool pedal_multi_memory_is_pending_write;
+uint8_t pedal_multi_previous_sw_mode;
 uint16_t pedal_multi_roomreverb_reverb_conversion_2;
 uint16_t pedal_multi_roomreverb_reverb_conversion_3;
 uint16_t pedal_multi_roomreverb_chorus_conversion_2;
@@ -156,6 +164,20 @@ int main(void) {
     util_pedal_pico_multi_free[14] = pedal_pico_sustain_free;
     util_pedal_pico_multi_free[15] = pedal_multi_distsustain_free;
     util_pedal_pico_multi_free[16] = pedal_multi_truebuffer_free;
+    /* Initialize Memory */
+    pedal_multi_memory_buffer = (uint16_t*)calloc(FLASH_SECTOR_SIZE >> 1, sizeof(uint16_t));
+    if (pedal_pico_looper_flash_reserve[FLASH_SECTOR_SIZE - 1] == 0x88) { // Check the last to know whether flash memory is initialized or not.
+        for(uint16_t i = 0; i < PEDAL_MULTI_MEMORY_MAX; i++) {
+            pedal_multi_memory_buffer[i] = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+        }
+        util_pedal_pico_flash_write((uint32_t)pedal_pico_looper_flash_reserve - XIP_BASE, (uint8_t*)pedal_multi_memory_buffer, FLASH_SECTOR_SIZE);
+    } else {
+        for(uint16_t i = 0; i < PEDAL_MULTI_MEMORY_MAX; i++) {
+            pedal_multi_memory_buffer[i] = ((uint16_t)pedal_pico_looper_flash_reserve[i * 2] | ((uint16_t)pedal_pico_looper_flash_reserve[(i * 2) + 1]) << 8) & UTIL_PEDAL_PICO_ADC_RANGE; // Prevent Unlikely Values in Case
+        }
+    }
+    pedal_multi_memory_is_pending_write = false;
+    pedal_multi_previous_sw_mode = 0;
     /* Initialize Switch */
     util_pedal_pico_init_sw(UTIL_PEDAL_PICO_SW_1_GPIO, UTIL_PEDAL_PICO_SW_2_GPIO);
     /* Unique Variables and Functions */
@@ -165,25 +187,29 @@ int main(void) {
     multicore_launch_core1_with_stack(util_pedal_pico_start, stack_pointer, UTIL_PEDAL_PICO_CORE_1_STACK_SIZE);
     while (true) {
         util_pedal_pico_select_multi();
+        if(pedal_multi_memory_is_pending_write) {
+            pedal_multi_memory_is_pending_write = false;
+            util_pedal_pico_flash_write((uint32_t)pedal_pico_looper_flash_reserve - XIP_BASE, (uint8_t*)pedal_multi_memory_buffer, FLASH_SECTOR_SIZE);
+        }
         sleep_us(PEDAL_MULTI_SLEEP_TIME);
     }
     return 0;
 }
 
 void pedal_multi_roomreverb_set() {
-    pedal_multi_roomreverb_reverb_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_roomreverb_reverb_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_roomreverb_chorus_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_roomreverb_chorus_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_roomreverb_reverb_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX];
+    pedal_multi_roomreverb_reverb_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 1];
+    pedal_multi_roomreverb_chorus_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 2];
+    pedal_multi_roomreverb_chorus_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 3];
     pedal_pico_reverb_set();
     pedal_pico_chorus_set();
 }
 
 void pedal_multi_planetsreverb_set() {
-    pedal_multi_planetsreverb_planets_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_planetsreverb_planets_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_planetsreverb_reverb_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_planetsreverb_reverb_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_planetsreverb_planets_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX];
+    pedal_multi_planetsreverb_planets_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 1];
+    pedal_multi_planetsreverb_reverb_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 2];
+    pedal_multi_planetsreverb_reverb_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 3];
     pedal_pico_planets_set();
     pedal_pico_reverb_set();
 }
@@ -212,10 +238,10 @@ void pedal_multi_truebuffer_set() {
 }
 
 void pedal_multi_rackphaser_set() {
-    pedal_multi_rackphaser_envelope_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_rackphaser_envelope_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_rackphaser_phaser_conversion_2 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
-    pedal_multi_rackphaser_phaser_conversion_3 = UTIL_PEDAL_PICO_ADC_MIDDLE_DEFAULT;
+    pedal_multi_rackphaser_envelope_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX];
+    pedal_multi_rackphaser_envelope_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 1];
+    pedal_multi_rackphaser_phaser_conversion_2 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 2];
+    pedal_multi_rackphaser_phaser_conversion_3 = pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 3];
     pedal_pico_envelope_set();
     pedal_pico_phaser_set();
 }
@@ -227,7 +253,18 @@ void pedal_multi_roomreverb_process(int32_t normalized_1, uint16_t conversion_2,
     } else if (sw_mode == 2) {
         pedal_multi_roomreverb_chorus_conversion_2 = conversion_2;
         pedal_multi_roomreverb_chorus_conversion_3 = conversion_3;
+    } else {
+        if (pedal_multi_previous_sw_mode == 1) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 1] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        } else if (pedal_multi_previous_sw_mode == 2) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 2] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_ROOMREVERB_INDEX + 3] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        }
     }
+    pedal_multi_previous_sw_mode = sw_mode;
     /* Objective entities, util_pedal_pico_obj, pedal_pico_reverb, and pedal_pico_chorus point the same struct and memory space */
     pedal_pico_reverb_process(normalized_1, pedal_multi_roomreverb_reverb_conversion_2, pedal_multi_roomreverb_reverb_conversion_3, 0);
     pedal_pico_chorus_process(util_pedal_pico_obj->output_1, pedal_multi_roomreverb_chorus_conversion_2, pedal_multi_roomreverb_chorus_conversion_3, 0);
@@ -240,7 +277,18 @@ void pedal_multi_planetsreverb_process(int32_t normalized_1, uint16_t conversion
     } else if (sw_mode == 2) {
         pedal_multi_planetsreverb_reverb_conversion_2 = conversion_2;
         pedal_multi_planetsreverb_reverb_conversion_3 = conversion_3;
+    } else {
+        if (pedal_multi_previous_sw_mode == 1) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 1] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        } else if (pedal_multi_previous_sw_mode == 2) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 2] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_PLANETSREVERB_INDEX + 3] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        }
     }
+    pedal_multi_previous_sw_mode = sw_mode;
     /* Objective entities, util_pedal_pico_obj, pedal_pico_planets, and pedal_pico_reverb point the same struct and memory space */
     pedal_pico_planets_process(normalized_1, pedal_multi_planetsreverb_planets_conversion_2, pedal_multi_planetsreverb_planets_conversion_3, 0);
     pedal_pico_reverb_process(util_pedal_pico_obj->output_1, pedal_multi_planetsreverb_reverb_conversion_2, pedal_multi_planetsreverb_reverb_conversion_3, 0);
@@ -284,7 +332,18 @@ void pedal_multi_rackphaser_process(int32_t normalized_1, uint16_t conversion_2,
     } else if (sw_mode == 2) {
         pedal_multi_rackphaser_phaser_conversion_2 = conversion_2;
         pedal_multi_rackphaser_phaser_conversion_3 = conversion_3;
+    } else {
+        if (pedal_multi_previous_sw_mode == 1) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 1] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        } else if (pedal_multi_previous_sw_mode == 2) {
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 2] = conversion_2;
+            pedal_multi_memory_buffer[PEDAL_MULTI_MEMORY_RACKPHASER_INDEX + 3] = conversion_3;
+            pedal_multi_memory_is_pending_write = true;
+        }
     }
+    pedal_multi_previous_sw_mode = sw_mode;
     /* Objective entities, util_pedal_pico_obj, pedal_pico_envelope, and pedal_pico_phaser point the same struct and memory space */
     pedal_pico_envelope_process(normalized_1, pedal_multi_rackphaser_envelope_conversion_2, pedal_multi_rackphaser_envelope_conversion_3, 2);
     pedal_pico_phaser_process(util_pedal_pico_obj->output_1, pedal_multi_rackphaser_phaser_conversion_2, pedal_multi_rackphaser_phaser_conversion_3, 2);

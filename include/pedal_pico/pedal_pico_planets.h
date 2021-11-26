@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 #define PEDAL_PICO_PLANETS_COEFFICIENT_FIXED_1 (int32_t)(0x00008000) // Using 32-bit Signed (Two's Compliment) Fixed Decimal, Bit[31] +/-, Bit[30:16] Integer Part, Bit[15:0] Decimal Part
-#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT (UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER >> 1) // Multiply by 2 (1-32 to 2-64)
+#define PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT (UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER >> 1) // Multiply by 1
 #define PEDAL_PICO_PLANETS_DELAY_TIME_MAX (((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1 1 // Value to Accumulate, Have to Be Small Value with Moving Average
 

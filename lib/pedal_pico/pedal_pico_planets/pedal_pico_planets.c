@@ -21,7 +21,7 @@ void pedal_pico_planets_set() {
     uint16_t delay_time_high_pass = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_planets_conversion_2 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 6-bit Value (64-1) and Shift
     pedal_pico_planets_delay_time_high_pass = delay_time_high_pass;
     pedal_pico_planets_delay_time_high_pass_interpolation = delay_time_high_pass;
-    uint16_t delay_time_low_pass = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 6-bit Value (64-1) and Shift
+    uint16_t delay_time_low_pass = _max(((((pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) >> 1), 1); // Make 6-bit Value (1-64) and Shift, then Halve with 1 at Minimum (1-32)
     pedal_pico_planets_delay_time_low_pass = delay_time_low_pass;
     pedal_pico_planets_delay_time_low_pass_interpolation = delay_time_low_pass;
     pedal_pico_planets_moving_average_sum_low_pass = 0;
@@ -34,7 +34,7 @@ void pedal_pico_planets_process(int32_t normalized_1, uint16_t conversion_2, uin
     }
     if (abs(conversion_3 - pedal_pico_planets_conversion_3) >= UTIL_PEDAL_PICO_ADC_FINE_THRESHOLD) {
         pedal_pico_planets_conversion_3 = conversion_3;
-        pedal_pico_planets_delay_time_low_pass = ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION + 1) - (pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT)) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT; // Make 6-bit Value (64-1) and Shift
+        pedal_pico_planets_delay_time_low_pass = _max(((((pedal_pico_planets_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) + 1) << PEDAL_PICO_PLANETS_DELAY_TIME_SHIFT) >> 1), 1); // Make 6-bit Value (1-64) and Shift, then Halve with 1 at Minimum (1-32)
     }
     pedal_pico_planets_delay_time_high_pass_interpolation = _interpolate(pedal_pico_planets_delay_time_high_pass_interpolation, pedal_pico_planets_delay_time_high_pass, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);
     pedal_pico_planets_delay_time_low_pass_interpolation = _interpolate(pedal_pico_planets_delay_time_low_pass_interpolation, pedal_pico_planets_delay_time_low_pass, PEDAL_PICO_PLANETS_DELAY_TIME_INTERPOLATION_ACCUM_FIXED_1);

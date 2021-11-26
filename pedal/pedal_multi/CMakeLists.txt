@@ -20,6 +20,7 @@ target_link_libraries(${target_name}
     pedal_pico_sustain
     pedal_pico_tremolo
     pedal_pico_envelope
+    pedal_pico_looper
 )
 
 # With No Setting CMAKE_MODULE_PATH
