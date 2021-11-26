@@ -172,8 +172,9 @@ int main(void) {
         }
         util_pedal_pico_flash_write((uint32_t)pedal_pico_looper_flash_reserve - XIP_BASE, (uint8_t*)pedal_multi_memory_buffer, FLASH_SECTOR_SIZE);
     } else {
+        uint16_t* flash_reserve_16 = (uint16_t*)pedal_pico_looper_flash_reserve; // Assign Array of Bytes as Array of Half Words
         for(uint16_t i = 0; i < PEDAL_MULTI_MEMORY_MAX; i++) {
-            pedal_multi_memory_buffer[i] = ((uint16_t)pedal_pico_looper_flash_reserve[i * 2] | ((uint16_t)pedal_pico_looper_flash_reserve[(i * 2) + 1]) << 8) & UTIL_PEDAL_PICO_ADC_RANGE; // Prevent Unlikely Values in Case
+            pedal_multi_memory_buffer[i] = flash_reserve_16[i] & UTIL_PEDAL_PICO_ADC_RANGE; // Prevent Unlikely Values in Case
         }
     }
     pedal_multi_memory_is_pending_write = false;
