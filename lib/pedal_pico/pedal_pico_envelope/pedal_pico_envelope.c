@@ -34,10 +34,9 @@ void pedal_pico_envelope_process(int32_t normalized_1, uint16_t conversion_2, ui
         pedal_pico_envelope_decay_start_threshold = (pedal_pico_envelope_conversion_3 >> UTIL_PEDAL_PICO_ADC_FINE_SHIFT) * PEDAL_PICO_ENVELOPE_DECAY_THRESHOLD_MULTIPLIER; // Make 6-bit Value (0-63) and Multiply
     }
     /* Decay Start */
-    uint16_t decay_start_count_previous = pedal_pico_envelope_decay_start_count;
     pedal_pico_envelope_decay_start_count = util_pedal_pico_threshold_gate_count(pedal_pico_envelope_decay_start_count, normalized_1, pedal_pico_envelope_decay_start_threshold, PEDAL_PICO_ENVELOPE_DECAY_HYSTERESIS_SHIFT);
     if (pedal_pico_envelope_decay_start_count >= PEDAL_PICO_ENVELOPE_DECAY_COUNT_MAX) pedal_pico_envelope_decay_start_count = 0;
-    if (decay_start_count_previous == 0 && pedal_pico_envelope_decay_start_count == 1 && ! pedal_pico_envelope_decay_is_outgoing) {
+    if (pedal_pico_envelope_decay_start_count == 1 && ! pedal_pico_envelope_decay_is_outgoing) {
             pedal_pico_envelope_decay_triangle_1_index = 0;
             pedal_pico_envelope_decay_is_release = false;
             pedal_pico_envelope_decay_is_outgoing = true;
