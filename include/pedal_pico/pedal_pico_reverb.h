@@ -38,7 +38,7 @@ extern "C" {
 #define PEDAL_PICO_REVERB_DELAY_TIME_SHIFT (8 + (UTIL_PEDAL_PICO_ADC_FINE_MULTIPLIER >> 1)) // Multiply by 256 (0-16128), 16128 Divided by 28125 (0.57 Seconds)
 #define PEDAL_PICO_REVERB_DELAY_TIME_MAX ((UTIL_PEDAL_PICO_ADC_FINE_RESOLUTION << PEDAL_PICO_REVERB_DELAY_TIME_SHIFT) + 1) // Don't Use Delay Time = 0
 #define PEDAL_PICO_REVERB_DELAY_TIME_INTERPOLATION_ACCUM 1
-#define PEDAL_PICO_REVERB_WAVE_MOVING_AVERAGE_NUMBER 16 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
+#define PEDAL_PICO_REVERB_WAVE_MOVING_AVERAGE_NUMBER 8 // Should be Power of 2 Because of Processing Speed (Logical Shift Left on Division)
 
 volatile util_pedal_pico* pedal_pico_reverb;
 volatile uint16_t pedal_pico_reverb_conversion_2;

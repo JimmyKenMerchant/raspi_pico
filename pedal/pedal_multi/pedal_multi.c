@@ -292,7 +292,7 @@ void pedal_multi_planetsreverb_process(int32_t normalized_1, uint16_t conversion
     pedal_multi_previous_sw_mode = sw_mode;
     /* Objective entities, util_pedal_pico_obj, pedal_pico_planets, and pedal_pico_reverb point the same struct and memory space */
     pedal_pico_planets_process(normalized_1, pedal_multi_planetsreverb_planets_conversion_2, pedal_multi_planetsreverb_planets_conversion_3, 0);
-    pedal_pico_reverb_process(util_pedal_pico_obj->output_1, pedal_multi_planetsreverb_reverb_conversion_2, pedal_multi_planetsreverb_reverb_conversion_3, 0);
+    pedal_pico_reverb_process(util_pedal_pico_obj->output_1, pedal_multi_planetsreverb_reverb_conversion_2, pedal_multi_planetsreverb_reverb_conversion_3, 2);
 }
 
 void pedal_multi_distreverb_process(int32_t normalized_1, uint16_t conversion_2, uint16_t conversion_3, uint8_t sw_mode) {
