@@ -1,0 +1,1 @@
+add_subdirectory(serial_console_periodic_1200)
