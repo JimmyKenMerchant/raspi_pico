@@ -21,44 +21,50 @@
 // raspi_pico/include
 #include "macros_pico.h"
 
+#define SERIAL_CONSOLE_CORE_1_STACK_SIZE 1024
+#define SERIAL_CONSOLE_LED_1_GPIO 25
 #define SERIAL_CONSOLE_UART_ID uart1
 #define SERIAL_CONSOLE_BAUD_RATE 1200
 #define SERIAL_CONSOLE_UART_TX_GPIO 4
 #define SERIAL_CONSOLE_UART_RX_GPIO 5
 #define SERIAL_CONSOLE_PERIODIC_MICROSECONDS 12500
-#define SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO 64
-#define SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH 3
-#define SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE 1024
+#define SERIAL_CONSOLE_SEQUENCE_PROGRAM_COUNTUPTO 64
+#define SERIAL_CONSOLE_SEQUENCE_PROGRAM_LENGTH 3
 
-uint8_t serial_console_sequence[SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH][SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO] = {
+uint8_t serial_console_sequence[SERIAL_CONSOLE_SEQUENCE_PROGRAM_LENGTH][SERIAL_CONSOLE_SEQUENCE_PROGRAM_COUNTUPTO] = {
    {_64('X')},
    {_64('Y')},
    {_64('P')}
 };
 
+volatile bool serial_console_led_1;
+volatile bool serial_console_sequence_is_start;
 volatile uint16_t serial_console_sequence_index;
 volatile uint16_t serial_console_sequence_count;
-volatile bool serial_console_sequence_is_start;
-
 
 void serial_console_core_1();
 bool serial_console_on_repeating_timer_callback(struct repeating_timer *t);
 
 int main(void) {
     stdio_usb_init(); // No Use UART for STDIO
-    sleep_ms(2000); // Wait for Rediness of USB for Messages
+    sleep_ms(2000); // Wait for Rediness of USB for Messages, and Pass through Transient Response of Power
     /* Initialize Global Variables */
+    serial_console_led_1 = true;
+    serial_console_sequence_is_start = false;
     serial_console_sequence_index = 0;
     serial_console_sequence_count = 0;
-    serial_console_sequence_is_start = false;
+    /* LED Indicator on Transmission */
+    gpio_init(SERIAL_CONSOLE_LED_1_GPIO);
+    gpio_set_dir(SERIAL_CONSOLE_LED_1_GPIO, GPIO_OUT);
+    gpio_put(SERIAL_CONSOLE_LED_1_GPIO, serial_console_led_1);
     /* UART Settings */
     uint32_t baud_rate = uart_init(SERIAL_CONSOLE_UART_ID, SERIAL_CONSOLE_BAUD_RATE);
     printf("@main 1 - baud_rate: %d\n", baud_rate);
     gpio_set_function(SERIAL_CONSOLE_UART_TX_GPIO, GPIO_FUNC_UART);
     gpio_set_function(SERIAL_CONSOLE_UART_RX_GPIO, GPIO_FUNC_UART);
     /* Launch Core 1 */
-    uint32_t* stack_pointer = (int32_t*)malloc(SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE);
-    multicore_launch_core1_with_stack(serial_console_core_1, stack_pointer, SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE);
+    uint32_t* stack_pointer = (int32_t*)malloc(SERIAL_CONSOLE_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(serial_console_core_1, stack_pointer, SERIAL_CONSOLE_CORE_1_STACK_SIZE);
     while (true) {
         puts("Type Sequence Index 0-2 or Type E to Stop Sequence:");
         int32_t input = getchar_timeout_us(10000000);
@@ -68,11 +74,11 @@ int main(void) {
             printf("%c\n", input_char);
             input_char -= 0x30;
             if (! serial_console_sequence_is_start) {
-                serial_console_sequence_index = _min(input_char, SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH - 1);
+                serial_console_sequence_index = _min(input_char, SERIAL_CONSOLE_SEQUENCE_PROGRAM_LENGTH - 1);
                 serial_console_sequence_count = 0;
                 serial_console_sequence_is_start = true;
             } else {
-                serial_console_sequence_index = _min(input_char, SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH - 1);
+                serial_console_sequence_index = _min(input_char, SERIAL_CONSOLE_SEQUENCE_PROGRAM_LENGTH - 1);
             }
         } else if (input_char == 'E') {
             if (serial_console_sequence_is_start) serial_console_sequence_is_start = false;
@@ -103,9 +109,13 @@ bool serial_console_on_repeating_timer_callback(struct repeating_timer *t) {
         }
         //hw_set_bits(&uart1_hw->dr, output_char);
         //printf("@serial_console_on_repeating_timer_callback 2 - output_char: %c\n", output_char);
-        if (++serial_console_sequence_count >= SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO) serial_console_sequence_count = 0;
+        if (++serial_console_sequence_count >= SERIAL_CONSOLE_SEQUENCE_PROGRAM_COUNTUPTO) serial_console_sequence_count = 0;
         //printf("@serial_console_on_repeating_timer_callback 3 - serial_console_sequence_count: %d\n", serial_console_sequence_count);
+        serial_console_led_1 ^= true;
+    } else {
+        serial_console_led_1 = true;
     }
+    gpio_put(SERIAL_CONSOLE_LED_1_GPIO, serial_console_led_1);
     __dsb();
 }
 
