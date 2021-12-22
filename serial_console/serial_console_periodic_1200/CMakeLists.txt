@@ -11,6 +11,8 @@ add_executable(${target_name}
 target_link_libraries(${target_name}
     pico_stdlib
     hardware_uart
+    pico_multicore
+    hardware_sync
 )
 
 # Beside elf, Create map/bin/hex/uf2 files.

@@ -15,7 +15,9 @@
 #include <stdlib.h>
 // Dependancies
 #include "pico/stdlib.h"
+#include "pico/multicore.h"
 #include "hardware/uart.h"
+#include "hardware/sync.h"
 // raspi_pico/include
 #include "macros_pico.h"
 
@@ -23,9 +25,10 @@
 #define SERIAL_CONSOLE_BAUD_RATE 1200
 #define SERIAL_CONSOLE_UART_TX_GPIO 4
 #define SERIAL_CONSOLE_UART_RX_GPIO 5
-#define SERIAL_CONSOLE_PERIODIC_MICROSECONDS 100000
+#define SERIAL_CONSOLE_PERIODIC_MICROSECONDS 12500
 #define SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO 64
 #define SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH 3
+#define SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE 1024
 
 uint8_t serial_console_sequence[SERIAL_CONSOLE_SEQUENCER_PROGRAM_LENGTH][SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO] = {
    {_64('X')},
@@ -37,6 +40,8 @@ volatile uint16_t serial_console_sequence_index;
 volatile uint16_t serial_console_sequence_count;
 volatile bool serial_console_sequence_is_start;
 
+
+void serial_console_core_1();
 bool serial_console_on_repeating_timer_callback(struct repeating_timer *t);
 
 int main(void) {
@@ -51,9 +56,9 @@ int main(void) {
     printf("@main 1 - baud_rate: %d\n", baud_rate);
     gpio_set_function(SERIAL_CONSOLE_UART_TX_GPIO, GPIO_FUNC_UART);
     gpio_set_function(SERIAL_CONSOLE_UART_RX_GPIO, GPIO_FUNC_UART);
-    /* Timer Settings */
-    struct repeating_timer timer;
-    add_repeating_timer_us(SERIAL_CONSOLE_PERIODIC_MICROSECONDS, serial_console_on_repeating_timer_callback, NULL, &timer);
+    /* Launch Core 1 */
+    uint32_t* stack_pointer = (int32_t*)malloc(SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE);
+    multicore_launch_core1_with_stack(serial_console_core_1, stack_pointer, SERIAL_CONSOLE_SEQUENCER_CORE_1_STACK_SIZE);
     while (true) {
         puts("Type Sequence Index 0-2 or Type E to Stop Sequence:");
         int32_t input = getchar_timeout_us(10000000);
@@ -78,6 +83,15 @@ int main(void) {
     return 0;
 }
 
+void serial_console_core_1() {
+    /* Timer Settings */
+    struct repeating_timer timer;
+    add_repeating_timer_us(-SERIAL_CONSOLE_PERIODIC_MICROSECONDS, serial_console_on_repeating_timer_callback, NULL, &timer); // Add "-" to First Argument for Periodical Callbacks without Considering Execution Time of Callback
+    while (true) {
+        tight_loop_contents();
+    }
+}
+
 bool serial_console_on_repeating_timer_callback(struct repeating_timer *t) {
     //if (uart_is_readable(SERIAL_CONSOLE_UART_ID)) printf("@serial_console_on_repeating_timer_callback 1 - uart_getc: %c\n", uart_getc(SERIAL_CONSOLE_UART_ID));
     if (serial_console_sequence_is_start) {
@@ -92,5 +106,6 @@ bool serial_console_on_repeating_timer_callback(struct repeating_timer *t) {
         if (++serial_console_sequence_count >= SERIAL_CONSOLE_SEQUENCER_PROGRAM_COUNTUPTO) serial_console_sequence_count = 0;
         //printf("@serial_console_on_repeating_timer_callback 3 - serial_console_sequence_count: %d\n", serial_console_sequence_count);
     }
+    __dsb();
 }
 
